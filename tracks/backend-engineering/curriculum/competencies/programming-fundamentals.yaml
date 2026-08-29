@@ -1,0 +1,11 @@
+{
+  "id": "programming-fundamentals",
+  "title": "Programming Fundamentals",
+  "description": "Control flow, functions, modules, and version-control workflow for small maintainable programs.",
+  "order": 1,
+  "estimated_hours": 18,
+  "learning_outcomes": ["Construct a program path that handles normal and invalid inputs explicitly.", "Implement and call functions with suitable parameters and return values.", "Separate a small feature into cohesive modules with clear dependencies.", "Produce a Git history that identifies each intentional change."],
+  "observable_behaviors": ["Breaks a requirement into inputs, decisions and outputs.", "Names and extracts functions with one responsibility.", "Keeps related behavior in modules.", "Creates focused, reviewable commits."],
+  "prerequisite_competencies": [],
+  "skills": ["program-control-flow", "functions-and-modules", "git-change-workflow"]
+}

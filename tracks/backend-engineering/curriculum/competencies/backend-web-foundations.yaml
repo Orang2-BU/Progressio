@@ -1,0 +1,11 @@
+{
+  "id": "backend-web-foundations",
+  "title": "Backend and Web Foundations",
+  "description": "The request-response model, resource-oriented HTTP interaction, message structure, methods, headers and status codes.",
+  "order": 2,
+  "estimated_hours": 16,
+  "learning_outcomes": ["Describe the roles of client, server, request, response and resource in a web interaction.", "Construct and interpret HTTP requests and responses, including start line, headers and body.", "Select an HTTP method and status code consistent with the requested operation and outcome."],
+  "observable_behaviors": ["Traces a request from client to server and back.", "Inspects an HTTP message.", "Distinguishes method intent from URI naming.", "Selects response status and headers that communicate the outcome."],
+  "prerequisite_competencies": [],
+  "skills": ["client-server-model", "http-messages-and-semantics"]
+}

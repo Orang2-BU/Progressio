@@ -1,0 +1,11 @@
+{
+  "id": "api-development",
+  "title": "API Development",
+  "description": "Resource and operation design, machine-readable API contracts, request validation and predictable error responses.",
+  "order": 3,
+  "estimated_hours": 20,
+  "learning_outcomes": ["Draft an API contract that defines operations, parameters, request bodies, responses and errors.", "Select appropriate HTTP methods and status codes for a defined API operation.", "Implement input validation rules for an API endpoint and return a consistent client-error response."],
+  "observable_behaviors": ["Maps a use case to an API operation.", "Documents inputs and outputs before implementation.", "Rejects malformed or semantically invalid input at the boundary.", "Explains an error response to an API consumer."],
+  "prerequisite_competencies": ["programming-fundamentals", "backend-web-foundations"],
+  "skills": ["api-contract-design", "api-input-validation"]
+}

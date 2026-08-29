@@ -1,8 +1,12 @@
-id: backend-engineering
-title: Backend Engineering
-version: 1.0.0
-status: approved-research-conversion
-estimated_learning_hours: 54
-tags: [backend, web, api]
-competencies: [programming-fundamentals, backend-web-foundations, api-development]
-
+{
+  "id": "backend-engineering",
+  "title": "Backend Engineering",
+  "description": "A competency-based foundation for turning small requirements into clear API contracts and bounded HTTP service behavior.",
+  "version": "0.1.0",
+  "schema_version": 1,
+  "target_learner": "An early-career developer who has written a small program but has not yet designed or implemented an HTTP API.",
+  "difficulty": "Beginner",
+  "estimated_hours": 54,
+  "competencies": ["programming-fundamentals", "backend-web-foundations", "api-development"],
+  "metadata": {"status": "draft", "source": "tracks/backend-engineering/research", "tags": ["backend", "web", "api"]}
+}
