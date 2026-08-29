@@ -1,0 +1,1 @@
+{"id":"fixture-competency","title":"Fixture Competency","description":"A valid competency.","order":1,"estimated_hours":1,"learning_outcomes":["Demonstrate a fixture outcome."],"observable_behaviors":["Performs a fixture behavior."],"prerequisite_competencies":[],"skills":["fixture-skill"]}

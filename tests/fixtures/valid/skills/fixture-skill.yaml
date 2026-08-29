@@ -1,0 +1,1 @@
+{"id":"fixture-skill","title":"Fixture Skill","competency":"fixture-competency","description":"A valid skill.","difficulty":"Beginner","estimated_minutes":60,"learning_outcomes":["Demonstrate a fixture skill."],"prerequisites":[],"resources":["fixture-resource"],"assessments":["fixture-assessment"]}

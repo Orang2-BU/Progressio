@@ -1,0 +1,1 @@
+{"id":"fixture-track","title":"Fixture Track","description":"A valid isolated curriculum fixture.","version":"0.1.0","schema_version":1,"target_learner":"Fixture learner.","difficulty":"Beginner","estimated_hours":1,"competencies":["fixture-competency"],"metadata":{"status":"draft","source":"tests","tags":["fixture"]}}

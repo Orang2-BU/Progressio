@@ -13,7 +13,11 @@ def load(path):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"{path.relative_to(ROOT)}: {error}") from error
+        try:
+            label = path.relative_to(ROOT)
+        except ValueError:
+            label = path
+        raise ValueError(f"{label}: {error}") from error
 
 
 def schema_validate(value, schema, path):
@@ -97,16 +101,16 @@ def visit(node, graph, seen, active):
     seen.add(node)
 
 
-def main():
-    manifest = load(TRACK / "curriculum.yaml")
-    version = load(TRACK / "version.yaml")
+def validate(track=TRACK, schema_dir=ROOT / "schemas"):
+    manifest = load(track / "curriculum.yaml")
+    version = load(track / "version.yaml")
     if set(manifest) != {"id", "title", "description", "version", "schema_version", "target_learner", "difficulty", "estimated_hours", "competencies", "metadata"}:
         raise ValueError("curriculum.yaml: unexpected or missing fields")
-    competencies = records(TRACK / "competencies")
-    skills = records(TRACK / "skills")
-    resources = records(TRACK / "resources")
-    assessments = records(TRACK / "assessments")
-    schemas = {name: load(ROOT / "schemas" / f"{name}.schema.json") for name in ["curriculum", "competency", "skill", "resource", "assessment"]}
+    competencies = records(track / "competencies")
+    skills = records(track / "skills")
+    resources = records(track / "resources")
+    assessments = records(track / "assessments")
+    schemas = {name: load(schema_dir / f"{name}.schema.json") for name in ["curriculum", "competency", "skill", "resource", "assessment"]}
     schema_validate(manifest, schemas["curriculum"], "curriculum.yaml")
     if set(version) != {"schema_version", "curriculum_version", "status"} or version["schema_version"] != manifest["schema_version"] or version["curriculum_version"] != manifest["version"]:
         raise ValueError("version.yaml: incompatible manifest version")
@@ -155,7 +159,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        validate()
     except ValueError as error:
         print(f"INVALID: {error}", file=sys.stderr)
         sys.exit(1)
