@@ -1,0 +1,8 @@
+id: backend-engineering
+title: Backend Engineering
+version: 1.0.0
+status: approved-research-conversion
+estimated_learning_hours: 54
+tags: [backend, web, api]
+competencies: [programming-fundamentals, backend-web-foundations, api-development]
+

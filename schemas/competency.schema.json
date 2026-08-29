@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["competencies"],
+  "properties": {
+    "competencies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "purpose", "description", "observable_professional_behaviors", "learning_outcomes", "estimated_learning_hours", "prerequisite_competencies", "skills"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "title": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "observable_professional_behaviors": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "learning_outcomes": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "estimated_learning_hours": {"type": "number", "exclusiveMinimum": 0},
+          "prerequisite_competencies": {"type": "array", "items": {"type": "string"}},
+          "recommended_prerequisite_competencies": {"type": "array", "items": {"type": "string"}},
+          "skills": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
