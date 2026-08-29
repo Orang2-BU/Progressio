@@ -1,1 +1,0 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["id","title","description","order","estimated_hours","skills"],"properties":{"id":{"type":"string"},"title":{"type":"string"},"description":{"type":"string"},"order":{"type":"integer"},"estimated_hours":{"type":"number"},"required_competencies":{"type":"array"},"skills":{"type":"array"}}}

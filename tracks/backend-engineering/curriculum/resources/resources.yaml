@@ -1,7 +1,0 @@
-resources:
-  - {id: mdn-http, provider: MDN, title: HTTP overview, type: documentation, url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview, difficulty: Beginner, priority: core}
-  - {id: python-tutorial, provider: Python, title: Python Tutorial, type: documentation, url: https://docs.python.org/3/tutorial/, difficulty: Beginner, priority: core}
-  - {id: postgres-tutorial, provider: PostgreSQL, title: Tutorial, type: documentation, url: https://www.postgresql.org/docs/current/tutorial.html, difficulty: Beginner, priority: core}
-  - {id: owasp-auth, provider: OWASP, title: Authentication Cheat Sheet, type: documentation, url: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html, difficulty: Intermediate, priority: core}
-  - {id: openapi-spec, provider: OpenAPI Initiative, title: OpenAPI Specification, type: standard, url: https://spec.openapis.org/oas/latest.html, difficulty: Intermediate, priority: core}
-

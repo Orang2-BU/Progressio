@@ -1,6 +1,0 @@
-assessments:
-  - {id: fundamentals-check, type: quiz, title: Fundamentals knowledge check, passing_score: 70, max_score: 100, skills: [programming_logic, data_structures, modular_design, error_testing, version_control]}
-  - {id: backend-service-project, type: mini_project, title: Observable HTTP service, passing_score: 80, max_score: 100, skills: [http_fundamentals, service_runtime]}
-  - {id: database-project, type: mini_project, title: Relational data feature, passing_score: 80, max_score: 100, skills: [data_modeling, sql_queries, transactions_indexes]}
-  - {id: secure-api-project, type: capstone, title: Authenticated documented API, passing_score: 80, max_score: 100, skills: [identity_basics, secure_credentials, access_control, api_contracts, api_implementation, api_quality]}
-
