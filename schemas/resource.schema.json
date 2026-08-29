@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["id","provider","title","type","url","difficulty","priority"],"properties":{"id":{"type":"string"},"provider":{"type":"string"},"title":{"type":"string"},"type":{"type":"string"},"url":{"type":"string","format":"uri"},"difficulty":{"type":"string"},"priority":{"enum":["core","supporting"]}}}

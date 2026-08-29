@@ -1,0 +1,7 @@
+competencies:
+  - {id: programming_fundamentals, title: Programming Fundamentals, description: Build reliable program logic and maintainable code., order: 1, estimated_hours: 32, required_competencies: [], skills: [programming_logic, data_structures, modular_design, error_testing, version_control]}
+  - {id: backend_foundations, title: Backend Foundations, description: Understand how backend services communicate and run., order: 2, estimated_hours: 30, required_competencies: [programming_fundamentals], skills: [http_fundamentals, service_runtime]}
+  - {id: database_engineering, title: Database Engineering, description: Model, query and protect durable relational data., order: 3, estimated_hours: 38, required_competencies: [programming_fundamentals], skills: [data_modeling, sql_queries, transactions_indexes]}
+  - {id: authentication, title: Authentication, description: Protect identity, sessions and resource access., order: 4, estimated_hours: 30, required_competencies: [backend_foundations], skills: [identity_basics, secure_credentials, access_control]}
+  - {id: api_development, title: API Development, description: Design, implement and verify predictable HTTP APIs., order: 5, estimated_hours: 40, required_competencies: [backend_foundations, database_engineering, authentication], skills: [api_contracts, api_implementation, api_quality]}
+

@@ -1,0 +1,8 @@
+id: backend-engineering
+title: Backend Engineering
+version: 1.0.0
+difficulty: Beginner
+estimated_hours: 170
+competencies: [programming_fundamentals, backend_foundations, database_engineering, authentication, api_development]
+credential: backend-engineering-foundations
+
