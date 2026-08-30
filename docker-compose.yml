@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: progressio
       POSTGRES_PASSWORD: progressio_dev_2026
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - progressio_db_data:/var/lib/postgresql/data
     networks:
