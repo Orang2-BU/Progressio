@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'apps.skills',
     'apps.learning',
     'apps.assessments',
+    'apps.credentials',
+    'apps.verification',
 ]
 
 MIDDLEWARE = [
@@ -173,6 +175,10 @@ SPECTACULAR_SETTINGS = {
         'deepLinking': True,
         'persistAuthorization': True,
         'displayOperationId': True,
+    },
+    'ENUM_NAME_OVERRIDES': {
+        'SubmissionStatusEnum': 'apps.assessments.models.Submission.Status',
+        'CredentialStatusEnum': 'apps.credentials.models.Credential.Status',
     },
 }
 

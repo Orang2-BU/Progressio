@@ -14,9 +14,9 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
  │
  ├──▶ [x] Sprint 2: Learning Engine & Progress Tracking (SELESAI)
  │     │
- │     └──▶ [ ] Sprint 3: Credential System & Verification (NEXT)
+ │     └──▶ [x] Sprint 3: Credential System & Verification (SELESAI)
  │           │
- │           └──▶ [ ] Sprint 4: External Services (AI, Blockchain, Celery)
+ │           └──▶ [ ] Sprint 4: External Services (AI, Blockchain, Celery) (NEXT)
 ```
 
 ---
@@ -51,24 +51,22 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
 
 ---
 
-### ⏳ Sprint 3 — Credential System & Verification (Status: NEXT)
-Fokus pada penerbitan sertifikat kompetensi dan verifikasi publik:
-
-1. **Credentials & Evidence** (`apps/credentials/`):
-   - Model `Credential` (`user`, `competency`, status: `draft`, `issued`, `revoked`, score, `issued_at`).
-   - Model `Evidence` (`submission`, `github_url`, `file_url`, `demo_url`, notes portofolio).
-   - Endpoints:
-     - `GET /api/v1/credentials` (list credential milik user)
-     - `GET /api/v1/credentials/{id}` (detail credential)
-     - `POST /api/v1/credentials/issue` (issue credential baru jika passing score tercapai)
-2. **Public Verification API** (`apps/verification/`):
-   - `GET /api/v1/verify/{credential_id}`: **Public endpoint (tanpa autentikasi)** agar recruiter/perusahaan bisa memvalidasi keaslian sertifikat & portofolio kandidat.
-3. **Credential Generator**:
-   - Engine generate snapshot metadata JSON & persiapan payload PDF/Hash.
+### ✅ Sprint 3 — Credential System & Verification (Status: SELESAI)
+- [x] **Credentials & Evidence** (`apps/credentials/`):
+  - Model `Credential` (`UUID id`, `user`, `competency`, status: `draft`, `issued`, `revoked`, `score`, `issued_at`, snapshot metadata).
+  - Model `Evidence` (`credential`, `submission`, `github_url`, `file_url`, `demo_url`, `notes`).
+  - `CredentialService`: Validasi kelayakan penerbitan (skor minimal 70%), issuance credential, dan snapshot packaging.
+  - Endpoints:
+    - `GET /api/v1/credentials` (list credential milik user yang login).
+    - `GET /api/v1/credentials/{id}` (detail credential & bukti portofolio).
+    - `POST /api/v1/credentials/issue` (issue credential baru dengan attaching evidence).
+- [x] **Public Verification API** (`apps/verification/`):
+  - `GET /api/v1/verify/{credential_id}`: **Public endpoint (tanpa login)** untuk recruiter/perusahaan memvalidasi keaslian sertifikat & portfolio evidence.
+- [x] **Testing & Docs**: 44/44 unit tests lolos 100% di PostgreSQL container.
 
 ---
 
-### ⏳ Sprint 4 — External Services & Background Workers (Status: UPCOMING)
+### ⏳ Sprint 4 — External Services & Background Workers (Status: NEXT)
 Fokus pada integrasi AI, Blockchain, task async, dan production infra:
 
 1. **Background Tasks with Celery & Redis**:
