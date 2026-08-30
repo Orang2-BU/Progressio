@@ -1,15 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+
 from .serializers import HealthCheckResponseSerializer
 
 
 class HealthCheckView(APIView):
-    """
-    Health check endpoint to verify backend system status and connectivity.
-    """
-    permission_classes = []
+    """Health check endpoint to verify backend system status."""
+    permission_classes = [AllowAny]
 
     @extend_schema(
         summary="API Health Check",

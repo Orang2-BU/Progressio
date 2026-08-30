@@ -1,4 +1,24 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: progressio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: progressio_db
+      POSTGRES_USER: progressio
+      POSTGRES_PASSWORD: progressio_dev_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - progressio_db_data:/var/lib/postgresql/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U progressio -d progressio_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./back-end
@@ -14,10 +34,21 @@ services:
       - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,backend
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
+      - DB_NAME=progressio_db
+      - DB_USER=progressio
+      - DB_PASSWORD=progressio_dev_2026
+      - DB_HOST=db
+      - DB_PORT=5432
     env_file:
       - ./back-end/.env
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - progressio_network
+
+volumes:
+  progressio_db_data:
 
 networks:
   progressio_network:

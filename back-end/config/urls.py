@@ -1,8 +1,5 @@
 """
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+URL configuration for Progressio Backend.
 """
 from django.contrib import admin
 from django.urls import path, include
@@ -13,6 +10,15 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+api_v1_patterns = [
+    path('auth/', include('apps.accounts.urls')),
+    path('career-tracks/', include('apps.careers.urls')),
+    path('competencies/', include('apps.competencies.urls')),
+    path('skills/', include('apps.skills.urls')),
+    path('', include('apps.learning.urls')),
+    path('', include('apps.common.urls')),
+]
+
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
@@ -22,8 +28,8 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    # API endpoints
-    path('api/', include('core.urls')),
+    # API v1 endpoints
+    path('api/v1/', include(api_v1_patterns)),
 
     # Root redirect to API Docs
     path('', RedirectView.as_view(url='/api/docs/', permanent=False)),
