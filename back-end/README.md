@@ -12,9 +12,9 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
 ```
 [x] Sprint 1: Backend Foundation (SELESAI)
  │
- ├──▶ [ ] Sprint 2: Learning Engine & Progress Tracking (NEXT)
+ ├──▶ [x] Sprint 2: Learning Engine & Progress Tracking (SELESAI)
  │     │
- │     └──▶ [ ] Sprint 3: Credential System & Verification
+ │     └──▶ [ ] Sprint 3: Credential System & Verification (NEXT)
  │           │
  │           └──▶ [ ] Sprint 4: External Services (AI, Blockchain, Celery)
 ```
@@ -31,29 +31,27 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
 
 ---
 
-### ⏳ Sprint 2 — Learning Engine & Progress Tracking (Status: UPCOMING)
-Fokus pada sistem penilaian, submission, perhitungan progress, dan XP user:
-
-1. **Assessments & Submissions** (`apps/assessments/`):
-   - Model `Assessment` (Types: `quiz`, `challenge`, `project`, passing score, max score).
-   - Model `Submission` (State Machine: `draft` ➔ `submitted` ➔ `evaluating` ➔ `completed`).
-   - Endpoints:
-     - `GET /api/v1/assessments` & `GET /api/v1/assessments/{id}`
-     - `POST /api/v1/assessments/{id}/submit`
-2. **Progress & XP Tracking** (`apps/learning/`):
-   - Model `SkillProgress` (`user`, `skill`, `mastery`, `xp`, `confidence`, `last_assessed_at`).
-   - Model `CompetencyProgress` (`user`, `competency`, `score`, `confidence`, `last_updated`).
-   - Endpoints:
-     - `GET /api/v1/learning-path` (rekomendasi path belajar berdasarkan graph skill)
-     - `GET /api/v1/progress` (overview progress belajar dan XP user)
-     - `POST /api/v1/lesson/{id}/complete` (trigger event: `LessonCompleted` ➔ tambah XP & recalculate)
-3. **Domain Event Handlers**:
-   - `LessonCompleted`: Update XP & Skill Progress.
-   - `AssessmentPassed`: Update Skill Progress & Competency Score, check eligibility credential.
+### ✅ Sprint 2 — Learning Engine & Progress Tracking (Status: SELESAI)
+- [x] **Assessments & Submissions** (`apps/assessments/`):
+  - Model `Assessment` (`quiz`, `challenge`, `project`, passing score, max score).
+  - Model `Submission` (State Machine: `draft` ➔ `submitted` ➔ `evaluating` ➔ `completed`).
+  - Endpoints: `GET /api/v1/assessments`, `GET /api/v1/assessments/{id}`, `POST /api/v1/assessments/{id}/submit`.
+- [x] **Progress & XP Tracking** (`apps/learning/`):
+  - Model `SkillProgress` (`user`, `skill`, `mastery`, `xp`, `confidence`, `last_assessed_at`).
+  - Model `CompetencyProgress` (`user`, `competency`, `score`, `confidence`, `last_updated`).
+  - Model `LessonCompletion` (`user`, `lesson`, `completed_at`).
+  - Endpoints:
+    - `GET /api/v1/learning-path` (algoritma graph prerequisite skill: `locked`, `available`, `in_progress`, `mastered`).
+    - `GET /api/v1/progress` (overview total XP, completed lessons, skill & competency progresses).
+    - `POST /api/v1/lesson/{id}/complete` (trigger event: `LessonCompleted` ➔ +50 XP & update mastery).
+- [x] **Domain Event Handlers**:
+  - `LessonCompleted`: Auto award XP & recalculate skill mastery.
+  - `AssessmentPassed`: Auto update skill mastery (up to 100%), +100 XP, dan sinkronisasi skor rata-rata competency.
+- [x] **Testing & Docs**: 38/38 unit tests lolos 100% di PostgreSQL container.
 
 ---
 
-### ⏳ Sprint 3 — Credential System & Verification (Status: UPCOMING)
+### ⏳ Sprint 3 — Credential System & Verification (Status: NEXT)
 Fokus pada penerbitan sertifikat kompetensi dan verifikasi publik:
 
 1. **Credentials & Evidence** (`apps/credentials/`):

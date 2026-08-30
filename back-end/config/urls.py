@@ -15,6 +15,7 @@ api_v1_patterns = [
     path('career-tracks/', include('apps.careers.urls')),
     path('competencies/', include('apps.competencies.urls')),
     path('skills/', include('apps.skills.urls')),
+    path('assessments/', include('apps.assessments.urls')),
     path('', include('apps.learning.urls')),
     path('', include('apps.common.urls')),
 ]

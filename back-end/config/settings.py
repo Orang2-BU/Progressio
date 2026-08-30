@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'apps.competencies',
     'apps.skills',
     'apps.learning',
+    'apps.assessments',
 ]
 
 MIDDLEWARE = [
