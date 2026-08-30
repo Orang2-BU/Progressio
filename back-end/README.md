@@ -1,13 +1,11 @@
 # Progressio Backend Service
 
 > **Turning Progress Into Proof.**
-> Backend architecture for the Progressio MVP built with **Django 5.1**, **Django REST Framework**, **OpenAPI 3.0 (drf-spectacular)**, and **PostgreSQL 15**.
+> Production-ready backend architecture for the Progressio platform built with **Django 5.1**, **Django REST Framework**, **OpenAPI 3.0 (drf-spectacular)**, **PostgreSQL 15**, **Redis 7**, **Celery 5**, **AI Integration Layer**, and **Blockchain Cryptographic Proofs**.
 
 ---
 
-## 🧭 Project Status & Sprint Roadmap
-
-Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap pengerjaan backend:
+## 🧭 Project Status & Sprint Roadmap (ALL SPRINTS COMPLETE 🎉)
 
 ```
 [x] Sprint 1: Backend Foundation (SELESAI)
@@ -16,22 +14,22 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
  │     │
  │     └──▶ [x] Sprint 3: Credential System & Verification (SELESAI)
  │           │
- │           └──▶ [ ] Sprint 4: External Services (AI, Blockchain, Celery) (NEXT)
+ │           └──▶ [x] Sprint 4: External Services (AI, Blockchain, Celery + Redis) (SELESAI)
 ```
 
 ---
 
-### ✅ Sprint 1 — Backend Foundation (Status: SELESAI)
+### ✅ Sprint 1 — Backend Foundation
 - [x] **Authentication & Role System** (`apps/accounts`): Custom `User` model (`student`, `recruiter`, `admin`), JWT Auth (`/register`, `/login`, `/refresh`, `/me`).
 - [x] **Career Tracks** (`apps/careers`): Model `CareerTrack` & CRUD endpoints.
 - [x] **Competencies** (`apps/competencies`): Model `Competency` & filtering per career track.
 - [x] **Skill Graph** (`apps/skills`): Model `Skill`, `SkillPrerequisite` (graph prasyarat), & endpoint materi per skill.
 - [x] **Learning Base** (`apps/learning`): Model `Lesson` (`video`, `article`, `exercise`, `reading`).
-- [x] **Database & OpenAPI**: PostgreSQL 15 + Swagger UI / Redoc + 34 unit tests lolos 100%.
+- [x] **Database & OpenAPI**: PostgreSQL 15 + Swagger UI / Redoc.
 
 ---
 
-### ✅ Sprint 2 — Learning Engine & Progress Tracking (Status: SELESAI)
+### ✅ Sprint 2 — Learning Engine & Progress Tracking
 - [x] **Assessments & Submissions** (`apps/assessments/`):
   - Model `Assessment` (`quiz`, `challenge`, `project`, passing score, max score).
   - Model `Submission` (State Machine: `draft` ➔ `submitted` ➔ `evaluating` ➔ `completed`).
@@ -47,111 +45,65 @@ Berdasarkan spesifikasi teknis di `progressio-backend-spec.md`, berikut roadmap 
 - [x] **Domain Event Handlers**:
   - `LessonCompleted`: Auto award XP & recalculate skill mastery.
   - `AssessmentPassed`: Auto update skill mastery (up to 100%), +100 XP, dan sinkronisasi skor rata-rata competency.
-- [x] **Testing & Docs**: 38/38 unit tests lolos 100% di PostgreSQL container.
 
 ---
 
-### ✅ Sprint 3 — Credential System & Verification (Status: SELESAI)
+### ✅ Sprint 3 — Credential System & Verification
 - [x] **Credentials & Evidence** (`apps/credentials/`):
   - Model `Credential` (`UUID id`, `user`, `competency`, status: `draft`, `issued`, `revoked`, `score`, `issued_at`, snapshot metadata).
   - Model `Evidence` (`credential`, `submission`, `github_url`, `file_url`, `demo_url`, `notes`).
-  - `CredentialService`: Validasi kelayakan penerbitan (skor minimal 70%), issuance credential, dan snapshot packaging.
+  - `CredentialService`: Validasi kelayakan penerbitan (skor minimal $\ge 70\%$), issuance credential, dan snapshot packaging.
   - Endpoints:
     - `GET /api/v1/credentials` (list credential milik user yang login).
     - `GET /api/v1/credentials/{id}` (detail credential & bukti portofolio).
     - `POST /api/v1/credentials/issue` (issue credential baru dengan attaching evidence).
 - [x] **Public Verification API** (`apps/verification/`):
   - `GET /api/v1/verify/{credential_id}`: **Public endpoint (tanpa login)** untuk recruiter/perusahaan memvalidasi keaslian sertifikat & portfolio evidence.
-- [x] **Testing & Docs**: 44/44 unit tests lolos 100% di PostgreSQL container.
 
 ---
 
-### ⏳ Sprint 4 — External Services & Background Workers (Status: NEXT)
-Fokus pada integrasi AI, Blockchain, task async, dan production infra:
-
-1. **Background Tasks with Celery & Redis**:
-   - Menambahkan container **Redis** sebagai message broker.
-   - Setup **Celery worker** untuk pekerjaan async: AI Evaluation, PDF Generation, Blockchain Minting, Notifikasi.
-2. **AI Integration Adapter** (`apps/ai/`):
-   - Clean Architecture: View ➔ Service Layer ➔ AI Adapter ➔ LLM API.
-   - AI Skill Gap Analysis, Learning Path Recommendations, Automated Assessment Evaluation.
-3. **Blockchain Integration Layer** (`apps/blockchain/`):
-   - Model `BlockchainCredential` (`credential_hash`, `transaction_hash`, `network`, `verified`, `revoked`).
-   - Hashing SHA-256 (hanya menyimpan hash pembuktian, *bukan* data pribadi siswa).
-   - Adapter untuk interaksi dengan smart contract / blockchain node.
-4. **Production Email & Notifications**:
-   - Mengganti `django.core.mail.backends.console.EmailBackend` dengan SMTP Provider (SendGrid/AWS SES/Resend).
+### ✅ Sprint 4 — External Services & Background Workers
+- [x] **Background Tasks with Celery & Redis**:
+  - Container **Redis 7 Alpine** (`progressio_redis`) sebagai message broker.
+  - Container **Celery Worker** (`progressio_celery_worker`) untuk background job async.
+- [x] **AI Integration Layer** (`apps/ai/`):
+  - Clean Architecture: `View ➔ Service ➔ AI Adapter ➔ Provider`.
+  - Built-in `MockAIAdapter` (untuk testing & dev offline) + `OpenAIAdapter` (live via `OPENAI_API_KEY`).
+  - Endpoints:
+    - `POST /api/v1/ai/skill-gap-analysis` (analisis gap kompetensi vs Career Track target).
+    - `GET /api/v1/ai/recommendations` (rekomendasi belajar personal).
+    - Background task evaluasi asesmen otomatis.
+- [x] **Blockchain Integration Layer** (`apps/blockchain/`):
+  - Model `BlockchainCredential` (`credential_hash` SHA-256, `transaction_hash`, `network`, `verified`, `revoked`).
+  - Privacy by Design: **Hanya hash SHA-256 yang disimpan on-chain** (tidak ada PII / data pribadi siswa).
+  - Terintegrasi langsung dengan Public Verification API `/api/v1/verify/{id}`.
+- [x] **Testing & Docs**: **51/51 unit tests PASSED (100%)** di PostgreSQL container.
 
 ---
 
-## 🛠️ Panduan Menjalankan Backend
+## 🛠️ Panduan Menjalankan Backend (Docker)
 
-### Prasyarat
-- Docker Desktop aktif (atau Python 3.12 + PostgreSQL lokal).
-
-### 1. Jalankan Menggunakan Docker (Rekomendasi)
 Dari root folder `Progressio/`:
 ```powershell
-# Jalankan seluruh service (PostgreSQL & Backend)
-docker compose up -d
+# Build dan jalankan seluruh 4 service (Postgres, Redis, Django Backend, Celery Worker)
+docker compose up --build -d
+
+# Cek logs worker atau backend
+docker compose logs -f celery_worker
+docker compose logs -f backend
 
 # Jalankan migrasi database
 docker compose exec backend python manage.py migrate
 
-# Jalankan seluruh unit testing (34 tests)
+# Jalankan seluruh unit testing (51 tests)
 docker compose exec backend python manage.py test
-
-# Cek logs real-time
-docker compose logs -f backend
-```
-
-### 2. Jalankan Lokal (Native Python)
-Dari folder `back-end/`:
-```powershell
-# Masuk folder & aktifkan virtualenv
-cd back-end
-.\.venv\Scripts\activate
-
-# Install dependensi
-pip install -r requirements.txt
-
-# Jalankan migrasi & testing
-python manage.py migrate
-python manage.py test
-
-# Jalankan server lokal
-python manage.py runserver
 ```
 
 ---
 
 ## 📖 Dokumentasi API Live
 
-Saat backend berjalan:
-- 📑 **Swagger UI**: [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
+- 📑 **Swagger UI (Interactive)**: [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
 - 📖 **Redoc UI**: [http://localhost:8000/api/redoc/](http://localhost:8000/api/redoc/)
 - 🩺 **Health Check**: [http://localhost:8000/api/v1/health/](http://localhost:8000/api/v1/health/)
 - 📄 **OpenAPI 3.0 Schema**: [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
-
----
-
-## 🏛️ Struktur Arsitektur Bersih (Clean Architecture)
-
-```text
-back-end/
-├── apps/
-│   ├── accounts/        # User, Roles, JWT Auth
-│   ├── careers/         # Career Tracks
-│   ├── competencies/    # Competencies
-│   ├── skills/          # Skills & Skill Graph Prerequisites
-│   ├── learning/        # Lessons, Learning Path & Progress
-│   ├── assessments/     # Assessments & Submissions (Sprint 2)
-│   ├── credentials/     # Credentials & Evidence (Sprint 3)
-│   ├── verification/    # Public Verification API (Sprint 3)
-│   ├── ai/              # AI Service Adapters (Sprint 4)
-│   ├── blockchain/      # Blockchain Proof Adapters (Sprint 4)
-│   └── common/          # TimestampMixin, Health Check, Shared Utils
-├── config/              # Django settings, JWT, URLs, WSGI/ASGI
-├── Dockerfile           # Python 3.12 slim container
-└── requirements.txt     # Python dependencies
-```

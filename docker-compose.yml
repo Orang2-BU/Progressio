@@ -19,6 +19,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: progressio_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - progressio_redis_data:/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./back-end
@@ -39,16 +55,50 @@ services:
       - DB_PASSWORD=progressio_dev_2026
       - DB_HOST=db
       - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
       - ./back-end/.env
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - progressio_network
+
+  celery_worker:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: progressio_celery_worker
+    restart: unless-stopped
+    command: celery -A config worker -l info
+    volumes:
+      - ./back-end:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
+      - DB_NAME=progressio_db
+      - DB_USER=progressio
+      - DB_PASSWORD=progressio_dev_2026
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - ./back-end/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - progressio_network
 
 volumes:
   progressio_db_data:
+  progressio_redis_data:
 
 networks:
   progressio_network:

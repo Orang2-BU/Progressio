@@ -17,6 +17,8 @@ api_v1_patterns = [
     path('skills/', include('apps.skills.urls')),
     path('assessments/', include('apps.assessments.urls')),
     path('credentials/', include('apps.credentials.urls')),
+    path('ai/', include('apps.ai.urls')),
+    path('blockchain/', include('apps.blockchain.urls')),
     path('', include('apps.verification.urls')),
     path('', include('apps.learning.urls')),
     path('', include('apps.common.urls')),

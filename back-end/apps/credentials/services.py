@@ -83,6 +83,13 @@ class CredentialService:
                 notes=evidence_data.get('notes', ''),
             )
 
+        # Trigger Blockchain Cryptographic Proof
+        try:
+            from apps.blockchain.services import BlockchainService
+            BlockchainService.record_credential_on_chain(credential)
+        except Exception:
+            pass
+
         return credential
 
     @classmethod

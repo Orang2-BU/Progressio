@@ -2,6 +2,7 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from apps.credentials.models import Credential
 from apps.credentials.serializers import EvidenceSerializer
+from apps.blockchain.serializers import BlockchainProofSerializer
 
 
 class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
@@ -19,6 +20,7 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
     )
     is_valid = serializers.BooleanField(read_only=True)
     evidences = EvidenceSerializer(many=True, read_only=True)
+    blockchain_proof = BlockchainProofSerializer(read_only=True)
 
     class Meta:
         model = Credential
@@ -32,6 +34,7 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
             'score',
             'issued_at',
             'evidences',
+            'blockchain_proof',
             'created_at'
         ]
 
