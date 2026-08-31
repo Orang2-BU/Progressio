@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     # Progressio Domain Apps
     'apps.common',
     'apps.accounts',
+    'apps.curriculum',
     'apps.careers',
     'apps.competencies',
     'apps.skills',

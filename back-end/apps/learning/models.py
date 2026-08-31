@@ -38,9 +38,45 @@ class Lesson(TimestampMixin):
         help_text="Order of lesson within the skill."
     )
 
+    # --- Curriculum package fields (populated by import_curriculum) ---
+    source_id = models.SlugField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Curriculum resource ID this lesson points at. Empty for hand-authored lessons."
+    )
+    provider = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Publisher of the linked resource, e.g. MDN, IETF, OWASP."
+    )
+    authority_level = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text="How authoritative the source is, e.g. industry-standard."
+    )
+    source_verified_at = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the curriculum last verified this resource URL."
+    )
+    is_managed = models.BooleanField(
+        default=False,
+        help_text="True when this record is owned by a curriculum package."
+    )
+
     class Meta:
         db_table = 'lessons'
         ordering = ['skill', 'order']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['skill', 'source_id'],
+                condition=models.Q(is_managed=True),
+                name='unique_managed_lesson_per_skill_resource',
+            )
+        ]
         verbose_name = 'Lesson'
         verbose_name_plural = 'Lessons'
 

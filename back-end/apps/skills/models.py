@@ -32,6 +32,17 @@ class Skill(TimestampMixin):
         help_text="Estimated time to learn this skill in minutes."
     )
 
+    # --- Curriculum package fields (populated by import_curriculum) ---
+    learning_outcomes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="What a learner can do once this skill is held."
+    )
+    is_managed = models.BooleanField(
+        default=False,
+        help_text="True when this record is owned by a curriculum package."
+    )
+
     class Meta:
         db_table = 'skills'
         ordering = ['competency', 'title']

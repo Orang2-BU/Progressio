@@ -54,6 +54,39 @@ class Assessment(TimestampMixin):
         ),
     )
 
+    # --- Curriculum package fields (populated by import_curriculum) ---
+    source_id = models.SlugField(
+        max_length=255,
+        blank=True,
+        default='',
+        unique=False,
+        help_text="Curriculum assessment ID. Empty for hand-authored assessments."
+    )
+    objective = models.TextField(
+        blank=True,
+        default='',
+        help_text="What this assessment is meant to establish."
+    )
+    expected_evidence = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Artifacts a learner must produce, from the curriculum."
+    )
+    mastery_criteria = models.TextField(
+        blank=True,
+        default='',
+        help_text="Curriculum-defined bar for counting this skill as mastered."
+    )
+    estimated_minutes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Expected time to complete. Null while the curriculum leaves it undefined."
+    )
+    is_managed = models.BooleanField(
+        default=False,
+        help_text="True when this record is owned by a curriculum package."
+    )
+
     class Meta:
         db_table = 'assessments'
         ordering = ['skill', 'title']

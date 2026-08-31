@@ -89,11 +89,19 @@ class CredentialService:
             submission = passed_submissions.first()
 
         now = timezone.now()
+        track = competency.career_track
         metadata_snapshot = {
             'student_name': user.get_full_name() or user.username,
             'student_email': user.email,
+            'competency_id': competency.slug,
             'competency_title': competency.title,
-            'career_track_title': competency.career_track.title if competency.career_track else '',
+            'career_track_id': track.slug if track else '',
+            'career_track_title': track.title if track else '',
+            # Pin the standard this credential was graded against, so the claim
+            # stays interpretable after the curriculum moves on.
+            'curriculum_version': track.curriculum_version if track else '',
+            'curriculum_schema_version': track.curriculum_schema_version if track else 0,
+            'observable_behaviors': competency.observable_behaviors,
             'score': score,
             'issued_at': now.isoformat(),
         }

@@ -42,12 +42,27 @@ class BlockchainService:
             }
             for item in credential.evidences.order_by('id')
         ]
+        track = credential.competency.career_track
         canonical_data = {
             'credential_id': str(credential.id),
+            # Slugs, not titles: a title may be reworded without changing what
+            # was actually assessed.
+            'competency_id': credential.competency.slug,
             'competency_title': metadata.get('competency_title', credential.competency.title),
             'career_track': metadata.get(
                 'career_track_title',
-                credential.competency.career_track.title if credential.competency.career_track else '',
+                track.title if track else '',
+            ),
+            'career_track_id': track.slug if track else '',
+            # Which version of the standard graded this claim. Without it, two
+            # credentials reading "API Development - 85" can mean different
+            # things once the curriculum changes.
+            'curriculum_version': metadata.get(
+                'curriculum_version', track.curriculum_version if track else ''
+            ),
+            'curriculum_schema_version': metadata.get(
+                'curriculum_schema_version',
+                track.curriculum_schema_version if track else 0,
             ),
             'student_name': metadata.get(
                 'student_name', credential.user.get_full_name() or credential.user.username
