@@ -30,7 +30,7 @@ class CurriculumFixtureMixin:
         root = Path(temp.name) / 'tracks'
         shutil.copytree(loader.TRACKS_ROOT / TRACK_ID, root / TRACK_ID)
         if edit:
-            edit(root / TRACK_ID / 'curriculum')
+            edit(root / TRACK_ID)
         patcher = mock.patch.object(loader, 'TRACKS_ROOT', root)
         patcher.start()
         self.addCleanup(patcher.stop)

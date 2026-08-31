@@ -18,14 +18,14 @@ class Command(BaseCommand):
     help = (
         'Prepare a demo environment: import every curriculum package, then add '
         'demo accounts. The curriculum itself is never defined here — it comes '
-        'from tracks/, which is the source of truth.'
+        'from curriculum/tracks/, which is the source of truth.'
     )
 
     @transaction.atomic
     def handle(self, *args, **options):
         tracks = available_tracks()
         if not tracks:
-            self.stdout.write(self.style.WARNING('No curriculum packages found under tracks/.'))
+            self.stdout.write(self.style.WARNING('No curriculum packages found under curriculum/tracks/.'))
 
         for track_id in tracks:
             try:

@@ -4,11 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts import validate_curriculum as validator
+from curriculum import validator
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TRACK = ROOT / "tracks" / "backend-engineering" / "curriculum"
+TRACK = ROOT / "tracks" / "backend-engineering"
 FIXTURES = ROOT / "tests" / "fixtures"
 
 

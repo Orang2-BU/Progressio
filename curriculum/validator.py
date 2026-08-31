@@ -4,8 +4,8 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-TRACK = ROOT / "tracks" / "backend-engineering" / "curriculum"
+ROOT = Path(__file__).resolve().parent
+TRACK = ROOT / "tracks" / "backend-engineering"
 ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 

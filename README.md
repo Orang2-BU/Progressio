@@ -3,11 +3,33 @@
 > **Turning Progress Into Proof.**
 > Progressio is an AI-powered platform for turning progress into clear, measurable proof.
 
-The hackathon MVP backend now supports an end-to-end vertical slice: server-graded diagnostic assessment, personalized skill graph, secure assessment scoring, evidence-backed credential issuance, cryptographic integrity anchoring, and public recruiter verification. Use `python manage.py seed_demo` from `back-end/` to load the Backend Engineering demo curriculum.
+The hackathon MVP backend now supports an end-to-end vertical slice: server-graded diagnostic assessment, personalized skill graph, secure assessment scoring, evidence-backed credential issuance, cryptographic integrity anchoring, and public recruiter verification. Run `python manage.py import_curriculum` from `back-end/` to project the curriculum package into the database, or `python manage.py seed_demo` to do that and add demo accounts.
 
 ---
 
-## 🏗️ System Architecture & Backend Overview
+## 📁 Struktur Repo
+
+```text
+Progressio/
+├── curriculum/      # Standar penilaian — SUMBER KEBENARAN, bukan turunan
+│   ├── validator.py #   validator tanpa dependency, dipakai CI dan backend
+│   ├── schemas/     #   kontrak tiap entitas (JSON Schema)
+│   ├── tests/       #   suite validasi + fixture valid & invalid
+│   └── tracks/      #   satu folder per career track
+├── back-end/        # Django 5.1 + DRF — mesin yang mengukur
+├── front-end/       # (belum diisi)
+├── Mobile/          # (belum diisi)
+└── docker-compose.yml
+```
+
+Aturan penting: **kurikulum adalah sumber kebenaran, database hanya proyeksinya.**
+Track, competency, skill, lesson, dan assessment diisi lewat `import_curriculum`,
+bukan lewat Django admin — perubahan manual akan tertimpa saat impor berikutnya.
+Lihat [curriculum/README.md](curriculum/README.md).
+
+---
+
+## 🏗️ Backend Overview
 
 Backend dibangun menggunakan **Django 5.1** + **Django REST Framework (DRF)** dengan dokumentasi **OpenAPI 3.0 (drf-spectacular)** dan database **PostgreSQL 15**.
 
@@ -16,13 +38,32 @@ Backend dibangun menggunakan **Django 5.1** + **Django REST Framework (DRF)** de
 back-end/
 ├── apps/
 │   ├── accounts/        # Custom User model (role: student, recruiter, admin), JWT Auth
+│   ├── curriculum/      # Importer paket kurikulum -> model Django
 │   ├── careers/         # CareerTrack model & API
-│   ├── competencies/    # Competency model & API (filterable by career_track)
+│   ├── competencies/    # Competency, CompetencyPrerequisite & API
 │   ├── skills/          # Skill, SkillPrerequisite (Skill Graph) & API
-│   ├── learning/        # Lesson model & API (filterable by skill)
-│   └── common/          # TimestampMixin, HealthCheck API, shared utils
+│   ├── learning/        # Lesson, StudyStep, progress, roadmap & API
+│   ├── assessments/     # Assessment, Submission, Diagnostic & grading server-side
+│   ├── credentials/     # Credential, Evidence, aturan kelayakan
+│   ├── blockchain/      # Hash SHA-256 kanonik + anchoring proof
+│   ├── verification/    # Verifikasi publik tanpa auth
+│   ├── ai/              # Adapter AI (mock | openai)
+│   └── common/          # TimestampMixin, HealthCheck API, seed_demo
 ├── config/              # Core settings, JWT, OpenAPI, and routing
 └── Dockerfile           # Python 3.12 slim backend container
+```
+
+---
+
+## 🧪 Menjalankan Test
+
+```powershell
+# Kurikulum (tanpa dependency, dari root repo)
+python -m unittest discover -s curriculum -t .
+
+# Backend
+cd back-end
+python manage.py test
 ```
 
 ---
@@ -93,6 +134,10 @@ Semua endpoint domain berada di bawah `/api/v1/`:
 | `GET` | `/api/v1/lessons` | Public | List lesson (bisa filter `?skill={id}`) |
 | `GET` | `/api/v1/lessons/{id}` | Public | Detail lesson |
 | `GET` | `/api/v1/health/` | Public | Status health check API |
+| `GET` | `/api/v1/learning-path?career_track={slug}` | Bearer JWT | Peta skill + status (mastered/available/locked) |
+| `GET` | `/api/v1/roadmap?skill={slug}` | Bearer JWT | Rute terurut ke target pilihan user + sisa jam |
+| `GET` | `/api/v1/skills/{slug}/study-plan` | Public | Study step: bagian mana yang dibaca dan apa yang dikerjakan |
+| `POST` | `/api/v1/study-steps/{id}/checkpoint` | Bearer JWT | Cek jawaban checkpoint (dinilai server-side) |
 
 ---
 

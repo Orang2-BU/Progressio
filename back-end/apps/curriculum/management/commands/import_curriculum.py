@@ -6,7 +6,7 @@ from apps.curriculum.loader import CurriculumError, available_tracks
 
 class Command(BaseCommand):
     help = (
-        'Import validated curriculum packages from tracks/ into the database. '
+        'Import validated curriculum packages from curriculum/tracks/ into the database. '
         'The package is the source of truth; the import is idempotent.'
     )
 
@@ -34,7 +34,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         tracks = options['tracks'] or available_tracks()
         if not tracks:
-            raise CommandError('No curriculum packages found under tracks/.')
+            raise CommandError('No curriculum packages found under curriculum/tracks/.')
 
         for track_id in tracks:
             self.stdout.write(f'Importing curriculum: {track_id}')

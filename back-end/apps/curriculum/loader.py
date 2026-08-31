@@ -2,10 +2,10 @@
 Reads a curriculum package from the repository and validates it before any
 database write is attempted.
 
-The curriculum lives outside the Django project, at the repository root, and is
-validated by ``scripts/validate_curriculum.py`` — the same validator GitHub
-Actions runs. It is loaded by path rather than by import so the backend does not
-require the repository root on ``PYTHONPATH``.
+The curriculum lives outside the Django project, in the repository's
+``curriculum/`` directory, and is validated by ``curriculum/validator.py`` — the
+same validator GitHub Actions runs. It is loaded by path rather than by import so
+the backend does not require the repository root on ``PYTHONPATH``.
 """
 import contextlib
 import importlib.util
@@ -15,11 +15,12 @@ from pathlib import Path
 
 from django.conf import settings
 
-# back-end/ -> repository root
+# back-end/ -> repository root -> curriculum/
 REPO_ROOT = Path(settings.BASE_DIR).parent
-TRACKS_ROOT = REPO_ROOT / 'tracks'
-SCHEMAS_ROOT = REPO_ROOT / 'schemas'
-VALIDATOR_PATH = REPO_ROOT / 'scripts' / 'validate_curriculum.py'
+CURRICULUM_ROOT = REPO_ROOT / 'curriculum'
+TRACKS_ROOT = CURRICULUM_ROOT / 'tracks'
+SCHEMAS_ROOT = CURRICULUM_ROOT / 'schemas'
+VALIDATOR_PATH = CURRICULUM_ROOT / 'validator.py'
 
 
 class CurriculumError(Exception):
@@ -47,13 +48,13 @@ def available_tracks():
     return sorted(
         path.name
         for path in TRACKS_ROOT.iterdir()
-        if (path / 'curriculum' / 'curriculum.yaml').exists()
+        if (path / 'curriculum.yaml').exists()
     )
 
 
 def track_dir(track_id):
     """Resolve a track ID to its curriculum directory."""
-    path = TRACKS_ROOT / track_id / 'curriculum'
+    path = TRACKS_ROOT / track_id
     if not (path / 'curriculum.yaml').exists():
         known = ', '.join(available_tracks()) or 'none'
         raise CurriculumError(f"No curriculum package for track '{track_id}'. Available: {known}.")

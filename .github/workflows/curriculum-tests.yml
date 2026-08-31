@@ -3,16 +3,12 @@ name: Curriculum tests
 on:
   push:
     paths:
-      - "tracks/backend-engineering/**"
-      - "schemas/**"
-      - "scripts/validate_curriculum.py"
-      - "tests/**"
+      - "curriculum/**"
+      - ".github/workflows/curriculum-tests.yml"
   pull_request:
     paths:
-      - "tracks/backend-engineering/**"
-      - "schemas/**"
-      - "scripts/validate_curriculum.py"
-      - "tests/**"
+      - "curriculum/**"
+      - ".github/workflows/curriculum-tests.yml"
 
 jobs:
   test:
@@ -22,4 +18,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest discover -s tests -v
+      - name: Validate every curriculum package and fixture
+        run: python -m unittest discover -s curriculum -t . -v

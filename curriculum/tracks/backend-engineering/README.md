@@ -4,14 +4,7 @@ This track is the machine-readable conversion of the approved research in `resea
 
 ## Structure
 
-- `curriculum.yaml` is the track manifest; `version.yaml` separates package and schema versions.
-- `competencies/`, `skills/`, `resources/`, and `assessments/` hold one JSON-compatible YAML document per entity. These are the reviewed research.
-- `grading/` holds how each assessment is scored: answer keys for rule-graded assessments, weighted rubrics for the rest. Kept separate from the research because it is operational data.
-- `diagnostics/` holds the placement questions used to seed a learner's skill graph.
-- `study-steps/` holds the authored bridge between a source and its assessment: which section to read and what to do there.
-- `schemas/` at repository root defines the entity contracts.
-
-The files use JSON syntax because JSON is valid YAML 1.2. This permits the included standard-library validator to run without a YAML dependency while remaining consumable by normal YAML loaders.
+See [`curriculum/README.md`](../../README.md) for the directory layout and the split between reviewed research and operational data. `research/` holds the approved source material this package was converted from.
 
 ## What this package does and does not contain
 
@@ -24,10 +17,10 @@ Two consequences follow:
 
 ## Validate
 
-Run:
+Run from the repository root:
 
 ```text
-python -m unittest discover -s tests -v
+python -m unittest discover -s curriculum -t .
 ```
 
 The command runs the production package plus valid and invalid fixtures. GitHub Actions runs this same command for relevant pushes and pull requests, and a second workflow imports the package into the backend.

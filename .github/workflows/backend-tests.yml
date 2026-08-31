@@ -4,14 +4,12 @@ on:
   push:
     paths:
       - "back-end/**"
-      - "tracks/**"
-      - "schemas/**"
+      - "curriculum/**"
       - ".github/workflows/backend-tests.yml"
   pull_request:
     paths:
       - "back-end/**"
-      - "tracks/**"
-      - "schemas/**"
+      - "curriculum/**"
       - ".github/workflows/backend-tests.yml"
 
 jobs:
