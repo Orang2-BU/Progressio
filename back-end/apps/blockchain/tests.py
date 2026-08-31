@@ -52,6 +52,11 @@ class BlockchainServiceAndAPITests(TestCase):
         self.assertTrue(is_intact)
         self.assertEqual(current_hash, proof.credential_hash)
 
+        self.credential.score = 99.0
+        self.credential.save(update_fields=['score'])
+        is_intact, _, _ = BlockchainService.verify_credential_integrity(self.credential)
+        self.assertFalse(is_intact)
+
     def test_blockchain_proof_endpoint(self):
         """Public endpoint should return proof details."""
         BlockchainService.record_credential_on_chain(self.credential, network='polygon-amoy')

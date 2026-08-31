@@ -68,13 +68,10 @@ class AssessmentSubmitView(APIView):
         serializer.is_valid(raise_exception=True)
 
         content = serializer.validated_data.get('content', {})
-        auto_score = serializer.validated_data.get('score', None)
-
         submission = AssessmentEvaluationService.submit_and_evaluate(
             user=request.user,
             assessment=assessment,
             content=content,
-            auto_score=auto_score,
         )
 
         response_serializer = SubmissionResponseSerializer(submission)

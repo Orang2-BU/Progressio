@@ -7,6 +7,9 @@ from rest_framework import status
 from apps.careers.models import CareerTrack
 from apps.competencies.models import Competency
 from apps.learning.models import CompetencyProgress
+from apps.skills.models import Skill
+from apps.assessments.models import Assessment, Submission
+from django.utils import timezone
 from .models import Credential, Evidence
 
 User = get_user_model()
@@ -22,6 +25,25 @@ class CredentialAPITests(TestCase):
         self.track = CareerTrack.objects.create(title='Backend Track', slug='backend-track')
         self.comp = Competency.objects.create(
             career_track=self.track, title='Database Engineering', slug='database-engineering', order=1
+        )
+        self.skill = Skill.objects.create(
+            competency=self.comp, title='SQL Fundamentals', slug='credential-sql-fundamentals'
+        )
+        self.assessment = Assessment.objects.create(
+            skill=self.skill,
+            title='SQL Project',
+            assessment_type=Assessment.AssessmentType.PROJECT,
+            passing_score=70,
+            max_score=100,
+        )
+
+    def create_passed_submission(self, score=88.0):
+        return Submission.objects.create(
+            user=self.user,
+            assessment=self.assessment,
+            status=Submission.Status.COMPLETED,
+            score=score,
+            submitted_at=timezone.now(),
         )
 
     def test_issue_credential_ineligible_returns_400(self):
@@ -44,13 +66,15 @@ class CredentialAPITests(TestCase):
         CompetencyProgress.objects.create(
             user=self.user, competency=self.comp, score=88.0, confidence=0.88
         )
+        submission = self.create_passed_submission()
 
         url = reverse('credential-issue')
         payload = {
             'competency_id': self.comp.id,
             'github_url': 'https://github.com/student/progressio-db-project',
             'demo_url': 'https://progressio-db.demo.app',
-            'notes': 'Implemented SQL optimization, indexing, and partitioning.'
+            'notes': 'Implemented SQL optimization, indexing, and partitioning.',
+            'submission_id': submission.id,
         }
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -62,12 +86,25 @@ class CredentialAPITests(TestCase):
             response.data['evidences'][0]['github_url'],
             'https://github.com/student/progressio-db-project'
         )
+        self.assertEqual(response.data['evidences'][0]['submission'], submission.id)
+
+    def test_issue_requires_a_passed_assessment(self):
+        self.client.force_authenticate(user=self.user)
+        CompetencyProgress.objects.create(
+            user=self.user, competency=self.comp, score=90.0, confidence=0.9
+        )
+        response = self.client.post(
+            reverse('credential-issue'), {'competency_id': self.comp.id}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('passing assessment', str(response.data))
 
     def test_list_and_detail_credentials(self):
         self.client.force_authenticate(user=self.user)
         CompetencyProgress.objects.create(
             user=self.user, competency=self.comp, score=90.0, confidence=0.9
         )
+        self.create_passed_submission(score=90.0)
         issue_res = self.client.post(reverse('credential-issue'), {'competency_id': self.comp.id}, format='json')
         cred_id = issue_res.data['id']
 

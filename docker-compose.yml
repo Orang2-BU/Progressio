@@ -57,8 +57,17 @@ services:
       - DB_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AI_PROVIDER=${AI_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini}
+      - BLOCKCHAIN_PROVIDER=${BLOCKCHAIN_PROVIDER:-mock}
+      - BLOCKCHAIN_NETWORK=${BLOCKCHAIN_NETWORK:-polygon-amoy}
+      - BLOCKCHAIN_SERVICE_URL=${BLOCKCHAIN_SERVICE_URL:-}
+      - BLOCKCHAIN_SERVICE_TOKEN=${BLOCKCHAIN_SERVICE_TOKEN:-}
+      - PUBLIC_WEB_URL=${PUBLIC_WEB_URL:-http://localhost:3000}
     env_file:
-      - ./back-end/.env
+      - path: ./back-end/.env
+        required: false
     depends_on:
       db:
         condition: service_healthy
@@ -86,8 +95,16 @@ services:
       - DB_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AI_PROVIDER=${AI_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini}
+      - BLOCKCHAIN_PROVIDER=${BLOCKCHAIN_PROVIDER:-mock}
+      - BLOCKCHAIN_NETWORK=${BLOCKCHAIN_NETWORK:-polygon-amoy}
+      - BLOCKCHAIN_SERVICE_URL=${BLOCKCHAIN_SERVICE_URL:-}
+      - BLOCKCHAIN_SERVICE_TOKEN=${BLOCKCHAIN_SERVICE_TOKEN:-}
     env_file:
-      - ./back-end/.env
+      - path: ./back-end/.env
+        required: false
     depends_on:
       db:
         condition: service_healthy

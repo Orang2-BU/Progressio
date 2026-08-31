@@ -15,6 +15,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-progressio-development-sec
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '*').split(',') if host.strip()]
+PUBLIC_WEB_URL = os.getenv('PUBLIC_WEB_URL', '').rstrip('/')
 
 
 # Application definition

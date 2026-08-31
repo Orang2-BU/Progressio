@@ -9,6 +9,7 @@ from apps.careers.models import CareerTrack
 from apps.competencies.models import Competency
 from apps.credentials.models import Credential, Evidence
 from apps.credentials.services import CredentialService
+from apps.blockchain.services import BlockchainService
 
 User = get_user_model()
 
@@ -42,6 +43,7 @@ class PublicVerificationAPITests(TestCase):
             demo_url='https://auth.johndoe.dev',
             notes='Full OAuth2 & JWT Implementation.'
         )
+        BlockchainService.record_credential_on_chain(self.credential)
 
     def test_verify_credential_publicly_no_auth(self):
         """Recruiters should be able to verify valid credentials with 0 authentication."""
@@ -56,6 +58,8 @@ class PublicVerificationAPITests(TestCase):
         self.assertEqual(response.data['competency_title'], 'Authentication & Security')
         self.assertEqual(response.data['career_track_title'], 'Backend Engineering')
         self.assertEqual(response.data['score'], 95.0)
+        self.assertTrue(response.data['integrity_verified'])
+        self.assertEqual(response.data['integrity_reason'], 'verified')
         self.assertEqual(len(response.data['evidences']), 1)
         self.assertEqual(
             response.data['evidences'][0]['github_url'],
@@ -72,6 +76,15 @@ class PublicVerificationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['is_valid'])
         self.assertEqual(response.data['status'], 'revoked')
+        self.assertEqual(response.data['integrity_reason'], 'revoked')
+
+    def test_tampered_score_fails_integrity_check(self):
+        Credential.objects.filter(id=self.credential.id).update(score=99.0)
+        response = self.client.get(reverse('verify-credential', args=[self.credential.id]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['is_valid'])
+        self.assertFalse(response.data['integrity_verified'])
+        self.assertEqual(response.data['integrity_reason'], 'hash_mismatch_or_unconfirmed')
 
     def test_verify_nonexistent_credential(self):
         """Random nonexistent UUID should return 404."""

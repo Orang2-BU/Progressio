@@ -398,6 +398,20 @@ GET    /api/v1/assessments/{id}
 POST   /api/v1/assessments/{id}/submit
 ```
 
+Assessment scores are always calculated server-side. Clients submit evidence or answers only and cannot provide a trusted `score` value.
+
+---
+
+### Diagnostic Assessment
+
+```
+GET    /api/v1/diagnostics/{career_track_id}
+POST   /api/v1/diagnostics/{career_track_id}/submit
+GET    /api/v1/diagnostics/latest?career_track={career_track_id}
+```
+
+Diagnostic answer keys remain private on the server. A completed diagnostic updates skill mastery and confidence, but does not award XP.
+
 ---
 
 ### Credentials
@@ -417,6 +431,8 @@ GET    /api/v1/verify/{credential_id}
 ```
 
 Public endpoint. Recruiters should not need authentication.
+
+The verification response is valid only when the credential is issued, not revoked, its current canonical hash matches the registered hash, and the configured proof provider confirms the transaction.
 
 ---
 

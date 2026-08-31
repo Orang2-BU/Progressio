@@ -1,7 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.core.management import call_command
 from rest_framework.test import APIClient
 from rest_framework import status
+from apps.assessments.models import Assessment, DiagnosticQuestion
+from apps.careers.models import CareerTrack
 
 
 class HealthCheckTests(TestCase):
@@ -44,3 +47,13 @@ class HealthCheckTests(TestCase):
         response = self.client.get('/')
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertEqual(response.url, '/api/docs/')
+
+    def test_seed_demo_command_is_idempotent(self):
+        call_command('seed_demo', verbosity=0)
+        call_command('seed_demo', verbosity=0)
+        self.assertEqual(CareerTrack.objects.filter(slug='backend-engineering').count(), 1)
+        self.assertEqual(DiagnosticQuestion.objects.count(), 8)
+        self.assertEqual(
+            Assessment.objects.filter(title='Build a Secure JWT + RBAC API').count(),
+            1,
+        )

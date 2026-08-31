@@ -1,5 +1,15 @@
 from rest_framework import serializers
+from django.conf import settings
+from django.urls import reverse
 from .models import Credential, Evidence
+
+
+def build_verification_url(serializer, credential):
+    if settings.PUBLIC_WEB_URL:
+        return f'{settings.PUBLIC_WEB_URL}/verify/{credential.id}'
+    path = reverse('verify-credential', args=[credential.id])
+    request = serializer.context.get('request')
+    return request.build_absolute_uri(path) if request else path
 
 
 class EvidenceSerializer(serializers.ModelSerializer):
@@ -40,6 +50,7 @@ class CredentialDetailSerializer(serializers.ModelSerializer):
     )
     evidences = EvidenceSerializer(many=True, read_only=True)
     is_valid = serializers.BooleanField(read_only=True)
+    verification_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Credential
@@ -47,9 +58,12 @@ class CredentialDetailSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_username',
             'competency', 'competency_title',
             'career_track_title', 'status', 'score',
-            'is_valid', 'issued_at', 'metadata',
+            'is_valid', 'verification_url', 'issued_at', 'metadata',
             'evidences', 'created_at', 'updated_at'
         ]
+
+    def get_verification_url(self, obj) -> str:
+        return build_verification_url(self, obj)
 
 
 class CredentialIssueRequestSerializer(serializers.Serializer):

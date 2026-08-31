@@ -63,8 +63,13 @@ class Credential(TimestampMixin):
 
     @property
     def is_valid(self):
-        """Returns True if the credential is currently in issued status and not revoked."""
-        return self.status == self.Status.ISSUED
+        """Return True only when status and cryptographic proof are both valid."""
+        if self.status != self.Status.ISSUED:
+            return False
+        from apps.blockchain.services import BlockchainService
+
+        is_intact, _, _ = BlockchainService.verify_credential_integrity(self)
+        return is_intact
 
 
 class Evidence(TimestampMixin):

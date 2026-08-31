@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from apps.common.models import TimestampMixin
 from apps.skills.models import Skill
+from apps.careers.models import CareerTrack
 
 
 class Assessment(TimestampMixin):
@@ -14,6 +15,10 @@ class Assessment(TimestampMixin):
         QUIZ = 'quiz', 'Quiz'
         CHALLENGE = 'challenge', 'Challenge'
         PROJECT = 'project', 'Project'
+
+    class EvaluationMode(models.TextChoices):
+        RULES = 'rules', 'Rule-based'
+        AI = 'ai', 'AI-assisted'
 
     skill = models.ForeignKey(
         Skill,
@@ -34,6 +39,19 @@ class Assessment(TimestampMixin):
     max_score = models.PositiveIntegerField(
         default=100,
         help_text="Maximum possible score."
+    )
+    evaluation_mode = models.CharField(
+        max_length=20,
+        choices=EvaluationMode.choices,
+        default=EvaluationMode.RULES,
+    )
+    grading_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "Private server-side grading configuration. For quizzes, use "
+            "{'answer_key': {'question_id': 'answer'}}. Never expose this field publicly."
+        ),
     )
 
     class Meta:
@@ -109,3 +127,61 @@ class Submission(TimestampMixin):
         if self.score is not None and self.assessment is not None:
             return self.score >= self.assessment.passing_score
         return False
+
+
+class DiagnosticQuestion(TimestampMixin):
+    """A server-graded diagnostic question mapped to one measurable skill."""
+
+    career_track = models.ForeignKey(
+        CareerTrack,
+        on_delete=models.CASCADE,
+        related_name='diagnostic_questions',
+    )
+    skill = models.ForeignKey(
+        Skill,
+        on_delete=models.CASCADE,
+        related_name='diagnostic_questions',
+    )
+    prompt = models.TextField()
+    options = models.JSONField(
+        default=list,
+        help_text="Public answer choices, preferably a list of {value, label} objects.",
+    )
+    correct_answer = models.CharField(max_length=255)
+    explanation = models.TextField(blank=True, default='')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'diagnostic_questions'
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"{self.career_track.title}: {self.skill.title} #{self.order}"
+
+
+class DiagnosticAttempt(TimestampMixin):
+    """Immutable result snapshot for a completed diagnostic assessment."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='diagnostic_attempts',
+    )
+    career_track = models.ForeignKey(
+        CareerTrack,
+        on_delete=models.CASCADE,
+        related_name='diagnostic_attempts',
+    )
+    answers = models.JSONField(default=dict)
+    skill_scores = models.JSONField(default=list)
+    weak_skill_ids = models.JSONField(default=list)
+    overall_score = models.FloatField(default=0.0)
+    completed_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'diagnostic_attempts'
+        ordering = ['-completed_at', '-created_at']
+
+    def __str__(self):
+        return f"Diagnostic {self.user} - {self.career_track} ({self.overall_score})"

@@ -65,6 +65,18 @@ class AuthRegistrationTests(TestCase):
         response = self.client.post(self.register_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_public_registration_cannot_create_admin(self):
+        data = {
+            'username': 'attacker',
+            'email': 'attacker@example.com',
+            'password': 'SecurePass123!',
+            'password_confirm': 'SecurePass123!',
+            'role': 'admin',
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(username='attacker').exists())
+
 
 class AuthJWTTests(TestCase):
     """Tests for JWT login, refresh, and me endpoints."""

@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -10,6 +11,11 @@ from apps.skills.models import Skill
 from apps.learning.models import SkillProgress
 from apps.assessments.models import Assessment, Submission
 from .tasks import evaluate_submission_ai_task
+from .services import AIService
+from .adapters.openai_adapter import OpenAIAdapter
+from unittest.mock import MagicMock, patch
+import json
+import os
 
 User = get_user_model()
 
@@ -67,12 +73,17 @@ class AIServicesTests(TestCase):
     def test_ai_evaluation_celery_task(self):
         assessment = Assessment.objects.create(
             skill=self.skill1, title='Docker Quiz',
-            assessment_type=Assessment.AssessmentType.QUIZ,
+            assessment_type=Assessment.AssessmentType.CHALLENGE,
+            evaluation_mode=Assessment.EvaluationMode.AI,
             passing_score=70, max_score=100
         )
         submission = Submission.objects.create(
             user=self.user, assessment=assessment,
-            content={'answers': {'q1': 'Docker image build', 'q2': 'Docker compose up'}},
+            content={
+                'code': 'authentication jwt permission\n' + ('x = 1\n' * 60),
+                'test_output': 'pytest test_authentication: passed',
+                'readme': 'README usage documentation and error handling',
+            },
             status=Submission.Status.SUBMITTED
         )
 
@@ -82,4 +93,45 @@ class AIServicesTests(TestCase):
         submission.refresh_from_db()
         self.assertEqual(submission.status, Submission.Status.COMPLETED)
         self.assertIsNotNone(submission.score)
-        self.assertIn('AI Evaluation', submission.feedback)
+        self.assertIn('Mock evaluation', submission.feedback)
+        self.assertTrue(submission.is_passed)
+        progress = SkillProgress.objects.get(user=self.user, skill=self.skill1)
+        self.assertEqual(progress.xp, 100)
+
+    def test_openai_provider_requires_api_key(self):
+        with patch.dict(os.environ, {'AI_PROVIDER': 'openai'}, clear=False):
+            os.environ.pop('OPENAI_API_KEY', None)
+            with self.assertRaises(ImproperlyConfigured):
+                AIService.get_adapter()
+
+    def test_openai_adapter_parses_structured_response(self):
+        expected = {'score': 82, 'feedback': 'Solid implementation'}
+        fake_response = MagicMock()
+        fake_response.__enter__.return_value.read.return_value = json.dumps({
+            'output': [{
+                'content': [{'type': 'output_text', 'text': json.dumps(expected)}]
+            }]
+        }).encode('utf-8')
+
+        adapter = OpenAIAdapter(api_key='test-key', model='test-model')
+        with patch('apps.ai.adapters.openai_adapter.urlopen', return_value=fake_response) as mocked:
+            result = adapter._request_json(
+                'test_result',
+                'Return the result.',
+                {'input': 'data'},
+                {
+                    'type': 'object',
+                    'additionalProperties': False,
+                    'properties': {
+                        'score': {'type': 'number'},
+                        'feedback': {'type': 'string'},
+                    },
+                    'required': ['score', 'feedback'],
+                },
+            )
+
+        self.assertEqual(result, expected)
+        request = mocked.call_args.args[0]
+        sent_body = json.loads(request.data.decode('utf-8'))
+        self.assertEqual(sent_body['model'], 'test-model')
+        self.assertEqual(sent_body['text']['format']['type'], 'json_schema')

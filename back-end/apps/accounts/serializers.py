@@ -31,6 +31,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+    def validate_role(self, value):
+        if value == User.Role.ADMIN:
+            raise serializers.ValidationError(
+                'Admin accounts cannot be created through public registration.'
+            )
+        return value
+
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')

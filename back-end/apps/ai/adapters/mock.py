@@ -74,24 +74,46 @@ class MockAIAdapter(BaseAIAdapter):
         }
 
     def evaluate_submission(self, assessment, submission_content):
-        # Intelligent evaluation rule-engine
-        answers = submission_content.get('answers', {})
-        answers_count = len(answers) if isinstance(answers, dict) else 0
+        # Deterministic offline rubric. This never trusts a client-supplied score.
+        evidence_parts = []
+        for key in ('code', 'repository_summary', 'readme', 'test_output'):
+            value = submission_content.get(key, '')
+            if isinstance(value, str):
+                evidence_parts.append(value)
+        files = submission_content.get('files', {})
+        if isinstance(files, dict):
+            evidence_parts.extend(str(value) for value in files.values())
 
-        score = min(float(assessment.passing_score + (answers_count * 5)), float(assessment.max_score))
+        evidence = '\n'.join(evidence_parts)
+        lowered = evidence.casefold()
+        score = 0.0
+        if len(evidence.strip()) >= 80:
+            score += 25.0
+        if len(evidence.strip()) >= 300:
+            score += 15.0
+        if any(token in lowered for token in ('test_', 'pytest', 'unittest', 'assert ')):
+            score += 20.0
+        if any(token in lowered for token in ('jwt', 'authentication', 'authorization', 'permission')):
+            score += 20.0
+        if any(token in lowered for token in ('try:', 'except ', 'error', 'status_code')):
+            score += 10.0
+        if any(token in lowered for token in ('readme', 'documentation', 'usage')):
+            score += 10.0
+        score = min(score, float(assessment.max_score))
         is_passed = score >= assessment.passing_score
 
         feedback = (
-            f"AI Evaluation: Good attempt! The submission scored {score}/{assessment.max_score}. "
-            "Code structure and conceptual understanding meet the expected criteria."
+            f"Mock evaluation: the submitted evidence scored {score}/{assessment.max_score}. "
+            "The offline rubric found sufficient implementation and validation evidence."
             if is_passed else
-            f"AI Evaluation: Score {score}/{assessment.max_score}. Review key prerequisites before retrying."
+            f"Mock evaluation: score {score}/{assessment.max_score}. Add concrete code, automated tests, "
+            "security handling, and documentation before retrying."
         )
 
         return {
             'score': score,
             'is_passed': is_passed,
             'feedback': feedback,
-            'strengths': ["Accurate syntax usage", "Logical problem breakdown"],
-            'areas_for_improvement': ["Add automated unit tests", "Optimize error handling"]
+            'strengths': ["Submitted evidence was evaluated deterministically"],
+            'areas_for_improvement': ["Add automated tests", "Document security and error handling"]
         }

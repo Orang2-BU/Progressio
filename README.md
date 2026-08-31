@@ -3,6 +3,8 @@
 > **Turning Progress Into Proof.**
 > Progressio is an AI-powered platform for turning progress into clear, measurable proof.
 
+The hackathon MVP backend now supports an end-to-end vertical slice: server-graded diagnostic assessment, personalized skill graph, secure assessment scoring, evidence-backed credential issuance, cryptographic integrity anchoring, and public recruiter verification. Use `python manage.py seed_demo` from `back-end/` to load the Backend Engineering demo curriculum.
+
 ---
 
 ## 🏗️ System Architecture & Backend Overview

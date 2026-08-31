@@ -99,5 +99,8 @@ class CredentialIssueView(APIView):
             evidence_data=evidence_data
         )
 
-        response_serializer = CredentialDetailSerializer(credential)
+        response_serializer = CredentialDetailSerializer(
+            credential,
+            context={'request': request},
+        )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

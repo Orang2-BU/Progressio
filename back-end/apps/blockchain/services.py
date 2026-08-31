@@ -1,8 +1,13 @@
 import hashlib
 import json
+import logging
 import os
 from .models import BlockchainCredential
 from .adapters.mock import MockBlockchainAdapter
+from .adapters.http import HTTPBlockchainAdapter
+
+
+logger = logging.getLogger(__name__)
 
 
 class BlockchainService:
@@ -13,8 +18,12 @@ class BlockchainService:
 
     @classmethod
     def get_adapter(cls):
-        # Extendable for Web3 live adapter via BLOCKCHAIN_PROVIDER env
-        return MockBlockchainAdapter()
+        provider = os.getenv('BLOCKCHAIN_PROVIDER', 'mock').lower()
+        if provider == 'mock':
+            return MockBlockchainAdapter()
+        if provider == 'http':
+            return HTTPBlockchainAdapter()
+        raise ValueError(f"Unsupported BLOCKCHAIN_PROVIDER '{provider}'.")
 
     @classmethod
     def compute_credential_hash(cls, credential):
@@ -22,13 +31,30 @@ class BlockchainService:
         Creates a canonical deterministic JSON snapshot of the credential
         and produces its SHA-256 cryptographic digest.
         """
+        metadata = credential.metadata if isinstance(credential.metadata, dict) else {}
+        evidence = [
+            {
+                'submission_id': item.submission_id,
+                'github_url': item.github_url,
+                'file_url': item.file_url,
+                'demo_url': item.demo_url,
+                'notes': item.notes,
+            }
+            for item in credential.evidences.order_by('id')
+        ]
         canonical_data = {
             'credential_id': str(credential.id),
-            'competency_title': credential.competency.title,
-            'career_track': credential.competency.career_track.title if credential.competency.career_track else '',
-            'student_username': credential.user.username,
+            'competency_title': metadata.get('competency_title', credential.competency.title),
+            'career_track': metadata.get(
+                'career_track_title',
+                credential.competency.career_track.title if credential.competency.career_track else '',
+            ),
+            'student_name': metadata.get(
+                'student_name', credential.user.get_full_name() or credential.user.username
+            ),
             'score': round(float(credential.score), 2),
             'issued_at': credential.issued_at.isoformat() if credential.issued_at else '',
+            'evidence': evidence,
         }
         canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
         return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
@@ -48,6 +74,8 @@ class BlockchainService:
             credential_hash=credential_hash,
             network=network
         )
+        if not proof.get('transaction_hash') or proof.get('verified') is not True:
+            raise ValueError('Blockchain provider did not return a confirmed transaction proof.')
 
         bc_credential, _ = BlockchainCredential.objects.update_or_create(
             credential=credential,
@@ -73,5 +101,21 @@ class BlockchainService:
             return False, None, None
 
         current_hash = cls.compute_credential_hash(credential)
-        is_intact = (current_hash == proof.credential_hash) and proof.verified and not proof.revoked
+        adapter = cls.get_adapter()
+        try:
+            provider_verified = adapter.verify_proof(
+                credential_id=str(credential.id),
+                credential_hash=proof.credential_hash,
+                transaction_hash=proof.transaction_hash,
+                network=proof.network,
+            )
+        except Exception:
+            logger.exception('Credential proof verification failed for %s.', credential.id)
+            provider_verified = False
+        is_intact = (
+            current_hash == proof.credential_hash
+            and proof.verified
+            and not proof.revoked
+            and provider_verified
+        )
         return is_intact, current_hash, proof

@@ -13,7 +13,7 @@ class PublicCredentialVerificationView(generics.RetrieveAPIView):
     Recruiters and external systems can verify without authentication.
     """
     queryset = Credential.objects.select_related(
-        'competency', 'competency__career_track', 'user'
+        'competency', 'competency__career_track', 'user', 'blockchain_proof'
     ).prefetch_related('evidences').all()
     serializer_class = PublicCredentialVerificationSerializer
     permission_classes = [AllowAny]

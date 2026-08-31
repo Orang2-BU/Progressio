@@ -1,4 +1,5 @@
 import os
+from django.core.exceptions import ImproperlyConfigured
 from .adapters.mock import MockAIAdapter
 from .adapters.openai_adapter import OpenAIAdapter
 from apps.careers.models import CareerTrack
@@ -15,9 +16,16 @@ class AIService:
     @classmethod
     def get_adapter(cls):
         provider = os.getenv('AI_PROVIDER', 'mock').lower()
-        if provider == 'openai' and os.getenv('OPENAI_API_KEY'):
+        if provider == 'openai':
+            if not os.getenv('OPENAI_API_KEY'):
+                raise ImproperlyConfigured(
+                    'OPENAI_API_KEY must be set when AI_PROVIDER=openai. '
+                    'Use AI_PROVIDER=mock for deterministic offline development.'
+                )
             return OpenAIAdapter()
-        return MockAIAdapter()
+        if provider == 'mock':
+            return MockAIAdapter()
+        raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'.")
 
     @classmethod
     def perform_skill_gap_analysis(cls, user, career_track):
