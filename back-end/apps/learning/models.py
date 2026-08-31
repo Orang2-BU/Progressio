@@ -62,6 +62,33 @@ class Lesson(TimestampMixin):
         blank=True,
         help_text="Date the curriculum last verified this resource URL."
     )
+    license = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text="SPDX-style identifier of the source's licence, e.g. CC-BY-SA-4.0."
+    )
+    license_url = models.URLField(max_length=500, blank=True, default='')
+    license_verified = models.BooleanField(
+        default=False,
+        help_text="True only once a human has confirmed the licence against the source."
+    )
+    redistributable = models.BooleanField(
+        default=False,
+        help_text="Whether the licence permits copying this material into Progressio."
+    )
+    attribution_required = models.BooleanField(default=True)
+    commercial_use_allowed = models.BooleanField(
+        default=False,
+        help_text="False for non-commercial licences such as CC BY-NC-SA."
+    )
+    link_status = models.CharField(
+        max_length=32,
+        blank=True,
+        default='',
+        help_text="Result of the last reachability check: ok, moved, or broken."
+    )
+    link_checked_at = models.DateTimeField(null=True, blank=True)
     is_managed = models.BooleanField(
         default=False,
         help_text="True when this record is owned by a curriculum package."
@@ -185,3 +212,57 @@ class CompetencyProgress(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.competency.title}: Score {self.score}"
+
+
+class StudyStep(TimestampMixin):
+    """
+    An authored bridge between a source and its assessment.
+
+    The material itself stays at the publisher. A study step points into one
+    section of it and states what the learner should do there, which is the part
+    Progressio can write without copying anything.
+    """
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='study_steps'
+    )
+    anchor = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Fragment identifying the section to read, e.g. #idempotent_methods."
+    )
+    prompt = models.TextField(
+        help_text="What the learner should do with that section."
+    )
+    checkpoint_question = models.TextField(
+        blank=True,
+        default='',
+        help_text="Short question to confirm the section was understood."
+    )
+    checkpoint_answer = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Expected answer. Graded server-side and never serialized."
+    )
+    estimated_minutes = models.PositiveIntegerField(default=0)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'study_steps'
+        ordering = ['lesson', 'order']
+        unique_together = ('lesson', 'order')
+        verbose_name = 'Study Step'
+        verbose_name_plural = 'Study Steps'
+
+    def __str__(self):
+        return f"{self.lesson.title} step {self.order}"
+
+    @property
+    def study_url(self):
+        """The source URL, deep-linked to the section this step covers."""
+        if self.anchor and not self.anchor.startswith('#'):
+            return f"{self.lesson.content_url}#{self.anchor}"
+        return f"{self.lesson.content_url}{self.anchor}"

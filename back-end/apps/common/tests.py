@@ -5,6 +5,10 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from apps.assessments.models import Assessment, DiagnosticQuestion
 from apps.careers.models import CareerTrack
+from apps.skills.models import Skill
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class HealthCheckTests(TestCase):
@@ -49,11 +53,35 @@ class HealthCheckTests(TestCase):
         self.assertEqual(response.url, '/api/docs/')
 
     def test_seed_demo_command_is_idempotent(self):
+        """seed_demo now projects the curriculum package; running it twice is a no-op."""
         call_command('seed_demo', verbosity=0)
-        call_command('seed_demo', verbosity=0)
-        self.assertEqual(CareerTrack.objects.filter(slug='backend-engineering').count(), 1)
-        self.assertEqual(DiagnosticQuestion.objects.count(), 8)
-        self.assertEqual(
-            Assessment.objects.filter(title='Build a Secure JWT + RBAC API').count(),
-            1,
+        counts = (
+            CareerTrack.objects.count(),
+            Skill.objects.count(),
+            Assessment.objects.count(),
+            DiagnosticQuestion.objects.count(),
         )
+
+        call_command('seed_demo', verbosity=0)
+
+        self.assertEqual(
+            (
+                CareerTrack.objects.count(),
+                Skill.objects.count(),
+                Assessment.objects.count(),
+                DiagnosticQuestion.objects.count(),
+            ),
+            counts,
+        )
+        self.assertEqual(CareerTrack.objects.filter(slug='backend-engineering').count(), 1)
+
+    def test_seed_demo_sources_the_curriculum_rather_than_defining_one(self):
+        call_command('seed_demo', verbosity=0)
+
+        track = CareerTrack.objects.get(slug='backend-engineering')
+        self.assertEqual(track.curriculum_version, '0.1.0')
+        self.assertTrue(track.is_managed)
+        # Every skill came from the package, none hand-written by the command.
+        self.assertTrue(Skill.objects.exists())
+        self.assertFalse(Skill.objects.filter(is_managed=False).exists())
+        self.assertTrue(User.objects.filter(username='student').exists())

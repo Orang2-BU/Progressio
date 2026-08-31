@@ -4,14 +4,21 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 
-from .models import Lesson, SkillProgress
+from apps.careers.models import CareerTrack
+from apps.competencies.models import Competency
+from apps.skills.models import Skill
+
+from .models import Lesson, SkillProgress, StudyStep
 from .serializers import (
     LessonSerializer,
     LessonCompletionResponseSerializer,
     UserProgressOverviewSerializer,
     LearningPathNodeSerializer,
+    RoadmapSerializer,
+    StudyStepSerializer,
+    StudyCheckpointRequestSerializer,
 )
 from .services import ProgressService, LearningPathService
 
@@ -126,6 +133,128 @@ class LearningPathView(APIView):
         }
     )
     def get(self, request, *args, **kwargs):
-        path_nodes = LearningPathService.get_learning_path(request.user)
+        track_slug = request.query_params.get('career_track')
+        career_track = get_object_or_404(CareerTrack, slug=track_slug) if track_slug else None
+        path_nodes = LearningPathService.get_learning_path(request.user, career_track=career_track)
         serializer = LearningPathNodeSerializer(path_nodes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Learning"])
+class RoadmapView(APIView):
+    """
+    Route from where the learner is now to a target they chose.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Personalized Roadmap",
+        description=(
+            "Walks the prerequisite graph backwards from a chosen target and returns only "
+            "the skills still to be learned, ordered so every prerequisite comes first. "
+            "Skills already held at 70 mastery are reported as satisfied and drop out of "
+            "the route. Provide exactly one of skill, competency, or career_track."
+        ),
+        parameters=[
+            OpenApiParameter('skill', str, description='Target skill slug.'),
+            OpenApiParameter('competency', str, description='Target competency slug.'),
+            OpenApiParameter('career_track', str, description='Target career track slug.'),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=RoadmapSerializer,
+                description="Ordered roadmap with remaining effort."
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        params = {
+            'target_skill': (Skill, request.query_params.get('skill')),
+            'target_competency': (Competency, request.query_params.get('competency')),
+            'career_track': (CareerTrack, request.query_params.get('career_track')),
+        }
+        given = {key: value for key, (_, value) in params.items() if value}
+        if len(given) != 1:
+            return Response(
+                {'detail': 'Provide exactly one of skill, competency, or career_track.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        key = next(iter(given))
+        model, slug = params[key]
+        target = get_object_or_404(model, slug=slug)
+
+        try:
+            roadmap = LearningPathService.get_roadmap(request.user, **{key: target})
+        except ValueError as error:
+            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = RoadmapSerializer(roadmap)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Learning"])
+class SkillStudyPlanView(generics.ListAPIView):
+    """
+    The authored study plan for one skill: which section of which source to
+    read, and what to do there. The material stays at the publisher.
+    """
+    serializer_class = StudyStepSerializer
+    permission_classes = [AllowAny]
+    # Schema generation introspects the view without URL kwargs present.
+    queryset = StudyStep.objects.none()
+
+    @extend_schema(
+        summary="Skill Study Plan",
+        description=(
+            "Ordered study steps for a skill. Each step deep-links into a licensed "
+            "source and states what the learner should do with that section. "
+            "Checkpoint answers are never included."
+        ),
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        skill = get_object_or_404(Skill, slug=self.kwargs['slug'])
+        return StudyStep.objects.filter(
+            lesson__skill=skill
+        ).select_related('lesson').order_by('lesson__order', 'order')
+
+
+@extend_schema(tags=["Learning"])
+class StudyCheckpointView(APIView):
+    """
+    Check one study step's checkpoint answer.
+
+    Graded server-side against an answer the client never receives, for the same
+    reason quiz answer keys stay server-side.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Submit Study Checkpoint",
+        request=StudyCheckpointRequestSerializer,
+        responses={
+            200: OpenApiResponse(description="Whether the checkpoint answer was correct."),
+        },
+    )
+    def post(self, request, pk, *args, **kwargs):
+        step = get_object_or_404(StudyStep, pk=pk)
+        serializer = StudyCheckpointRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        given = serializer.validated_data['answer'].strip().casefold()
+        expected = step.checkpoint_answer.strip().casefold()
+        correct = given == expected
+
+        return Response(
+            {
+                'correct': correct,
+                'feedback': (
+                    'Correct.' if correct
+                    else 'Not quite. Re-read the linked section and try again.'
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )

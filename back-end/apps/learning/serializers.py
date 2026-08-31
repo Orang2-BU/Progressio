@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Lesson, LessonCompletion, SkillProgress, CompetencyProgress
+from .models import Lesson, LessonCompletion, SkillProgress, CompetencyProgress, StudyStep
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -13,6 +13,8 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'skill', 'skill_title', 'title',
             'content_type', 'content_url', 'duration', 'order',
+            'provider', 'authority_level', 'license', 'license_url',
+            'attribution_required', 'link_status',
             'created_at', 'updated_at'
         ]
 
@@ -93,3 +95,63 @@ class LearningPathNodeSerializer(serializers.Serializer):
     mastery = serializers.FloatField()
     xp = serializers.IntegerField()
     missing_prerequisites = MissingPrerequisiteSerializer(many=True)
+
+
+class RoadmapTargetSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=['skill', 'competency', 'career_track'])
+    slug = serializers.CharField()
+    title = serializers.CharField()
+
+
+class RoadmapStepSerializer(serializers.Serializer):
+    order = serializers.IntegerField()
+    skill_id = serializers.IntegerField()
+    skill_slug = serializers.CharField()
+    skill_title = serializers.CharField()
+    competency_title = serializers.CharField()
+    difficulty = serializers.CharField()
+    estimated_minutes = serializers.IntegerField()
+    mastery = serializers.FloatField()
+    prerequisites = serializers.ListField(child=serializers.CharField())
+    is_target = serializers.BooleanField()
+
+
+class RoadmapSatisfiedSerializer(serializers.Serializer):
+    skill_slug = serializers.CharField()
+    skill_title = serializers.CharField()
+    mastery = serializers.FloatField()
+
+
+class RoadmapSerializer(serializers.Serializer):
+    target = RoadmapTargetSerializer()
+    total_steps = serializers.IntegerField()
+    remaining_minutes = serializers.IntegerField()
+    remaining_hours = serializers.FloatField()
+    already_satisfied = RoadmapSatisfiedSerializer(many=True)
+    steps = RoadmapStepSerializer(many=True)
+
+
+class StudyStepSerializer(serializers.ModelSerializer):
+    """
+    Public view of a study step. ``checkpoint_answer`` is deliberately absent:
+    checkpoints are graded server-side, like every other answer in Progressio.
+    """
+    study_url = serializers.CharField(read_only=True)
+    provider = serializers.CharField(source='lesson.provider', read_only=True)
+    license = serializers.CharField(source='lesson.license', read_only=True)
+
+    class Meta:
+        model = StudyStep
+        fields = [
+            'id', 'lesson', 'order', 'prompt', 'checkpoint_question',
+            'estimated_minutes', 'study_url', 'provider', 'license',
+        ]
+
+
+class StudyCheckpointRequestSerializer(serializers.Serializer):
+    answer = serializers.CharField(max_length=255)
+
+
+class StudyCheckpointResponseSerializer(serializers.Serializer):
+    correct = serializers.BooleanField()
+    feedback = serializers.CharField()

@@ -46,17 +46,40 @@ class CurriculumFixtureMixin:
     def drop_skill(curriculum, skill_id):
         """Remove a skill and everything that references it, keeping the package valid."""
         (curriculum / 'skills' / f'{skill_id}.yaml').unlink()
+
+        dropped_assessments = set()
         for path in (curriculum / 'assessments').glob('*.yaml'):
-            if json.loads(path.read_text(encoding='utf-8'))['skill'] == skill_id:
+            data = json.loads(path.read_text(encoding='utf-8'))
+            if data['skill'] == skill_id:
+                dropped_assessments.add(data['id'])
                 path.unlink()
+        for path in (curriculum / 'grading').glob('*.yaml'):
+            if json.loads(path.read_text(encoding='utf-8'))['assessment'] in dropped_assessments:
+                path.unlink()
+
+        for folder in ('diagnostics', 'study-steps'):
+            for path in (curriculum / folder).glob('*.yaml'):
+                if json.loads(path.read_text(encoding='utf-8'))['skill'] == skill_id:
+                    path.unlink()
+
+        dropped_resources = set()
         for path in (curriculum / 'resources').glob('*.yaml'):
             data = json.loads(path.read_text(encoding='utf-8'))
             remaining = [item for item in data['supported_skills'] if item != skill_id]
             if not remaining:
+                dropped_resources.add(data['id'])
                 path.unlink()
             elif remaining != data['supported_skills']:
                 data['supported_skills'] = remaining
                 path.write_text(json.dumps(data), encoding='utf-8')
+
+        for path in (curriculum / 'skills').glob('*.yaml'):
+            data = json.loads(path.read_text(encoding='utf-8'))
+            remaining = [item for item in data['resources'] if item not in dropped_resources]
+            if remaining != data['resources']:
+                data['resources'] = remaining
+                path.write_text(json.dumps(data), encoding='utf-8')
+
         for path in (curriculum / 'competencies').glob('*.yaml'):
             data = json.loads(path.read_text(encoding='utf-8'))
             if skill_id in data['skills']:
@@ -144,10 +167,69 @@ class CurriculumImportTests(CurriculumFixtureMixin, TestCase):
         )
         self.assertEqual(sum(report.created.values()), 0)
 
-    def test_assessments_are_deferred_until_the_curriculum_defines_grading(self):
+    def test_assessments_are_imported_with_server_side_grading(self):
+        from apps.assessments.models import Assessment
+
+        import_track(TRACK_ID)
+
+        quiz = Assessment.objects.get(source_id='client-server-model-assessment')
+        self.assertEqual(quiz.evaluation_mode, Assessment.EvaluationMode.RULES)
+        self.assertEqual(quiz.passing_score, 70)
+        self.assertIn('answer_key', quiz.grading_config)
+        # The public question list carries no answers.
+        self.assertTrue(quiz.questions)
+        for question in quiz.questions:
+            self.assertNotIn('correct_answer', question)
+            self.assertNotIn('answer', question)
+
+        project = Assessment.objects.get(source_id='api-contract-design-assessment')
+        self.assertEqual(project.evaluation_mode, Assessment.EvaluationMode.AI)
+        self.assertEqual(sum(item['weight'] for item in project.grading_config['rubric']), 100)
+        self.assertEqual(project.questions, [])
+
+    def test_diagnostic_questions_are_imported_for_the_track(self):
+        from apps.assessments.models import DiagnosticQuestion
+
+        import_track(TRACK_ID)
+
+        questions = DiagnosticQuestion.objects.filter(career_track__slug=TRACK_ID)
+        self.assertEqual(questions.count(), 15)
+        for question in questions:
+            values = {option['value'] for option in question.options}
+            self.assertIn(question.correct_answer, values)
+
+    def test_study_steps_attach_to_the_lesson_they_point_at(self):
+        from apps.learning.models import StudyStep
+
+        import_track(TRACK_ID)
+
+        step = StudyStep.objects.get(prompt__startswith='Read the definition of idempotent')
+        self.assertEqual(step.lesson.source_id, 'rfc-9110')
+        self.assertEqual(step.lesson.skill.slug, 'http-messages-and-semantics')
+        self.assertTrue(step.study_url.startswith('https://www.rfc-editor.org/'))
+        self.assertIn('#', step.study_url)
+
+    def test_resource_licences_are_imported_onto_lessons(self):
+        import_track(TRACK_ID)
+
+        mdn = Lesson.objects.filter(source_id='mdn-http-messages').first()
+        self.assertTrue(mdn.redistributable)
+        self.assertTrue(mdn.commercial_use_allowed)
+
+        # Pro Git is CC BY-NC-SA: linkable, not copyable into a commercial product.
+        pro_git = Lesson.objects.filter(source_id='pro-git-basics').first()
+        self.assertFalse(pro_git.redistributable)
+        self.assertFalse(pro_git.commercial_use_allowed)
+
+    def test_unverified_licences_are_reported(self):
         report = import_track(TRACK_ID)
 
-        self.assertTrue(any('assessments not imported' in note for note in report.skipped))
+        self.assertTrue(any('not yet verified' in note for note in report.warnings))
+
+    def test_draft_grading_is_reported(self):
+        report = import_track(TRACK_ID)
+
+        self.assertTrue(any('review_status: draft' in note for note in report.warnings))
 
     def test_dry_run_writes_nothing(self):
         report = import_track(TRACK_ID, dry_run=True)

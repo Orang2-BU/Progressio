@@ -45,6 +45,14 @@ class Assessment(TimestampMixin):
         choices=EvaluationMode.choices,
         default=EvaluationMode.RULES,
     )
+    questions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "Public question list for rule-graded assessments: "
+            "[{'id', 'prompt', 'options': [{'value', 'label'}]}]. Never contains answers."
+        ),
+    )
     grading_config = models.JSONField(
         default=dict,
         blank=True,
@@ -184,6 +192,12 @@ class DiagnosticQuestion(TimestampMixin):
     explanation = models.TextField(blank=True, default='')
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    source_id = models.SlugField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Curriculum diagnostic question ID. Empty for hand-authored questions."
+    )
 
     class Meta:
         db_table = 'diagnostic_questions'

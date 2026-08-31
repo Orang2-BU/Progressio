@@ -1,0 +1,1 @@
+{"assessment": "fixture-assessment", "review_status": "draft", "mode": "rules", "passing_score": 70, "max_score": 100, "estimated_minutes": 30, "questions": [{"id": "fq-1", "prompt": "A fixture question?", "options": [{"value": "a", "label": "A"}, {"value": "b", "label": "B"}]}], "answer_key": {"fq-1": "a"}}

@@ -28,8 +28,9 @@ class AssessmentDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'skill', 'skill_title', 'title',
             'assessment_type', 'instructions',
-            'passing_score', 'max_score',
-            'evaluation_mode',
+            'objective', 'expected_evidence', 'mastery_criteria',
+            'passing_score', 'max_score', 'estimated_minutes',
+            'evaluation_mode', 'questions',
             'created_at', 'updated_at'
         ]
 

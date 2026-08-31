@@ -137,18 +137,29 @@ class LearningPathService:
     Computes personalized learning paths based on skill prerequisites graph.
     """
 
+    # A prerequisite counts as satisfied at this mastery, matching the bar the
+    # diagnostic uses to decide whether a skill is weak.
+    PREREQUISITE_THRESHOLD = 70.0
+    MASTERED_THRESHOLD = 85.0
+
     @classmethod
-    def get_learning_path(cls, user):
+    def get_learning_path(cls, user, career_track=None):
         """
         Traverses skill graph and classifies each skill's status:
         - 'mastered': mastery >= 85
         - 'in_progress': mastery > 0
         - 'available': all prerequisites mastered / met
         - 'locked': one or more prerequisites unmet
+
+        Pass ``career_track`` to scope the graph to one track. Without it every
+        track in the database is returned, which is only meaningful while a
+        single track exists.
         """
         all_skills = Skill.objects.select_related('competency').prefetch_related(
             'prerequisites__required_skill'
         ).all()
+        if career_track is not None:
+            all_skills = all_skills.filter(competency__career_track=career_track)
 
         user_progress_map = {
             p.skill_id: p
@@ -197,3 +208,173 @@ class LearningPathService:
             })
 
         return path_nodes
+
+    @classmethod
+    def get_roadmap(cls, user, target_skill=None, target_competency=None, career_track=None):
+        """
+        Computes the ordered route from where the learner is now to a target
+        they chose.
+
+        ``get_learning_path`` answers "what does the whole map look like".
+        This answers "what is left for me to reach that", which is a different
+        question: it walks the prerequisite graph backwards from the target,
+        stops descending wherever a skill is already held, and returns only the
+        remaining work in an order that respects prerequisites.
+
+        Exactly one target must be given.
+        """
+        targets = [target_skill, target_competency, career_track]
+        if sum(item is not None for item in targets) != 1:
+            raise ValueError('Provide exactly one of target_skill, target_competency, or career_track.')
+
+        if target_skill is not None:
+            goal_skills = [target_skill]
+            target_info = {
+                'type': 'skill',
+                'slug': target_skill.slug,
+                'title': target_skill.title,
+            }
+        elif target_competency is not None:
+            goal_skills = list(target_competency.skills.all())
+            target_info = {
+                'type': 'competency',
+                'slug': target_competency.slug,
+                'title': target_competency.title,
+            }
+        else:
+            goal_skills = list(Skill.objects.filter(competency__career_track=career_track))
+            target_info = {
+                'type': 'career_track',
+                'slug': career_track.slug,
+                'title': career_track.title,
+            }
+
+        if not goal_skills:
+            raise ValueError(f"Target '{target_info['slug']}' contains no skills.")
+
+        graph = cls._prerequisite_graph(goal_skills[0].competency.career_track_id)
+        mastery = {
+            progress.skill_id: progress.mastery
+            for progress in SkillProgress.objects.filter(user=user)
+        }
+
+        required, satisfied = cls._walk_back(goal_skills, graph, mastery)
+        ordered = cls._topological_order(required, graph)
+
+        steps = []
+        for position, skill in enumerate(ordered, start=1):
+            steps.append({
+                'order': position,
+                'skill_id': skill.id,
+                'skill_slug': skill.slug,
+                'skill_title': skill.title,
+                'competency_title': skill.competency.title,
+                'difficulty': skill.difficulty,
+                'estimated_minutes': skill.estimated_learning_minutes,
+                'mastery': mastery.get(skill.id, 0.0),
+                'prerequisites': sorted(item.slug for item in graph[skill.id]['requires']),
+                'is_target': skill.id in {item.id for item in goal_skills},
+            })
+
+        remaining_minutes = sum(step['estimated_minutes'] for step in steps)
+        return {
+            'target': target_info,
+            'total_steps': len(steps),
+            'remaining_minutes': remaining_minutes,
+            'remaining_hours': round(remaining_minutes / 60.0, 1),
+            'already_satisfied': [
+                {
+                    'skill_slug': skill.slug,
+                    'skill_title': skill.title,
+                    'mastery': mastery.get(skill.id, 0.0),
+                }
+                for skill in sorted(satisfied.values(), key=lambda item: item.slug)
+            ],
+            'steps': steps,
+        }
+
+    @classmethod
+    def _prerequisite_graph(cls, career_track_id):
+        """Adjacency map of one track's skill graph, keyed by skill ID."""
+        skills = Skill.objects.filter(
+            competency__career_track_id=career_track_id
+        ).select_related('competency').prefetch_related('prerequisites__required_skill')
+
+        graph = {}
+        for skill in skills:
+            graph[skill.id] = {
+                'skill': skill,
+                'requires': [item.required_skill for item in skill.prerequisites.all()],
+            }
+        return graph
+
+    @classmethod
+    def _walk_back(cls, goal_skills, graph, mastery):
+        """
+        Collect what still has to be learned to reach the goals.
+
+        A skill already held at the prerequisite bar is treated as satisfied and
+        its own prerequisites are not revisited — holding a skill implies its
+        foundations are good enough for this route.
+        """
+        required = {}
+        satisfied = {}
+        active = set()
+
+        def visit(skill):
+            if skill.id in required or skill.id in satisfied:
+                return
+            if skill.id in active:
+                raise ValueError(
+                    f"Prerequisite cycle detected at skill '{skill.slug}'. "
+                    'The curriculum validator forbids cycles, so this indicates '
+                    'hand-edited data in the database.'
+                )
+            if mastery.get(skill.id, 0.0) >= cls.PREREQUISITE_THRESHOLD:
+                satisfied[skill.id] = skill
+                return
+
+            active.add(skill.id)
+            for parent in graph.get(skill.id, {}).get('requires', []):
+                visit(parent)
+            active.discard(skill.id)
+            required[skill.id] = skill
+
+        for goal in goal_skills:
+            visit(goal)
+        return required, satisfied
+
+    @classmethod
+    def _topological_order(cls, required, graph):
+        """
+        Order the remaining skills so every prerequisite comes before the skill
+        that needs it. Ties break on competency order then title, so the same
+        input always produces the same route.
+        """
+        placed = {}
+        ordered = []
+
+        def depth(skill_id):
+            if skill_id in placed:
+                return placed[skill_id]
+            parents = [
+                parent.id
+                for parent in graph.get(skill_id, {}).get('requires', [])
+                if parent.id in required
+            ]
+            placed[skill_id] = 1 + max((depth(parent) for parent in parents), default=0)
+            return placed[skill_id]
+
+        for skill_id in required:
+            depth(skill_id)
+
+        for skill_id in sorted(
+            required,
+            key=lambda item: (
+                placed[item],
+                required[item].competency.order,
+                required[item].title,
+            ),
+        ):
+            ordered.append(required[skill_id])
+        return ordered

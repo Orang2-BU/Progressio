@@ -100,4 +100,7 @@ def load_package(track_id):
         'skills': _read_dir(directory / 'skills'),
         'resources': _read_dir(directory / 'resources'),
         'assessments': _read_dir(directory / 'assessments'),
+        'grading': _read_dir(directory / 'grading'),
+        'diagnostics': _read_dir(directory / 'diagnostics'),
+        'study_steps': _read_dir(directory / 'study-steps'),
     }

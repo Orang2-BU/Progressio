@@ -73,6 +73,39 @@ class MockAIAdapter(BaseAIAdapter):
             'estimated_weekly_study_hours': 4.5
         }
 
+    STOPWORDS = frozenset({
+        'and', 'are', 'each', 'every', 'from', 'has', 'have', 'its', 'not', 'one',
+        'per', 'rather', 'than', 'that', 'the', 'their', 'them', 'they', 'this',
+        'with', 'without', 'into', 'over', 'before', 'after', 'more', 'most',
+        'other', 'once', 'only', 'used', 'using', 'been', 'stay', 'stays',
+    })
+
+    def _score_against_rubric(self, assessment, evidence):
+        """
+        Score by how much of the curriculum's own rubric the evidence touches.
+
+        Deterministic and offline: each criterion contributes its declared weight
+        in proportion to how many of its significant words appear in the
+        submission. This is a development stand-in, not a judgement of quality.
+        """
+        rubric = (assessment.grading_config or {}).get('rubric') or []
+        if not rubric:
+            return None
+
+        lowered = evidence.casefold()
+        total = 0.0
+        for item in rubric:
+            words = {
+                word.strip('.,;:()')
+                for word in item['criterion'].casefold().split()
+                if len(word) > 3 and word not in self.STOPWORDS
+            }
+            if not words:
+                continue
+            matched = sum(1 for word in words if word in lowered)
+            total += item['weight'] * (matched / len(words))
+        return round(min(total, float(assessment.max_score)), 1)
+
     def evaluate_submission(self, assessment, submission_content):
         # Deterministic offline rubric. This never trusts a client-supplied score.
         evidence_parts = []
@@ -86,6 +119,27 @@ class MockAIAdapter(BaseAIAdapter):
 
         evidence = '\n'.join(evidence_parts)
         lowered = evidence.casefold()
+
+        # When the curriculum publishes a rubric, grade against that rubric
+        # rather than against keywords left over from an older demo.
+        rubric_score = self._score_against_rubric(assessment, evidence)
+        if rubric_score is not None:
+            is_passed = rubric_score >= assessment.passing_score
+            return {
+                'score': rubric_score,
+                'is_passed': is_passed,
+                'feedback': (
+                    f'Mock evaluation against the curriculum rubric: '
+                    f'{rubric_score}/{assessment.max_score}. '
+                    + ('Every rubric criterion was evidenced.' if is_passed else
+                       'Some rubric criteria are not evidenced in the submission.')
+                ),
+                'strengths': ['Evidence was matched against the published rubric'],
+                'areas_for_improvement': [
+                    item['criterion'] for item in assessment.grading_config['rubric']
+                ],
+            }
+
         score = 0.0
         if len(evidence.strip()) >= 80:
             score += 25.0

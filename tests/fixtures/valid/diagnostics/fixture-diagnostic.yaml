@@ -1,0 +1,1 @@
+{"id": "fixture-diagnostic", "skill": "fixture-skill", "review_status": "draft", "questions": [{"id": "fd-1", "prompt": "A fixture diagnostic question?", "options": [{"value": "a", "label": "A"}, {"value": "b", "label": "B"}], "correct_answer": "a", "explanation": "Because it is the fixture answer."}]}

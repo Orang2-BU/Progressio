@@ -67,6 +67,35 @@ class CurriculumTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "broken reference"):
                 validator.validate(target)
 
+    def test_grading_answer_must_be_one_of_the_offered_options(self):
+        self.assert_invalid("is not an option", [(FIXTURES / "invalid" / "answer-not-an-option-grading.yaml", "grading/client-server-model-assessment.yaml")])
+
+    def test_grading_answer_key_must_cover_every_question(self):
+        self.assert_invalid("does not cover every question", [(FIXTURES / "invalid" / "uncovered-question-grading.yaml", "grading/client-server-model-assessment.yaml")])
+
+    def test_grading_scores_must_agree_with_the_assessment(self):
+        self.assert_invalid("passing_score disagrees", [(FIXTURES / "invalid" / "score-mismatch-grading.yaml", "grading/client-server-model-assessment.yaml")])
+
+    def test_rubric_weights_must_total_one_hundred(self):
+        self.assert_invalid("weights must total 100", [(FIXTURES / "invalid" / "rubric-weights-grading.yaml", "grading/api-contract-design-assessment.yaml")])
+
+    def test_every_assessment_needs_grading_data(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "curriculum"
+            shutil.copytree(TRACK, target)
+            (target / "grading" / "client-server-model-assessment.yaml").unlink()
+            with self.assertRaisesRegex(ValueError, "assessments without grading"):
+                validator.validate(target)
+
+    def test_diagnostic_must_target_a_known_skill(self):
+        self.assert_invalid("unknown skill", [(FIXTURES / "invalid" / "unknown-skill-diagnostic.yaml", "diagnostics/program-control-flow-diagnostic.yaml")])
+
+    def test_diagnostic_answer_must_be_one_of_the_offered_options(self):
+        self.assert_invalid("is not an option", [(FIXTURES / "invalid" / "wrong-answer-diagnostic.yaml", "diagnostics/program-control-flow-diagnostic.yaml")])
+
+    def test_noncommercial_source_cannot_be_marked_redistributable(self):
+        self.assert_invalid("non-commercial licence", [(FIXTURES / "invalid" / "noncommercial-redistributable-resource.yaml", "resources/pro-git-basics.yaml")])
+
     def test_missing_version_file_fails(self):
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / "curriculum"

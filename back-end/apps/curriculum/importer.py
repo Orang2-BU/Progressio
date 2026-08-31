@@ -6,20 +6,20 @@ it. Importing is idempotent: running it twice produces the same rows. Records
 created here are flagged ``is_managed`` so hand-authored content is never
 touched.
 
-Assessments and diagnostics are deliberately not imported yet. The curriculum
-still carries ``passing_score: null`` and no answer keys, and the importer must
-not invent either — see the track README, which requires curriculum review
-before those values are set.
+Grading data lives in the package's ``grading/`` directory rather than in the
+reviewed research files, because answer keys and rubrics are operational data.
+Anything still marked ``review_status: draft`` is imported but reported, so an
+unreviewed answer key is never mistaken for an approved one.
 """
 from collections import defaultdict
 from datetime import date
 
 from django.db import transaction
 
-from apps.assessments.models import Submission
+from apps.assessments.models import Assessment, DiagnosticQuestion, Submission
 from apps.careers.models import CareerTrack
 from apps.competencies.models import Competency, CompetencyPrerequisite
-from apps.learning.models import Lesson, LessonCompletion
+from apps.learning.models import Lesson, LessonCompletion, StudyStep
 from apps.skills.models import Skill, SkillPrerequisite
 
 from . import mapping
@@ -91,8 +91,14 @@ class CurriculumImporter:
         skills = self._import_skills(competencies, package['skills'])
         self._import_skill_prerequisites(package['skills'], skills)
         self._import_resources(package['resources'], skills)
+        self._import_assessments(package['assessments'], package['grading'], skills)
+        self._import_diagnostics(track, package['diagnostics'], skills)
+        self._import_study_steps(package['study_steps'], skills)
 
-        self._note_deferred_assessments(package['assessments'])
+        self._warn_about_draft_grading(
+            package['grading'], package['diagnostics'], package['study_steps']
+        )
+        self._warn_about_unverified_licences(package['resources'])
         self._warn_about_unmanaged(track)
 
         if self.prune:
@@ -221,22 +227,145 @@ class CurriculumImporter:
                         'provider': record['provider'],
                         'authority_level': record['authority_level'],
                         'source_verified_at': date.fromisoformat(record['verified_at']),
-                        # The curriculum does not yet declare per-resource
-                        # duration, and inventing one would misreport effort.
-                        'duration': 0,
+                        # Zero until the curriculum declares one; inventing a
+                        # duration would misreport effort.
+                        'duration': record.get('estimated_minutes') or 0,
+                        'license': record['license'],
+                        'license_url': record['license_url'],
+                        'license_verified': record['license_verified'],
+                        'redistributable': record['redistributable'],
+                        'attribution_required': record['attribution_required'],
+                        'commercial_use_allowed': record['commercial_use_allowed'],
                     },
                 )
                 self.report.record('lesson', created)
 
+    def _import_assessments(self, records, grading_records, skills):
+        """
+        Assessments carry what is assessed; the grading files carry how it is
+        scored. Answer keys land in grading_config, which is never serialized,
+        while the question list is public and holds no answers.
+        """
+        grading = {item['assessment']: item for item in grading_records}
+        for record in records:
+            rules = grading[record['id']]
+            assessment_type, evaluation_mode = mapping.assessment_type(record['type'])
+            if rules['mode'] == 'rules':
+                config = {'answer_key': rules['answer_key']}
+                questions = rules.get('questions', [])
+            else:
+                config = {'rubric': rules['rubric']}
+                questions = []
+
+            _, created = Assessment.objects.update_or_create(
+                source_id=record['id'],
+                is_managed=True,
+                defaults={
+                    'skill': skills[record['skill']],
+                    'title': record['title'],
+                    'assessment_type': assessment_type,
+                    'evaluation_mode': evaluation_mode,
+                    'instructions': record['instructions_summary'],
+                    'objective': record['objective'],
+                    'expected_evidence': record['expected_evidence'],
+                    'mastery_criteria': record['mastery_criteria'],
+                    'passing_score': rules['passing_score'],
+                    'max_score': rules['max_score'],
+                    'estimated_minutes': rules['estimated_minutes'],
+                    'questions': questions,
+                    'grading_config': config,
+                },
+            )
+            self.report.record('assessment', created)
+
+    def _import_diagnostics(self, track, records, skills):
+        """
+        Diagnostic questions are keyed by their curriculum question ID so a
+        reworded prompt updates in place instead of creating a duplicate.
+        """
+        order = 0
+        wanted = []
+        for record in records:
+            skill = skills[record['skill']]
+            for question in record['questions']:
+                order += 1
+                wanted.append(question['id'])
+                _, created = DiagnosticQuestion.objects.update_or_create(
+                    career_track=track,
+                    source_id=question['id'],
+                    defaults={
+                        'skill': skill,
+                        'prompt': question['prompt'],
+                        'options': question['options'],
+                        'correct_answer': question['correct_answer'],
+                        'explanation': question['explanation'],
+                        'order': order,
+                        'is_active': True,
+                    },
+                )
+                self.report.record('diagnostic_question', created)
+
+        stale = DiagnosticQuestion.objects.filter(career_track=track).exclude(
+            source_id__in=wanted
+        ).exclude(source_id='')
+        removed = stale.count()
+        if removed:
+            stale.delete()
+            self.report.pruned['diagnostic_question'] += removed
+
+    def _import_study_steps(self, records, skills):
+        """
+        Attach authored study steps to the lesson that points at the resource
+        each step covers. The checkpoint answer is stored but never serialized.
+        """
+        wanted = []
+        for plan in records:
+            skill = skills[plan['skill']]
+            for order, step in enumerate(plan['steps']):
+                lesson = Lesson.objects.filter(
+                    skill=skill, source_id=step['resource'], is_managed=True
+                ).first()
+                if lesson is None:
+                    raise CurriculumError(
+                        f"Study step '{step['id']}' points at resource "
+                        f"'{step['resource']}', which has no lesson for skill "
+                        f"'{plan['skill']}'."
+                    )
+                wanted.append(step['id'])
+                _, created = StudyStep.objects.update_or_create(
+                    lesson=lesson,
+                    order=order,
+                    defaults={
+                        'anchor': step['anchor'],
+                        'prompt': step['prompt'],
+                        'checkpoint_question': step['checkpoint_question'],
+                        'checkpoint_answer': step['checkpoint_answer'],
+                        'estimated_minutes': step['estimated_minutes'],
+                    },
+                )
+                self.report.record('study_step', created)
+
     # --- deferred and safety checks ----------------------------------------
 
-    def _note_deferred_assessments(self, records):
-        undefined = [item['id'] for item in records if item.get('passing_score') is None]
-        if records:
-            self.report.skipped.append(
-                f'{len(records)} assessments not imported: the curriculum defines no '
-                f'passing_score for {len(undefined)} of them and carries no answer keys. '
-                f'Set these through curriculum review before importing.'
+    def _warn_about_draft_grading(self, grading_records, diagnostic_records, study_records):
+        draft = [
+            item for item in grading_records + diagnostic_records + study_records
+            if item.get('review_status') != 'reviewed'
+        ]
+        if draft:
+            self.report.warnings.append(
+                f'{len(draft)} grading, diagnostic and study files are still marked '
+                'review_status: draft. Their scores and answer keys have not been '
+                'through curriculum review and must not be treated as approved.'
+            )
+
+    def _warn_about_unverified_licences(self, resources):
+        unverified = [item['id'] for item in resources if not item['license_verified']]
+        if unverified:
+            self.report.warnings.append(
+                f'{len(unverified)} resource licences are declared but not yet verified '
+                'against the source. Linking is unaffected; copying any of this material '
+                'requires verification first.'
             )
 
     def _warn_about_unmanaged(self, track):

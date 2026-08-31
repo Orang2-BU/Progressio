@@ -28,15 +28,35 @@ class AIService:
         raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'.")
 
     @classmethod
-    def perform_skill_gap_analysis(cls, user, career_track):
+    def perform_skill_gap_analysis(cls, user, career_track, target_skill=None, target_competency=None):
         """
-        Gathers user skill progress and career track required skills,
-        then queries AI adapter for gap analysis.
+        Gathers user skill progress and the skills a target requires, then
+        queries the AI adapter for gap analysis.
+
+        Without a narrower target the whole track is compared, which answers
+        "how close am I to this career". Passing a target skill or competency
+        narrows the comparison to that goal and everything it depends on, which
+        answers "how close am I to this specific thing I picked".
         """
-        # All skills under this career track
         skills_qs = Skill.objects.filter(
             competency__career_track=career_track
         ).select_related('competency')
+
+        if target_skill is not None or target_competency is not None:
+            from apps.learning.services import LearningPathService
+
+            roadmap = LearningPathService.get_roadmap(
+                user,
+                target_skill=target_skill,
+                target_competency=target_competency,
+            )
+            in_scope = {step['skill_id'] for step in roadmap['steps']}
+            in_scope |= set(
+                Skill.objects.filter(
+                    slug__in=[item['skill_slug'] for item in roadmap['already_satisfied']]
+                ).values_list('id', flat=True)
+            )
+            skills_qs = skills_qs.filter(id__in=in_scope)
 
         required_skills = [
             {
@@ -71,10 +91,11 @@ class AIService:
             'email': user.email,
         }
 
+        target = target_skill or target_competency or career_track
         track_data = {
             'id': career_track.id,
-            'title': career_track.title,
-            'description': career_track.description,
+            'title': target.title,
+            'description': getattr(target, 'description', ''),
         }
 
         adapter = cls.get_adapter()
