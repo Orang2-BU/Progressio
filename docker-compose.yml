@@ -1,0 +1,122 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: progressio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: progressio_db
+      POSTGRES_USER: progressio
+      POSTGRES_PASSWORD: progressio_dev_2026
+    ports:
+      - "5434:5432"
+    volumes:
+      - progressio_db_data:/var/lib/postgresql/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U progressio -d progressio_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: progressio_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - progressio_redis_data:/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: progressio_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back-end:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,backend
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
+      - DB_NAME=progressio_db
+      - DB_USER=progressio
+      - DB_PASSWORD=progressio_dev_2026
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AI_PROVIDER=${AI_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini}
+      - BLOCKCHAIN_PROVIDER=${BLOCKCHAIN_PROVIDER:-mock}
+      - BLOCKCHAIN_NETWORK=${BLOCKCHAIN_NETWORK:-polygon-amoy}
+      - BLOCKCHAIN_SERVICE_URL=${BLOCKCHAIN_SERVICE_URL:-}
+      - BLOCKCHAIN_SERVICE_TOKEN=${BLOCKCHAIN_SERVICE_TOKEN:-}
+      - PUBLIC_WEB_URL=${PUBLIC_WEB_URL:-http://localhost:3000}
+    env_file:
+      - path: ./back-end/.env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - progressio_network
+
+  celery_worker:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: progressio_celery_worker
+    restart: unless-stopped
+    command: celery -A config worker -l info
+    volumes:
+      - ./back-end:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
+      - DB_NAME=progressio_db
+      - DB_USER=progressio
+      - DB_PASSWORD=progressio_dev_2026
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - AI_PROVIDER=${AI_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini}
+      - BLOCKCHAIN_PROVIDER=${BLOCKCHAIN_PROVIDER:-mock}
+      - BLOCKCHAIN_NETWORK=${BLOCKCHAIN_NETWORK:-polygon-amoy}
+      - BLOCKCHAIN_SERVICE_URL=${BLOCKCHAIN_SERVICE_URL:-}
+      - BLOCKCHAIN_SERVICE_TOKEN=${BLOCKCHAIN_SERVICE_TOKEN:-}
+    env_file:
+      - path: ./back-end/.env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - progressio_network
+
+volumes:
+  progressio_db_data:
+  progressio_redis_data:
+
+networks:
+  progressio_network:
+    driver: bridge
