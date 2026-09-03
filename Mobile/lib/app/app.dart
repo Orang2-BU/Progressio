@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progressio_mobile/core/theme/app_theme.dart';
-import 'package:progressio_mobile/presentation/pages/splash/splash_page.dart';
+import 'package:progressio_mobile/presentation/pages/auth/login/login_page.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Root widget — MaterialApp diconfig di sini.
@@ -14,7 +14,8 @@ class ProgressioApp extends StatelessWidget {
       title: 'Progressio',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dopamineTheme,
-      home: const SplashPage(),
+      home: const LoginPage(),
     );
   }
 }
+
