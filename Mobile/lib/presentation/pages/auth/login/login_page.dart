@@ -108,14 +108,12 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
           return Stack(
             children: [
-              // Header Image Lime with Gradient
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOutCubic,
-                top: _isRegisterMode ? -15 : -45,
+              // Header Image Lime with Gradient (Tetap statis tanpa zoom/resize saat ganti form)
+              Positioned(
+                top: -20,
                 left: 0,
                 right: 0,
-                height: _isRegisterMode ? 460 : 520,
+                height: 480,
                 child: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -135,7 +133,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       child: Builder(
                         builder: (context) {
                           final dpr = MediaQuery.of(context).devicePixelRatio;
-                          final baseSize = _isRegisterMode ? 460.0 : 520.0;
+                          const baseSize = 480.0;
                           final physicalSize = (baseSize * dpr).toInt();
                           return Image(
                             image: ResizeImage(
@@ -169,16 +167,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           // Spacer dinamis di atas — menyesuaikan ukuran layar agar card selalu pas di bawah
-                          SizedBox(height: _isRegisterMode ? 40 : 100),
+                          const SizedBox(height: 24),
                           const Spacer(),
 
-                          // Bottom Card Sheet Putih menempel pas di bawah
+                          // Bottom Card Sheet Putih menempel pas di bawah (tanpa geser saat ganti form)
                           SlideTransition(
                             position: _slideAnimation,
                             child: FadeTransition(
                               opacity: _fadeAnimation,
                               child: Container(
                                 width: double.infinity,
+                                clipBehavior: Clip.antiAlias,
                                 decoration: const BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.vertical(
@@ -198,53 +197,73 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   26,
                                   32,
                                 ),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 350),
-                                  switchInCurve: Curves.easeOutCubic,
-                                  switchOutCurve: Curves.easeInCubic,
-                                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                                    return Stack(
-                                      alignment: Alignment.topCenter,
-                                      children: <Widget>[
-                                        ...previousChildren,
-                                        ?currentChild,
-                                      ],
-                                    );
-                                  },
-                                  transitionBuilder: (Widget child, Animation<double> animation) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(0.0, 0.04),
-                                          end: Offset.zero,
-                                        ).animate(animation),
-                                        child: child,
-                                      ),
-                                    );
-                                  },
-                                  child: _isRegisterMode
-                                      ? KeyedSubtree(
-                                          key: const ValueKey<String>('register_form'),
-                                          child: RegisterFormContent(
-                                            onSwitchToLogin: () {
-                                              setState(() {
-                                                _isRegisterMode = false;
-                                              });
-                                              if (_scrollController.hasClients) {
-                                                _scrollController.animateTo(
-                                                  0,
-                                                  duration: const Duration(milliseconds: 300),
-                                                  curve: Curves.easeOut,
-                                                );
-                                              }
-                                            },
+                                child: AnimatedSize(
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeOutCubic,
+                                  alignment: Alignment.topCenter,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 380),
+                                    switchInCurve: Curves.easeOutCubic,
+                                    switchOutCurve: Curves.easeInCubic,
+                                    layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                                      return Stack(
+                                        alignment: Alignment.topCenter,
+                                        children: <Widget>[
+                                          ...previousChildren,
+                                          ?currentChild,
+                                        ],
+                                      );
+                                    },
+                                    transitionBuilder: (Widget child, Animation<double> animation) {
+                                      final isChildRegister = child.key == const ValueKey<String>('register_form');
+                                      final beginOffset = isChildRegister
+                                          ? const Offset(0.30, 0.0)
+                                          : const Offset(-0.30, 0.0);
+                                      
+                                      // Animasi berurutan (sequential) agar tidak tumpang tindih:
+                                      // Form lama keluar dulu, form baru masuk bergantian secara rapi.
+                                      final seqAnimation = CurvedAnimation(
+                                        parent: animation,
+                                        curve: const Interval(0.42, 1.0, curve: Curves.easeOutCubic),
+                                      );
+
+                                      return FadeTransition(
+                                        opacity: seqAnimation,
+                                        child: SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: beginOffset,
+                                            end: Offset.zero,
+                                          ).animate(seqAnimation),
+                                          child: Container(
+                                            color: Colors.white,
+                                            child: child,
                                           ),
-                                        )
-                                      : KeyedSubtree(
-                                          key: const ValueKey<String>('login_form'),
-                                          child: _buildLoginForm(context),
                                         ),
+                                      );
+                                    },
+                                    child: _isRegisterMode
+                                        ? KeyedSubtree(
+                                            key: const ValueKey<String>('register_form'),
+                                            child: RegisterFormContent(
+                                              onSwitchToLogin: () {
+                                                setState(() {
+                                                  _isRegisterMode = false;
+                                                });
+                                                if (_scrollController.hasClients) {
+                                                  _scrollController.animateTo(
+                                                    0,
+                                                    duration: const Duration(milliseconds: 300),
+                                                    curve: Curves.easeOut,
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          )
+                                        : KeyedSubtree(
+                                            key: const ValueKey<String>('login_form'),
+                                            child: _buildLoginForm(context),
+                                          ),
+                                  ),
                                 ),
                               ),
                             ),
