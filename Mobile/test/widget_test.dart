@@ -1,30 +1,49 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:progressio_mobile/main.dart';
+import 'package:progressio_mobile/app/app.dart';
+import 'package:progressio_mobile/presentation/pages/auth/login/login_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('ProgressioApp smoke test — renders LoginPage with form elements', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Build root app ProgressioApp
+    await tester.pumpWidget(const ProgressioApp());
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify Header text
+    expect(find.text('Selamat Datang!'), findsOneWidget);
+    expect(find.text('Masuk untuk melanjutkan'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify Inputs exist
+    expect(find.text('Email Belajar'), findsOneWidget);
+    expect(find.text('Kata Sandi'), findsOneWidget);
+
+    // Verify CTA Buttons
+    expect(find.text('Masuk Sekarang'), findsOneWidget);
+    expect(find.text('Lanjutkan dengan Google'), findsOneWidget);
+    expect(find.text('Daftar Gratis'), findsOneWidget);
+  });
+
+  testWidgets('LoginPage validation test — empty submission triggers validation error', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(const MaterialApp(
+      home: LoginPage(),
+    ));
+    await tester.pumpAndSettle();
+
+    // Tap submit button without filling fields
+    final submitButton = find.text('Masuk Sekarang');
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
+
+    // Verify error messages appear (case-sensitive matching)
+    expect(find.text('Email wajib diisi'), findsOneWidget);
+    expect(find.text('Kata sandi wajib diisi'), findsOneWidget);
   });
 }
