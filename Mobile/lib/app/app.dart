@@ -13,7 +13,7 @@ class ProgressioApp extends StatelessWidget {
     return MaterialApp(
       title: 'Progressio',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.dopamineTheme,
       home: const SplashPage(),
     );
   }
