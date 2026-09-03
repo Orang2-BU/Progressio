@@ -18,9 +18,10 @@ Jika sedang kerja di `back-end/`, `front-end/`, atau `curriculum/` → **ABAIKAN
 
 1. **`docs/TODO.md`** — Lihat status terkini, apa yang sudah selesai, apa yang sedang dikerjakan
 2. **`docs/ARCHITECTURE.md`** — Pahami struktur folder dan aturan layer
-3. **`AGENTS.md`** — Pahami coding style dan konvensi
+3. **`docs/AGENTS.md`** — Pahami coding style dan konvensi
 
-Baca `docs/PRD_MOBILE.md` **hanya jika** butuh detail spesifikasi fitur, UI, atau gamifikasi.
+Baca **`docs/design/DESIGN.md`** DAN cek folder **`docs/design/figma_screens/`** ketika mengerjakan UI/widget/halaman agar tampilan sesuai acuan visual Figma.
+Baca `docs/PRD_MOBILE.md` **hanya jika** butuh detail spesifikasi fitur, flow bisnis, atau gamifikasi.
 Baca `docs/SKILL.md` **hanya jika** perlu template prompt.
 
 ---
@@ -92,10 +93,10 @@ Jika salah satu belum terpenuhi → status tetap `🔄`, bukan `✅`.
 2. Baca PRD (jika perlu)  → pahami spesifikasi fitur
 3. Kerjakan domain/       → entity + repository interface + usecase
 4. Kerjakan data/         → model + repository impl + datasource
-5. Kerjakan presentation/ → BLoC/Cubit + page + widgets
+5. Kerjakan presentation/ → Cek mockup di docs/design/figma_screens/ + implementasi BLoC/Cubit + page + widgets
 6. Update constants       → strings, colors, api endpoints (jika ada yang baru)
 7. Update router          → tambah route di app_router.dart
-8. Cek kualitas           → flutter analyze, tidak ada hardcode
+8. Cek kualitas           → flutter analyze, tidak ada hardcode, cocokkan dengan mockup
 9. Update TODO.md         → status ✅ + log perubahan
 ```
 
@@ -105,12 +106,17 @@ Jika salah satu belum terpenuhi → status tetap `🔄`, bukan `✅`.
 
 ```
 Mobile/
-├── AGENTS.md              ← Coding style, konvensi, anti-pattern
 └── docs/
-    ├── ARCHITECTURE.md    ← Struktur folder, layer, design system
+    ├── TODO.md            ← ⭐ BACA PERTAMA — status & memori project
+    ├── ARCHITECTURE.md    ← Struktur folder, layer, design system quick ref
+    ├── AGENTS.md          ← Coding style, konvensi, anti-pattern
     ├── PRD_MOBILE.md      ← Spesifikasi fitur, halaman, gamifikasi
     ├── NATIVE_PLATFORMS.md ← Kapan sentuh android/ dan ios/
-    ├── TODO.md            ← ⭐ BACA PERTAMA — status & memori project
     ├── SKILL.md           ← Template prompt reusable
-    └── WORKFLOW.md        ← (file ini) Aturan main
+    ├── WORKFLOW.md        ← (file ini) Aturan main
+    │
+    └── design/            ← 🎨 SPESIFIKASI DESAIN & MOCKUP FIGMA
+        ├── DESIGN.md      ← Token warna, tipografi, radius, dan panduan UI
+        ├── figma_screens/ ← Screenshot halaman Figma untuk acuan visual AI
+        └── components/    ← Screenshot potongan komponen modular
 ```

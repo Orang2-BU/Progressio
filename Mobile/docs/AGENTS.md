@@ -17,6 +17,7 @@ Sebelum menulis kode apa pun, **WAJIB** baca dokumen-dokumen ini:
 | Dokumen | Path | Isi |
 |---|---|---|
 | Arsitektur & Struktur Folder | `docs/ARCHITECTURE.md` | Clean Architecture 3 layer, aturan penempatan file, design system |
+| Design System & Figma Mockups | `docs/design/DESIGN.md` | Dopamine Design System, token visual, screenshot acuan di `figma_screens/` |
 | PRD Mobile | `docs/PRD_MOBILE.md` | Spesifikasi fitur, halaman, gamifikasi, API mapping |
 | Platform Native | `docs/NATIVE_PLATFORMS.md` | Kapan dan bagaimana menyentuh folder `android/` dan `ios/` |
 | Backend Spec | `../progressio-backend-spec.md` | API endpoints, domain model, flow backend |
@@ -205,11 +206,13 @@ class MyPage extends StatelessWidget {
 
 ## 4. Design System — Aturan Wajib
 
+> Detail lengkap lihat `docs/DESIGN.md` (Neo-Dopamine Gamified UI)
+
 ### 4.1 DILARANG KERAS (Hard Rules)
 
 ```
-❌ DILARANG: Color(0xFF7CB8F2)          → Hardcode warna
-✅ WAJIB:    AppColors.primary           → Dari constants
+❌ DILARANG: Color(0xFFB5F942)          → Hardcode warna
+✅ WAJIB:    AppColors.limePrimary      → Dari constants
 
 ❌ DILARANG: fontSize: 16               → Hardcode font size
 ✅ WAJIB:    fontSize: AppTypography.subtitle1  → Dari constants
@@ -217,8 +220,11 @@ class MyPage extends StatelessWidget {
 ❌ DILARANG: padding: EdgeInsets.all(16) → Hardcode spacing
 ✅ WAJIB:    padding: EdgeInsets.all(AppSpacing.lg)  → Dari constants
 
-❌ DILARANG: BorderRadius.circular(16)  → Hardcode radius
+❌ DILARANG: BorderRadius.circular(24)  → Hardcode radius
 ✅ WAJIB:    BorderRadius.circular(AppRadius.card)   → Dari constants
+
+❌ DILARANG: BorderRadius.circular(999) → Hardcode pill radius
+✅ WAJIB:    BorderRadius.circular(AppRadius.pill)   → Dari constants
 
 ❌ DILARANG: Text('Login')              → Hardcode string UI
 ✅ WAJIB:    Text(AppStrings.login)      → Dari constants
@@ -231,12 +237,13 @@ class MyPage extends StatelessWidget {
 
 | Apa | File | Class |
 |---|---|---|
-| Semua warna | `lib/core/constants/app_colors.dart` | `AppColors` |
+| Spesifikasi visual & mockup | `docs/design/DESIGN.md` & `docs/design/figma_screens/` | — |
+| Semua warna (Dopamine palette) | `lib/core/constants/app_colors.dart` | `AppColors` |
 | Font size & family | `lib/core/constants/app_typography.dart` | `AppTypography` |
-| Spacing & padding | `lib/core/constants/app_spacing.dart` | `AppSpacing`, `AppRadius` |
+| Spacing, padding, radius | `lib/core/constants/app_spacing.dart` | `AppSpacing`, `AppRadius` |
 | Teks UI statis | `lib/core/constants/app_strings.dart` | `AppStrings` |
 | API endpoint | `lib/core/constants/api_constants.dart` | `ApiConstants` |
-| ThemeData | `lib/core/theme/app_theme.dart` | `AppTheme` |
+| ThemeData (Dopamine) | `lib/core/theme/app_theme.dart` | `AppTheme` |
 
 ### 4.3 Barrel Export
 

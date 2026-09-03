@@ -1,64 +1,67 @@
 import 'package:flutter/material.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// Progressio — Color Palette (Soft Pastel Blue)
+/// Progressio — Color Palette (Neo-Dopamine Gamified)
 /// ─────────────────────────────────────────────────────────────────────────────
-/// Warna ini di-sinkronkan dari Design System PRD.
+/// Warna ini di-sinkronkan dari DESIGN.md (Dopamine Design Language).
 /// Jangan pakai warna literal di widget — selalu refer ke sini.
 /// ─────────────────────────────────────────────────────────────────────────────
 class AppColors {
   AppColors._();
 
-  // ── Primary ────────────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF7CB8F2);        // Soft sky blue
-  static const Color primaryLight = Color(0xFFA8D4FF);    // Pastel light blue
-  static const Color primaryDark = Color(0xFF5A9FE0);     // Medium soft blue
+  // ── Brand Lime Dopamine ───────────────────────────────────────────────────
+  static const Color limePrimary = Color(0xFFB5F942);     // Warna brand utama
+  static const Color limeDeep = Color(0xFF8DE319);         // Akhir gradien, border highlight
+  static const Color limeLight = Color(0xFFE8FDC9);        // Background kartu sub-fitur
 
-  // ── Accent / Tint ─────────────────────────────────────────────────────────
-  static const Color accent = Color(0xFFE8F4FD);          // Ice blue tint (bg)
-  static const Color accentLight = Color(0xFFF0F7FF);     // Very light blue
+  // ── High Contrast Dark Anchors ────────────────────────────────────────────
+  static const Color darkSlate = Color(0xFF14161D);        // Hero card, navbar, headline
+  static const Color darkCard = Color(0xFF1D2027);         // Surface kartu dark sekunder
 
-  // ── Neutral / Background ──────────────────────────────────────────────────
-  static const Color background = Color(0xFFF5F8FC);      // Ice blue-gray base
-  static const Color surface = Color(0xFFFFFFFF);          // Card / surface white
-  static const Color scaffold = Color(0xFFF5F8FC);         // Scaffold background
+  // ── Playful Dopamine Accents ──────────────────────────────────────────────
+  static const Color lavenderBg = Color(0xFFEDE6FF);       // Background kartu kategori
+  static const Color lavenderPrimary = Color(0xFF7B4FE3);  // Badge "Hot", status pill aktif
+  static const Color coralOrange = Color(0xFFFF623E);      // Streak fire 🔥, banner challenge
+  static const Color sunYellow = Color(0xFFFDE93A);        // Tag poin, XP token, bintang ⭐
+
+  // ── Background & Surfaces ─────────────────────────────────────────────────
+  static const Color canvasBg = Color(0xFFF7FAF4);         // Background halaman (off-white gading)
+  static const Color surfaceWhite = Color(0xFFFFFFFF);     // Background kartu, modal, list item
+  static const Color borderColor = Color(0xFFEAEFE3);      // Outline kartu halus, pembatas
 
   // ── Text ──────────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF1E293B);     // Dark slate
-  static const Color textSecondary = Color(0xFF64748B);   // Medium gray
-  static const Color textTertiary = Color(0xFF94A3B8);    // Light gray
-  static const Color textOnPrimary = Color(0xFFFFFFFF);   // White on blue
+  static const Color textMain = Color(0xFF111317);         // Judul utama (Super High Contrast)
+  static const Color textMuted = Color(0xFF727782);        // Teks sekunder, deskripsi, placeholder
 
-  // ── Semantic ──────────────────────────────────────────────────────────────
-  static const Color success = Color(0xFF81C995);          // Soft green
-  static const Color error = Color(0xFFE57373);            // Soft red
-  static const Color warning = Color(0xFFF2C97C);          // Soft amber
-  static const Color info = Color(0xFF7CB8F2);             // Same as primary
+  // ── Gamification Semantic ─────────────────────────────────────────────────
+  static const Color heartRed = Color(0xFFFF4757);         // Sisa nyawa & jawaban salah
+  static const Color streakFire = Color(0xFFFF623E);       // Ikon api streak & countdown
+  static const Color xpGold = Color(0xFFFFC800);           // XP counter, level bar, badge
+  static const Color successGreen = Color(0xFF22C55E);     // Jawaban benar, skill verified
+  static const Color lockedGray = Color(0xFFCBD5E1);       // Node terkunci, tombol belum aktif
+  static const Color blockchainCyan = Color(0xFF00D2D3);   // Badge verifikasi blockchain
 
-  // ── Border / Divider ──────────────────────────────────────────────────────
-  static const Color border = Color(0xFFE8EDF2);           // Light border
-  static const Color divider = Color(0xFFE2E8F0);          // Divider line
-  static const Color inputBorder = Color(0xFFE8F0FE);      // Input field border
-
-  // ── Shadow ────────────────────────────────────────────────────────────────
-  static const Color shadow = Color(0x0D000000);           // Very subtle shadow
-
-  // ── Skill Graph Node Colors ───────────────────────────────────────────────
-  static const Color nodeMastered = Color(0xFF7CB8F2);     // Soft blue
-  static const Color nodeInProgress = Color(0xFF7CB8F2);   // Border only
-  static const Color nodeAvailable = Color(0xFFD1D5DB);    // Dashed gray
-  static const Color nodeLocked = Color(0xFFF1F5F9);       // Very light gray
+  // ── Feedback Backgrounds ──────────────────────────────────────────────────
+  static const Color feedbackSuccessBg = Color(0xFFE8FDC9); // Sheet jawaban benar
+  static const Color feedbackErrorBg = Color(0xFFFFEAEA);   // Sheet jawaban salah
 
   // ── Gradient ──────────────────────────────────────────────────────────────
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFA8D4FF), Color(0xFFE8F4FD)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient splashGradient = LinearGradient(
-    colors: [Color(0xFFE8F4FD), Color(0xFFFFFFFF)],
+  static const LinearGradient limeHeaderGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
+    colors: [Color(0xFFB8F944), Color(0xFFD4FFA0), Color(0xFFF7FAF4)],
+    stops: [0.0, 0.45, 1.0],
+  );
+
+  static const LinearGradient darkCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1A1C23), Color(0xFF111216)],
+  );
+
+  static const LinearGradient lavenderCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFEDE6FF), Color(0xFFE4D7FF)],
   );
 }

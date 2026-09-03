@@ -31,6 +31,7 @@ Buatkan lengkap end-to-end sesuai ARCHITECTURE.md dan AGENTS.md:
 9. presentation/pages/{nama}/widgets/ — Widget khusus (jika perlu)
 
 Aturan:
+- Periksa gambar mockup di docs/design/figma_screens/ jika ada, jadikan acuan layout 1:1
 - Warna dari AppColors, spacing dari AppSpacing, string dari AppStrings
 - Loading pakai skeleton shimmer, bukan spinner
 - Handle 4 state: loading, loaded, empty, error
@@ -57,6 +58,7 @@ Konteks:
 Taruh di: presentation/widgets/{kategori}/{nama_widget}.dart
 
 Aturan:
+- Periksa gambar contoh di docs/design/components/ jika ada
 - Pakai const constructor
 - Warna/spacing/radius dari constants, JANGAN hardcode
 - Parameternya lengkap (required + optional yang masuk akal)

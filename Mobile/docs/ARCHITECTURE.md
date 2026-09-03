@@ -4,7 +4,8 @@
 >
 > **Dokumen terkait:**
 > - [PRD Mobile](PRD_MOBILE.md) — Spesifikasi fitur, halaman, gamifikasi
-> - [AGENTS.md](../AGENTS.md) — Instruksi AI untuk coding style & konvensi
+> - [AGENTS.md](AGENTS.md) — Instruksi AI untuk coding style & konvensi
+> - [Design System & Figma](design/DESIGN.md) — Token warna, tipografi, dan mockup Figma
 > - [Platform Native](NATIVE_PLATFORMS.md) — Kapan menyentuh folder `android/` dan `ios/`
 
 ---
@@ -427,7 +428,7 @@ class ProgressioApp extends StatelessWidget {
         BlocProvider(create: (_) => getIt<SettingsCubit>()),
       ],
       child: MaterialApp.router(
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.dopamineTheme,
         routerConfig: appRouter,
       ),
     );
@@ -473,8 +474,8 @@ class HomeError extends HomeState {
 
 ### 1. Warna
 ```
-❌ SALAH:  Color(0xFF7CB8F2)  ← di dalam widget
-✅ BENAR:  AppColors.primary   ← dari constants
+❌ SALAH:  Color(0xFFB5F942)  ← di dalam widget
+✅ BENAR:  AppColors.limePrimary   ← dari constants
 ```
 Semua warna HARUS diambil dari `lib/core/constants/app_colors.dart`.
 
@@ -564,54 +565,61 @@ import 'package:progressio_mobile/domain/entities/user.dart';
 
 ---
 
-## 🎨 Design System — Quick Reference
+## 🎨 Design System — Quick Reference (Dopamine)
 
-### Warna Utama
+> Detail lengkap lihat [DESIGN.md](design/DESIGN.md) dan screenshot di [`docs/design/figma_screens/`](design/figma_screens/)
 
-| Token | Hex | Penggunaan | File |
-|---|---|---|---|
-| `primary` | `#7CB8F2` | Tombol utama, link, accent | `app_colors.dart` |
-| `primaryLight` | `#A8D4FF` | Secondary, highlight | `app_colors.dart` |
-| `primaryDark` | `#5A9FE0` | Pressed state, emphasis | `app_colors.dart` |
-| `background` | `#F5F8FC` | Background utama | `app_colors.dart` |
-| `surface` | `#FFFFFF` | Card, dialog, bottom sheet | `app_colors.dart` |
-| `textPrimary` | `#1E293B` | Headline, body text | `app_colors.dart` |
-| `textSecondary` | `#64748B` | Caption, hint text | `app_colors.dart` |
-
-### Warna Semantic
+### Warna Brand
 
 | Token | Hex | Penggunaan |
 |---|---|---|
-| `success` | `#81C995` | Jawaban benar, completed |
-| `error` | `#E57373` | Jawaban salah, error state |
-| `warning` | `#F2C97C` | Warning, streak about to end |
+| `limePrimary` | `#B5F942` | Warna brand utama, header, XP glow |
+| `limeDeep` | `#8DE319` | Gradien, border highlight, active tab |
+| `limeLight` | `#E8FDC9` | Background kartu sub-fitur |
+| `darkSlate` | `#14161D` | Hero card, navbar, headline |
+| `darkCard` | `#1D2027` | Surface kartu dark sekunder |
+| `lavenderBg` | `#EDE6FF` | Background kartu kategori |
+| `lavenderPrimary` | `#7B4FE3` | Badge "Hot", status pill |
+| `coralOrange` | `#FF623E` | Streak fire 🔥, challenge |
+| `sunYellow` | `#FDE93A` | Tag poin, XP token |
+| `canvasBg` | `#F7FAF4` | Background halaman |
+| `surfaceWhite` | `#FFFFFF` | Kartu, modal, list item |
+| `textMain` | `#111317` | Judul utama |
+| `textMuted` | `#727782` | Teks sekunder |
 
 ### Warna Gamifikasi
 
 | Token | Hex | Penggunaan |
 |---|---|---|
-| `xpGold` | `#FFD700` | XP, reward, badge |
-| `heartRed` | `#FF4757` | Hearts display |
-| `streakOrange` | `#FF6B35` | Streak fire icon |
-| `locked` | `#CBD5E1` | Locked skill/content |
+| `heartRed` | `#FF4757` | Nyawa & jawaban salah |
+| `streakFire` | `#FF623E` | Api streak & countdown |
+| `xpGold` | `#FFC800` | XP, level bar, badge |
+| `successGreen` | `#22C55E` | Jawaban benar, verified |
+| `lockedGray` | `#CBD5E1` | Node terkunci |
+| `blockchainCyan` | `#00D2D3` | Verifikasi blockchain |
 
 ### Typography
 
 | Style | Font | Size | Weight |
 |---|---|---|---|
-| Headline | Plus Jakarta Sans | 28/24/22/20 | Bold/SemiBold |
-| Body | Inter | 14/13 | Regular |
-| Caption | Inter | 12/11 | Regular |
-| Code | JetBrains Mono | 14 | Regular |
-| Button | Plus Jakarta Sans | 16 | SemiBold |
+| Display | Plus Jakarta Sans | 32 | ExtraBold (800) |
+| Headline | Plus Jakarta Sans | 24/20 | Bold (700) |
+| Subtitle | Plus Jakarta Sans | 16/14 | SemiBold (600) |
+| Body | Inter | 15/13 | Regular/Medium |
+| Caption/Tag | Plus Jakarta Sans | 11 | ExtraBold (800), UPPERCASE |
+| Code | JetBrains Mono | 13 | Medium (500) |
 
-### Spacing & Sizing
+### Spacing & Sizing (Dopamine Pill Geometry)
 
 | Token | Value | Class |
 |---|---|---|
-| `xs` / `sm` / `md` / `lg` / `xl` / `xxl` / `xxxl` | 4 / 8 / 12 / 16 / 20 / 24 / 32 | `AppSpacing` |
+| `xs` / `sm` / `md` / `lg` / `xl` / `xxl` | 4 / 8 / 12 / 16 / 24 / 32 | `AppSpacing` |
 | `screenPadding` | 16px horizontal | `AppSpacing` |
-| `card` / `button` / `input` radius | 16 / 12 / 12 | `AppRadius` |
+| `card` radius | 24px | `AppRadius` |
+| `heroBanner` radius | 26px | `AppRadius` |
+| `button` / `pill` radius | 999px (pill/capsule) | `AppRadius` |
+| `input` radius | 16px | `AppRadius` |
+| `floatingNav` radius | 36px | `AppRadius` |
 | Button height | 52px | `AppTheme` |
 
 ---
