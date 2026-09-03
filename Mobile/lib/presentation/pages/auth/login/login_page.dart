@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:progressio_mobile/core/constants/app_colors.dart';
 import 'package:progressio_mobile/core/constants/app_spacing.dart';
 import 'package:progressio_mobile/core/constants/app_typography.dart';
 import 'package:progressio_mobile/core/constants/cute_iconify_icons.dart';
 import 'package:progressio_mobile/presentation/pages/auth/login/widgets/animated_text_field.dart';
-import 'package:progressio_mobile/presentation/pages/auth/login/widgets/mascot_banner.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,17 +13,47 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  late final AnimationController _animController;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
+
   bool _rememberMe = true;
-  bool _obscurePassword = true;
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.22),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
+    );
+
+    _animController.forward();
+  }
+
+  @override
   void dispose() {
+    _animController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -66,182 +96,120 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.canvasBg,
-      body: Stack(
-        children: [
-          // Background Gradient Soft Lime di bagian atas sesuai Dopamine Style
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 340,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFE9F8CC),
-                    Color(0xFFF3FCE5),
-                    AppColors.canvasBg,
-                  ],
-                  stops: [0.0, 0.65, 1.0],
-                ),
-              ),
-            ),
-          ),
+      backgroundColor: const Color(0xFFC7F37A),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenHeight = constraints.maxHeight;
 
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // Top Bar: Logo & Brand + Tag Version "v2.4 NEO"
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Logo Circle & Brand Name
-                        Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.darkSlate,
-                              ),
-                              child: Center(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    Text(
-                                      'P',
-                                      style: TextStyle(
-                                        fontFamily: AppTypography.headlineFont,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.limePrimary,
-                                      ),
-                                    ),
-                                    Text(
-                                      '⚡',
-                                      style: TextStyle(fontSize: 10),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            const Text(
-                              'PROGRESSIO',
-                              style: TextStyle(
-                                fontFamily: AppTypography.headlineFont,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
-                                color: AppColors.darkSlate,
-                              ),
-                            ),
-                          ],
+          return Stack(
+            children: [
+              // Header Image Lime
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 410,
+                child: Container(
+                  color: const Color(0xFFC7F37A),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 20),
+                        child: Image.asset(
+                          'assets/images/Hello_Login.png',
+                          width: 360,
+                          height: 360,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
                         ),
-
-                        // Version Capsule Tag (V2.4 NEO)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: AppColors.borderColor,
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xFF8CE323),
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              const Text(
-                                'V2.4 NEO',
-                                style: TextStyle(
-                                  fontFamily: AppTypography.headlineFont,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.darkSlate,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Mascot Banner + Streak Capsule
-                    const MascotBanner(),
-
-                    const SizedBox(height: 24),
-
-                    // Headline "Selamat Datang! 👋"
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
-                          'Selamat Datang!',
-                          style: TextStyle(
-                            fontFamily: AppTypography.headlineFont,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textMain,
-                          ),
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          '👋',
-                          style: TextStyle(fontSize: 22),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Subtitle
-                    const Text(
-                      'Masuk untuk melanjutkan streak dan\npetualangan ngodingmu',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: AppTypography.bodyFont,
-                        fontSize: 13,
-                        color: AppColors.textMuted,
-                        height: 1.45,
                       ),
                     ),
+                  ),
+                ),
+              ),
 
-                    const SizedBox(height: 28),
+              // Scrollable Content
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: screenHeight,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Spacer di atas agar ilustrasi terlihat
+                        const SizedBox(height: 320),
+
+                        // Bottom Card Sheet Putih dengan Animasi Halus
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: Container(
+                              width: double.infinity,
+                              constraints: BoxConstraints(
+                                minHeight: (screenHeight - 320).clamp(520.0, double.infinity),
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(32),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0x14000000),
+                                    blurRadius: 20,
+                                    offset: Offset(0, -4),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xl,
+                                vertical: 30,
+                              ),
+                              child: Form(
+                                key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Headline: "Selamat Datang! 👋"
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text(
+                                'Selamat Datang!',
+                                style: TextStyle(
+                                  fontFamily: AppTypography.headlineFont,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textMain,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                '👋',
+                                style: TextStyle(fontSize: 22),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // Subtitle: "Masuk untuk melanjutkan"
+                          const Text(
+                            'Masuk untuk melanjutkan',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AppTypography.bodyFont,
+                              fontSize: 13,
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
 
                     // Email Belajar Field with Dopamine animation & Cute Iconify Icon
                     AnimatedDopamineTextField(
@@ -542,13 +510,21 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     const SizedBox(height: 36),
-                  ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  );
+},
+),
+);
   }
 }

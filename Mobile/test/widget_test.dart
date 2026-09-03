@@ -13,10 +13,9 @@ void main() {
     await tester.pumpWidget(const ProgressioApp());
     await tester.pumpAndSettle();
 
-    // Verify Brand / Header text
-    expect(find.text('PROGRESSIO'), findsOneWidget);
-    expect(find.text('V2.4 NEO'), findsOneWidget);
+    // Verify Header text
     expect(find.text('Selamat Datang!'), findsOneWidget);
+    expect(find.text('Masuk untuk melanjutkan'), findsOneWidget);
 
     // Verify Inputs exist
     expect(find.text('Email Belajar'), findsOneWidget);
