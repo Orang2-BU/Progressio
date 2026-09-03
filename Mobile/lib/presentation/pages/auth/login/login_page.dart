@@ -514,8 +514,9 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 28),
 
                     // Footer: Belum punya akun Progressio? Daftar Gratis
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text(
                           'Belum punya akun Progressio? ',
