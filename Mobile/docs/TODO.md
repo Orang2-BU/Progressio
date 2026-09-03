@@ -46,8 +46,8 @@
 | 1.11 | Splash Page | ✅ | Sudah ada, perlu update logic cek JWT |
 | 1.12 | Onboarding Page (3 slides) | ⬜ | Folder ada, belum ada dart file |
 | 1.13 | Interest Selector Page | ⬜ | Folder belum ada |
-| 1.14 | Register Page + form validation | ⬜ | Folder ada |
-| 1.15 | Login Page + JWT token management | ⬜ | Folder ada |
+| 1.14 | Register Page + form validation | ✅ | Selesai sesuai acuan Figma 05_register_page.png |
+| 1.15 | Login Page + UI & Dopamine polish | ✅ | Selesai sesuai acuan Figma 04_login_page.png |
 | 1.16 | Forgot Password Page | ⬜ | Folder belum ada |
 | 1.17 | Home Dashboard (layout + widget) | ⬜ | Folder ada |
 | 1.18 | Widget reusable: loading_shimmer, empty_state, error_state, offline_banner | ⬜ | |
