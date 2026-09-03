@@ -96,33 +96,52 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFC7F37A),
+      backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final screenHeight = constraints.maxHeight;
 
           return Stack(
             children: [
-              // Header Image Lime
+              // Header Image Lime with Gradient
               Positioned(
-                top: 0,
+                top: -45,
                 left: 0,
                 right: 0,
-                height: 410,
+                height: 520,
                 child: Container(
-                  color: const Color(0xFFC7F37A),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFC7F37A), // Hijau lime di atas
+                        Color(0xFFE8FCD0), // Transisi lembut
+                        Colors.white,      // Putih di bawah
+                      ],
+                      stops: [0.0, 0.65, 1.0],
+                    ),
+                  ),
                   child: SafeArea(
                     bottom: false,
                     child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 20),
-                        child: Image.asset(
-                          'assets/images/Hello_Login.png',
-                          width: 360,
-                          height: 360,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                        ),
+                      child: Builder(
+                        builder: (context) {
+                          final dpr = MediaQuery.of(context).devicePixelRatio;
+                          final physicalSize = (520 * dpr).toInt();
+                          return Image(
+                            image: ResizeImage(
+                              const AssetImage('assets/images/Hello_Login.png'),
+                              width: physicalSize,
+                              height: physicalSize,
+                            ),
+                            width: 520,
+                            height: 520,
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
+                            isAntiAlias: true,
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -139,8 +158,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Spacer di atas agar ilustrasi terlihat
-                        const SizedBox(height: 320),
+                        // Spacer di atas agar ilustrasi terlihat penuh tanpa crop
+                        const SizedBox(height: 400),
 
                         // Bottom Card Sheet Putih dengan Animasi Halus
                         SlideTransition(
@@ -150,7 +169,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             child: Container(
                               width: double.infinity,
                               constraints: BoxConstraints(
-                                minHeight: (screenHeight - 320).clamp(520.0, double.infinity),
+                                minHeight: (screenHeight - 380).clamp(520.0, double.infinity),
                               ),
                               decoration: const BoxDecoration(
                                 color: Colors.white,
