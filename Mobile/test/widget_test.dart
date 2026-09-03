@@ -46,4 +46,34 @@ void main() {
     expect(find.text('Email wajib diisi'), findsOneWidget);
     expect(find.text('Kata sandi wajib diisi'), findsOneWidget);
   });
+
+  testWidgets('RegisterPage smoke test — renders with full registration form', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(const ProgressioApp());
+    await tester.pumpAndSettle();
+
+    // Tap Daftar Gratis to navigate to RegisterPage
+    await tester.tap(find.text('Daftar Gratis'));
+    await tester.pumpAndSettle();
+
+    // Verify RegisterPage elements
+    expect(find.text('Mulai Petualanganmu!'), findsOneWidget);
+    expect(find.text('Nama Lengkap'), findsOneWidget);
+    expect(find.text('Email Belajar'), findsOneWidget);
+    expect(find.text('Kata Sandi'), findsOneWidget);
+    expect(find.text('Ulangi Kata Sandi'), findsOneWidget);
+    expect(find.text('Daftar Sekarang'), findsOneWidget);
+    expect(find.text('Kekuatan: '), findsOneWidget);
+
+    final cardRect = tester.getRect(find.byWidgetPredicate(
+      (w) => w is Container && w.decoration is BoxDecoration && (w.decoration as BoxDecoration).borderRadius != null,
+    ).first);
+    final pillRect = tester.getRect(find.byWidgetPredicate(
+      (w) => w is Container && w.constraints?.maxWidth == 44.0,
+    ).first);
+    expect(pillRect.top - cardRect.top, lessThanOrEqualTo(16.0));
+  });
 }
