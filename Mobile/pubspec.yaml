@@ -22,4 +22,5 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/lock_forgot.png
 

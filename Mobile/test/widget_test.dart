@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:progressio_mobile/app/app.dart';
 import 'package:progressio_mobile/presentation/pages/auth/login/login_page.dart';
+import 'package:progressio_mobile/presentation/pages/auth/forgot_password/forgot_password_page.dart';
 
 void main() {
   testWidgets('ProgressioApp smoke test — renders LoginPage with form elements', (WidgetTester tester) async {
@@ -75,5 +76,34 @@ void main() {
       (w) => w is Container && w.constraints?.maxWidth == 44.0,
     ).first);
     expect(pillRect.top - cardRect.top, lessThanOrEqualTo(16.0));
+  });
+
+  testWidgets('ForgotPasswordPage smoke test — renders full white page with lock illustration and form', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    // Build ForgotPasswordPage
+    await tester.pumpWidget(const MaterialApp(
+      home: ForgotPasswordPage(),
+    ));
+    await tester.pumpAndSettle();
+
+    // Verify Title & Subtitle
+    expect(find.text('Lupa Kata Sandi? 🔑'), findsOneWidget);
+    expect(find.text('Jangan khawatir! Masukkan email belajarmu, kami akan mengirimkan tautan untuk mengatur ulang kata sandi.'), findsOneWidget);
+
+    // Verify Email field & Label
+    expect(find.text('Email Akun Belajar'), findsOneWidget);
+    expect(find.text('learner.code@progressio.id'), findsOneWidget);
+
+    // Verify Action button
+    expect(find.text('Kirim Tautan Reset'), findsOneWidget);
+
+    // Verify Spam banner
+    expect(find.textContaining('Spam', findRichText: true), findsOneWidget);
+
+    // Verify Bottom link
+    expect(find.text('Kembali Masuk'), findsOneWidget);
   });
 }

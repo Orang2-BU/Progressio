@@ -48,7 +48,7 @@
 | 1.13 | Interest Selector Page | ⬜ | Folder belum ada |
 | 1.14 | Register Page + form validation | ✅ | Selesai sesuai acuan Figma 05_register_page.png |
 | 1.15 | Login Page + UI & Dopamine polish | ✅ | Selesai sesuai acuan Figma 04_login_page.png |
-| 1.16 | Forgot Password Page | ⬜ | Folder belum ada |
+| 1.16 | Forgot Password Page | ✅ | Selesai sesuai acuan Figma 06_forgot_pw_page.png + asset lock_forgot |
 | 1.17 | Home Dashboard (layout + widget) | ⬜ | Folder ada |
 | 1.18 | Widget reusable: loading_shimmer, empty_state, error_state, offline_banner | ⬜ | |
 
@@ -116,4 +116,5 @@
 |---|---|---|
 | 2 Sep 2026 | Setup awal: main.dart, app.dart, splash_page, constants (6 file), theme | AI |
 | 2 Sep 2026 | Buat PRD_MOBILE.md, AGENTS.md, update ARCHITECTURE.md | AI |
-| | | |
+| 4 Sep 2026 | Fix lag animasi TextField pada Login & Register | AI |
+| 4 Sep 2026 | Buat ForgotPasswordPage sesuai Figma 06 + aset lock_forgot | AI |
