@@ -18,6 +18,13 @@ class AppStrings {
   static const String confirmPassword = 'Confirm Password';
   static const String username = 'Username';
   static const String forgotPassword = 'Forgot Password?';
+  static const String resetPasswordTitle = 'Lupa Kata Sandi?';
+  static const String resetPasswordDesc =
+      'Jangan khawatir! Masukkan email yang terdaftar dan kami akan mengirimkan tautan untuk mengatur ulang kata sandi kamu.';
+  static const String sendResetLink = 'Kirim Tautan Reset';
+  static const String resetLinkSent = 'Tautan reset kata sandi telah dikirim ke email kamu!';
+  static const String rememberPassword = 'Ingat kata sandi kamu? ';
+  static const String loginHere = 'Masuk di Sini';
   static const String noAccount = "Don't have an account?";
   static const String haveAccount = 'Already have an account?';
   static const String orContinueWith = 'or continue with';

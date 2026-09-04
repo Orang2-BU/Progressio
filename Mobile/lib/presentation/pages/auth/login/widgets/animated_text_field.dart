@@ -47,6 +47,8 @@ class _AnimatedDopamineTextFieldState extends State<AnimatedDopamineTextField>
   late final Animation<double> _eyeScaleAnimation;
   late final Animation<double> _eyeRotationAnimation;
 
+  bool _hadText = false;
+
   @override
   void initState() {
     super.initState();
@@ -93,18 +95,31 @@ class _AnimatedDopamineTextFieldState extends State<AnimatedDopamineTextField>
       ),
     ]).animate(_eyeAnimController);
 
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
+    _hadText = widget.controller.text.isNotEmpty;
+
+    _focusNode.addListener(_onFocusChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onFocusChanged() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
     });
-    widget.controller.addListener(() {
+  }
+
+  // ponytail: hanya rebuild saat transisi kosong↔terisi, bukan setiap keystroke
+  void _onTextChanged() {
+    final hasText = widget.controller.text.isNotEmpty;
+    if (hasText != _hadText) {
+      _hadText = hasText;
       if (mounted) setState(() {});
-    });
+    }
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
     _eyeAnimController.dispose();
     _focusNode.dispose();
     super.dispose();
