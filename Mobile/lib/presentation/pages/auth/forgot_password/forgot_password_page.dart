@@ -4,6 +4,7 @@ import 'package:progressio_mobile/core/constants/app_colors.dart';
 import 'package:progressio_mobile/core/constants/app_spacing.dart';
 import 'package:progressio_mobile/core/constants/app_typography.dart';
 import 'package:progressio_mobile/core/constants/cute_iconify_icons.dart';
+import 'package:progressio_mobile/presentation/pages/auth/otp/otp_verification_page.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// ForgotPasswordPage — Halaman Lupa Kata Sandi
@@ -77,32 +78,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   void _handleResetPassword() {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
-      Future.delayed(const Duration(milliseconds: 800), () {
+      Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) {
           setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: AppColors.darkSlate,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.card),
-              ),
-              content: Row(
-                children: const [
-                  Text('📧', style: TextStyle(fontSize: 18)),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Tautan reset kata sandi telah dikirim ke email kamu!',
-                      style: TextStyle(
-                        fontFamily: AppTypography.headlineFont,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.limePrimary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => OtpVerificationPage(
+                email: _emailController.text.trim(),
               ),
             ),
           );
