@@ -4,6 +4,7 @@ import 'package:progressio_mobile/core/constants/app_colors.dart';
 import 'package:progressio_mobile/core/constants/app_spacing.dart';
 import 'package:progressio_mobile/core/constants/app_typography.dart';
 import 'package:progressio_mobile/core/constants/cute_iconify_icons.dart';
+import 'package:progressio_mobile/presentation/pages/auth/forgot_password/forgot_password_page.dart';
 import 'package:progressio_mobile/presentation/pages/auth/login/widgets/animated_text_field.dart';
 import 'package:progressio_mobile/presentation/pages/auth/login/widgets/fluid_checkbox.dart';
 import 'package:progressio_mobile/presentation/pages/auth/register/register_page.dart';
@@ -155,6 +156,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
 
               // Scrollable Content
+              // ponytail: IntrinsicHeight dihapus — double-pass layout mahal,
+              // diganti SizedBox spacer statis. Upgrade: pakai SliverFillRemaining jika perlu.
               Positioned.fill(
                 child: SingleChildScrollView(
                   controller: _scrollController,
@@ -162,13 +165,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     constraints: BoxConstraints(
                       minHeight: screenHeight,
                     ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          // Spacer dinamis di atas — menyesuaikan ukuran layar agar card selalu pas di bawah
-                          const SizedBox(height: 24),
-                          const Spacer(),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        SizedBox(height: screenHeight * 0.38),
 
                           // Bottom Card Sheet Putih menempel pas di bawah (tanpa geser saat ganti form)
                           SlideTransition(
@@ -270,7 +270,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           ),
                         ],
                       ),
-                    ),
                   ),
                 ),
               ),
@@ -378,7 +377,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 },
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ForgotPasswordPage(),
+                    ),
+                  );
+                },
                 child: const Text(
                   'Lupa Password?',
                   style: TextStyle(

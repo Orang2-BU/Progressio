@@ -524,12 +524,11 @@ class RegisterPage extends StatelessWidget {
                 constraints: BoxConstraints(
                   minHeight: screenHeight,
                 ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const SizedBox(height: 40),
-                      const Spacer(),
+                // ponytail: IntrinsicHeight dihapus — double-pass layout mahal.
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(height: screenHeight * 0.35),
                       Container(
                         width: double.infinity,
                         decoration: const BoxDecoration(
@@ -555,7 +554,6 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
               ),
             ),
           ),

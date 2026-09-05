@@ -12,6 +12,7 @@ class ApiConstants {
   static const String register = '$apiVersion/auth/register';
   static const String login = '$apiVersion/auth/login';
   static const String refreshToken = '$apiVersion/auth/refresh';
+  static const String passwordReset = '$apiVersion/auth/password-reset';
   static const String me = '$apiVersion/auth/me';
 
   // ── Career Tracks ──────────────────────────────────────────────────
