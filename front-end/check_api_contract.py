@@ -5,7 +5,6 @@ Known contract gaps are reported, not silently treated as passing features.
 """
 import io
 import json
-import logging
 import os
 from pathlib import Path
 import sys
@@ -84,12 +83,11 @@ def main():
     request('get', f'diagnostics/latest?career_track={track.pk}', status=404)
     request('post', f'diagnostics/{track.pk}/submit', status=201, data={'answers': answers})
     request('get', f'diagnostics/latest?career_track={track.pk}')
-    request('post', f'diagnostics/{track.pk}/submit', status=201, data={'answers': answers})
-    logging.getLogger('django.request').setLevel(logging.CRITICAL)
-    client.raise_request_exception = False
-    latest = client.get(f'/api/v1/diagnostics/latest?career_track={track.pk}')
+    second = request('post', f'diagnostics/{track.pk}/submit', status=201, data={'answers': answers})
+    latest = request('get', f'diagnostics/latest?career_track={track.pk}')
+    assert latest['id'] == second['id']
     print(f'PASS: {checks} API requests; OpenAPI generated without warnings.')
-    print(f'OBSERVED: latest diagnostic with two attempts returns HTTP {latest.status_code}.')
+    print('PASS: latest diagnostic returns the second attempt.')
     operation = schema['paths']['/api/v1/study-steps/{id}/checkpoint']['post']
     print('SCHEMA GAP: checkpoint response has no content schema:',
           'content' not in operation['responses']['200'])

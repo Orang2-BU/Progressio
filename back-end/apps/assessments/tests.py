@@ -209,3 +209,37 @@ class DiagnosticAPITests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(DiagnosticAttempt.objects.count(), 0)
+
+    def test_latest_repeated_attempts_and_isolation(self):
+        from django.utils import timezone
+        latest_url = reverse('diagnostic-latest')
+        self.assertEqual(self.client.get(latest_url).status_code, 404)
+        url = reverse('diagnostic-submit', args=[self.track.id])
+        correct = {str(q.id): q.correct_answer for q in self.questions}
+        first = self.client.post(url, {'answers': correct}, format='json')
+        second = self.client.post(url, {'answers': {str(q.id): '' for q in self.questions}}, format='json')
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(second.data['overall_score'], 0)
+        self.assertEqual(SkillProgress.objects.get(user=self.user, skill=self.rest_skill).mastery, 100)
+        self.assertEqual(SkillProgress.objects.get(user=self.user, skill=self.rest_skill).xp, 0)
+        now = timezone.now()
+        DiagnosticAttempt.objects.filter(user=self.user).update(completed_at=now, created_at=now)
+        other = User.objects.create_user(username='other_diagnostic')
+        other_track = CareerTrack.objects.create(title='Other', slug='other-diagnostic')
+        DiagnosticAttempt.objects.create(user=other, career_track=self.track, completed_at=now)
+        unrelated = DiagnosticAttempt.objects.create(user=self.user, career_track=other_track, completed_at=now)
+        self.assertEqual(self.client.get(latest_url, {'career_track': self.track.id}).data['id'], second.data['id'])
+        self.assertEqual(self.client.get(latest_url).data['id'], unrelated.id)
+        self.assertEqual(self.client.get(latest_url, {'career_track': 99999}).status_code, 404)
+        for invalid in ('', 'oops', '-1', '0', '9' * 40):
+            self.assertEqual(self.client.get(latest_url, {'career_track': invalid}).status_code, 400)
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get(latest_url).status_code, 401)
+
+    def test_question_list_matches_grading_track(self):
+        other_track = CareerTrack.objects.create(title='Other', slug='other-question')
+        self.questions[0].career_track = other_track
+        self.questions[0].save()
+        response = self.client.get(reverse('diagnostic-question-list', args=[other_track.id]))
+        self.assertEqual(response.data, [])

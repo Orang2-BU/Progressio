@@ -95,6 +95,13 @@ dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 @media (max-width: 650px) { .topbar { padding: 20px; } .brand-tagline { display: none; } .auth-layout { display: flex; flex-direction: column-reverse; padding: 0 20px; margin: 24px auto 40px; gap: 24px; } .auth-panel { max-width: none; width: 100%; } .auth-story { width: 100%; } .auth-story h1 { font-size: 36px; } .workspace { display: block; } .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 16px 20px; } .sidebar > .eyebrow, .sidebar-note { display: none; } .sidebar nav { display: flex; } .sidebar nav a { flex: 1; } .workspace-content { padding: 28px 20px; } .workspace-content > h1 { font-size: 32px; } .welcome-card { padding: 24px; } .welcome-card h2 { font-size: 28px; } dl { grid-template-columns: 1fr; } .profile-card { padding: 20px; } .footer { padding: 20px; font-size: 11px; } .account-label { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
 .catalog-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.diagnostic-content > .profile-actions { margin-bottom: 24px; }
+.diagnostic-question { margin: 24px 0; }
+.diagnostic-question legend { font-weight: 650; font-size: 17px; padding: 0 8px; overflow-wrap: anywhere; }
+.diagnostic-question .hint { margin-bottom: 16px; }
+.diagnostic-scores { list-style: none; padding: 0; }
+.diagnostic-scores li { display: grid; gap: 8px; padding: 20px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.diagnostic-scores small { color: var(--muted); }
 .catalog-fields { margin-top: 28px; }
 .catalog-description { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; overflow-wrap: anywhere; }
 .catalog-description h3, .target-result h3 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.5px; }

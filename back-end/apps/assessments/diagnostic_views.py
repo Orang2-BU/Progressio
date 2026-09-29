@@ -3,6 +3,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound, ValidationError
 from drf_spectacular.utils import extend_schema
 
 from apps.careers.models import CareerTrack
@@ -28,6 +29,7 @@ class DiagnosticQuestionListView(generics.ListAPIView):
         return DiagnosticQuestion.objects.filter(
             career_track_id=self.kwargs['career_track_id'],
             career_track__is_active=True,
+            skill__competency__career_track_id=self.kwargs['career_track_id'],
             is_active=True,
         ).select_related('skill')
 
@@ -61,6 +63,11 @@ class LatestDiagnosticAttemptView(generics.RetrieveAPIView):
     def get_object(self):
         queryset = DiagnosticAttempt.objects.filter(user=self.request.user)
         career_track_id = self.request.query_params.get('career_track')
-        if career_track_id:
+        if career_track_id is not None:
+            if not career_track_id.isascii() or not career_track_id.isdecimal() or len(career_track_id) > 19 or not 1 <= int(career_track_id) <= 9223372036854775807:
+                raise ValidationError({'career_track': 'Expected a positive integer ID.'})
             queryset = queryset.filter(career_track_id=career_track_id)
-        return get_object_or_404(queryset)
+        attempt = queryset.order_by('-completed_at', '-created_at', '-id').first()
+        if attempt is None:
+            raise NotFound('No diagnostic attempt found.')
+        return attempt

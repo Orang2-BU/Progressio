@@ -107,7 +107,8 @@ export default function Catalog() {
       <button className="button primary full" disabled={!target || pending || Boolean(error || invalid)} onClick={copy}>Salin tautan target <span aria-hidden="true">↗</span></button>
       {copied?.href === href && <p className="hint" role="status">{copied.message}</p>}
       <p className="session-note">Pilihan tersimpan pada URL, bukan di profil server. Tautan dapat dibuka kembali; login tetap diperlukan.</p>
-      <p className="hint">Berikutnya: ukur titik awal melalui diagnostic, lalu susun roadmap. Alur tersebut belum tersedia pada fase ini.</p>
+      {target && !pending && !error && !invalid && <Link className="button primary full" href={href.replace('/catalog', '/diagnostic')}>Ukur titik awal</Link>}
+      <p className="hint">Diagnostic mencakup seluruh career track, termasuk jika targetmu satu skill. Roadmap hadir pada fase berikutnya.</p>
     </aside></div>
   </section></WorkspaceLayout>;
 }

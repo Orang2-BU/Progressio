@@ -56,7 +56,7 @@ Seluruh GET di tabel mengembalikan 200 kecuali dinyatakan lain.
 | Pilih skill | GET `skills/?competency={id}`, `skills/{id}` | Publik | list P; competency ID, slug, difficulty, estimated_learning_minutes; detail prerequisites, lesson_count |
 | Diagnostic | GET `diagnostics/{track_id}` | Privat | A; id, skill, skill_title, prompt, options[{value,label}], order |
 | Kirim diagnostic | POST `diagnostics/{track_id}/submit` | Privat | 201 DiagnosticAttempt; semua ID soal wajib ada |
-| Hasil terakhir | GET `diagnostics/latest?career_track={id}` | Privat | objek attempt; 404 jika belum ada; ada bug multi-attempt (G1) |
+| Hasil terakhir | GET `diagnostics/latest?career_track={id}` | Privat | objek attempt terbaru milik user; 404 jika belum ada; filter ID invalid 400 |
 | Dashboard | GET `progress` | Privat | total_xp, completed_lessons_count, competencies[], skills[] |
 | Peta skill | GET `learning-path?career_track={slug}` | Privat | A; skill_id, skill_slug, status, mastery, xp, missing_prerequisites[] |
 | Roadmap | GET `roadmap?skill={slug}` atau `?competency={slug}` atau `?career_track={slug}` | Privat | tepat satu target; target, total_steps, remaining_minutes, remaining_hours, already_satisfied[], steps[] |
@@ -171,11 +171,11 @@ Belum ada envelope error tunggal. Tangani semuanya:
 
 ## Gap backend dan kriteria penerimaan
 
-Perubahan berikut adalah backlog, belum diimplementasikan dalam Fase 0.
+G1 diselesaikan pada fase 3; gap lainnya tetap backlog.
 
 | ID / prioritas | Temuan dan sumber | Dampak / kriteria selesai |
 |---|---|---|
-| G1 / sebelum hasil diagnostic | `assessments/diagnostic_views.py`: latest memakai get_object_or_404(queryset), yang menjalankan get(), bukan first() | Dua attempt memicu MultipleObjectsReturned; pilih terbaru dengan urutan deterministik; 0→404, 1/2+→200 terbaru; uji isolasi user/track |
+| G1 / selesai fase 3 | Latest memakai first() dengan urutan -completed_at, -created_at, -id | 0→404, 1/2+→200 terbaru; tie-break, isolasi user/track dan filter invalid diuji |
 | G2 / sebelum hasil assessment persisten | `assessments/urls.py`: tidak ada GET submission | Tambahkan list/detail milik user; refresh halaman dapat memuat hasil; user lain mendapat 404 |
 | G3 / sebelum badge selesai belajar | `learning/serializers.py`: progress hanya jumlah completed lesson, tanpa ID; checkpoint tidak persisten | Ekspos completed lesson IDs/status per user; UI tidak menebak completion dari mastery; tentukan apakah checkpoint perlu disimpan |
 | G4 / sebelum UI eligibility | `credentials/urls.py`: eligibility hanya service internal | Tambahkan endpoint read-only dengan eligible, alasan, kebutuhan yang belum terpenuhi; jangan mencoba issue hanya untuk mengecek |
@@ -201,7 +201,7 @@ dua attempt. Data dibuat di SQLite in-memory. OpenAPI dihasilkan ulang dari kode
 tanpa snapshot besar yang mudah basi.
 
 Fase 1 auth dan fondasi UI sudah diimplementasikan; lihat README untuk uji client
-dan smoke test browser dengan database sementara. G1/G2/G3/G4 perlu
+dan smoke test browser dengan database sementara. G1 sudah selesai; G2/G3/G4 perlu
 diselesaikan sebelum alur hasil dan progress dinyatakan lengkap; G5/G7/G8 sebelum
 credential final ditampilkan. Tidak ada klaim bahwa frontend penuh atau deployment
-sudah diuji. Provider nyata dan alur browser di luar auth belum diuji.
+sudah diuji. Katalog dan diagnostic diuji dengan Django sementara; provider nyata belum diuji.

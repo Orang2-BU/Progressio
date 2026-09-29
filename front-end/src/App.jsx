@@ -119,7 +119,7 @@ export function WorkspaceLayout({ children }) {
     <aside className="sidebar"><p className="eyebrow">WORKSPACE</p>
       <nav aria-label="Navigasi workspace">{[['/', 'Ringkasan'], ['/catalog', 'Pilih target'], ['/profile', 'Profil akun']].map(([href, label]) =>
         <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>{label}<span aria-hidden="true">↗</span></Link>)}</nav>
-      <div className="sidebar-note"><span className="eyebrow">TARGET → BUKTI</span><p>Kurikulum adalah standar penilaian kemampuan, bukan daftar materi yang wajib dibaca.</p><small>Target dipilih dahulu. Pengukuran dan roadmap hadir pada fase berikutnya.</small></div>
+      <div className="sidebar-note"><span className="eyebrow">TARGET → BUKTI</span><p>Kurikulum adalah standar penilaian kemampuan, bukan daftar materi yang wajib dibaca.</p><small>Pilih target dan ukur titik awal. Roadmap hadir pada fase berikutnya.</small></div>
     </aside>{children}
   </div>;
 }
@@ -175,7 +175,7 @@ export default function App({ children }) {
   const router = useRouter();
   const main = useRef(null);
   const publicRoute = ['/login', '/register'].includes(route);
-  const privateRoute = ['/', '/profile', '/catalog'].includes(route);
+  const privateRoute = ['/', '/profile', '/catalog', '/diagnostic', '/diagnostic/result'].includes(route);
   useEffect(() => {
     if (!user && privateRoute) router.replace('/login?next=' + encodeURIComponent(window.location.pathname + window.location.search));
     if (user && publicRoute) router.replace(loginDestination(new URLSearchParams(window.location.search).get('next')));
