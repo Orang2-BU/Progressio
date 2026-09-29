@@ -1,4 +1,6 @@
 from django.utils import timezone
+from django.db import transaction
+from django.contrib.auth import get_user_model
 from django.db.models import Avg, Sum
 from .models import Lesson, LessonCompletion, SkillProgress, CompetencyProgress
 from apps.skills.models import Skill, SkillPrerequisite
@@ -14,6 +16,7 @@ class ProgressService:
     XP_PER_ASSESSMENT = 100
 
     @classmethod
+    @transaction.atomic
     def complete_lesson(cls, user, lesson):
         """
         Event: LessonCompleted
@@ -22,6 +25,8 @@ class ProgressService:
         3. Recalculates skill mastery based on completed lessons ratio.
         4. Updates competency progress.
         """
+        # Serialize this user's lesson rewards, including first SkillProgress creation.
+        get_user_model().objects.select_for_update().get(pk=user.pk)
         completion, created = LessonCompletion.objects.get_or_create(
             user=user,
             lesson=lesson
@@ -114,7 +119,7 @@ class ProgressService:
         - Skill progresses
         """
         total_xp = SkillProgress.objects.filter(user=user).aggregate(total=Sum('xp'))['total'] or 0
-        total_completed_lessons = LessonCompletion.objects.filter(user=user).count()
+        completed_lesson_ids = list(LessonCompletion.objects.filter(user=user).order_by('lesson_id').values_list('lesson_id', flat=True))
 
         competency_progresses = CompetencyProgress.objects.filter(
             user=user
@@ -126,7 +131,8 @@ class ProgressService:
 
         return {
             'total_xp': total_xp,
-            'completed_lessons_count': total_completed_lessons,
+            'completed_lessons_count': len(completed_lesson_ids),
+            'completed_lesson_ids': completed_lesson_ids,
             'competency_progresses': competency_progresses,
             'skill_progresses': skill_progresses,
         }

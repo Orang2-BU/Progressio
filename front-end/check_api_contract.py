@@ -86,11 +86,17 @@ def main():
     second = request('post', f'diagnostics/{track.pk}/submit', status=201, data={'answers': answers})
     latest = request('get', f'diagnostics/latest?career_track={track.pk}')
     assert latest['id'] == second['id']
+    lesson = skill.lessons.first()
+    request('post', f'lesson/{lesson.pk}/complete')
+    duplicate = request('post', f'lesson/{lesson.pk}/complete')
+    assert duplicate['xp_earned'] == 0 and not duplicate['newly_completed']
+    progress = request('get', 'progress')
+    assert progress['completed_lesson_ids'] == [lesson.pk]
     print(f'PASS: {checks} API requests; OpenAPI generated without warnings.')
     print('PASS: latest diagnostic returns the second attempt.')
     operation = schema['paths']['/api/v1/study-steps/{id}/checkpoint']['post']
-    print('SCHEMA GAP: checkpoint response has no content schema:',
-          'content' not in operation['responses']['200'])
+    assert 'content' in operation['responses']['200']
+    print('PASS: checkpoint response schema is present.')
     parameters = schema['paths']['/api/v1/learning-path']['get'].get('parameters', [])
     print('SCHEMA GAP: learning-path career_track parameter missing:',
           not any(p['name'] == 'career_track' for p in parameters))

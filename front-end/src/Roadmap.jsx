@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { loadTarget } from './catalog.js';
 import { loadRoadmap } from './roadmap.js';
+import { studyHref } from './study.js';
 
 export default function Roadmap() {
   const query = useSearchParams().toString();
@@ -48,13 +49,14 @@ export default function Roadmap() {
             <h3>{s.skill_title}</h3><p>{s.competency_title} · {s.difficulty}</p>
             <p>Mastery tersimpan: {s.mastery} / 100 · Estimasi: {s.estimated_minutes} menit</p>
             <details><summary>Prasyarat ({s.prerequisites.length})</summary>{s.prerequisites.length ? <ul>{s.prerequisites.map((slug) => <li key={slug}>{titles.get(slug) || slug}</li>)}</ul> : <p>Tidak ada prasyarat pada katalog.</p>}</details>
+            <Link className="button secondary" href={studyHref(query, s.skill_id)}>Buka materi {s.skill_title}</Link>
           </li>)}</ol>}
       </section>
       <section className="profile-card" aria-labelledby="satisfied-title"><h2 id="satisfied-title">Cukup untuk roadmap ini</h2>
         <p className="hint">Ditentukan server dari mastery tersimpan, bukan tanda selesai membaca. Prasyarat di bawah skill yang sudah cukup tidak ditelusuri ulang oleh backend.</p>
         {data.already_satisfied.length ? <ul className="diagnostic-scores">{data.already_satisfied.map((s) => <li key={s.skill_slug}><strong>{s.skill_title}</strong><span>Mastery {s.mastery} / 100</span></li>)}</ul> : <p>Belum ada skill pada jalur ini yang dinyatakan cukup.</p>}
       </section>
-      <p className="session-note">Roadmap dihitung ulang, bukan rencana tersimpan. Membuka atau memperbaruinya tidak mengubah mastery/XP. Materi dan assessment akan disambungkan pada fase berikutnya.</p>
+      <p className="session-note">Roadmap dihitung ulang, bukan rencana tersimpan. Membuka atau memperbaruinya tidak mengubah mastery/XP. Skill yang sudah cukup tetap dapat dipelajari kembali melalui katalog; assessment hadir pada fase berikutnya.</p>
     </>}
   </section></WorkspaceLayout>;
 }

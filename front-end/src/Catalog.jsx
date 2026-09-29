@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { publicRequest } from './api.js';
 import { listCatalog, parseSelection, selectionHref, resolveTarget } from './catalog.js';
+import { studyHref } from './study.js';
 
 const empty = { track: '', competency: '', skill: '', target: 'career_track' };
 const names = { career_track: 'Career track', competency: 'Competency', skill: 'Skill' };
@@ -109,6 +110,7 @@ export default function Catalog() {
       <p className="session-note">Pilihan tersimpan pada URL, bukan di profil server. Tautan dapat dibuka kembali; login tetap diperlukan.</p>
       {target && !pending && !error && !invalid && <Link className="button primary full" href={href.replace('/catalog', '/diagnostic')}>Ukur titik awal</Link>}
       {target && !pending && !error && !invalid && <Link className="button secondary full" href={href.replace('/catalog', '/roadmap')}>Lihat roadmap target</Link>}
+      {target && skill && !pending && !error && !invalid && <Link className="button secondary full" href={studyHref(href.split('?')[1] || '', skill.id)}>Buka materi skill pilihan</Link>}
       <p className="hint">Diagnostic mencakup seluruh career track. Roadmap mengikuti cakupan target dan mastery tersimpan; diagnostic belum wajib.</p>
     </aside></div>
   </section></WorkspaceLayout>;

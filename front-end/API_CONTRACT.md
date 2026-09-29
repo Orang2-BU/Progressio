@@ -57,10 +57,10 @@ Seluruh GET di tabel mengembalikan 200 kecuali dinyatakan lain.
 | Diagnostic | GET `diagnostics/{track_id}` | Privat | A; id, skill, skill_title, prompt, options[{value,label}], order |
 | Kirim diagnostic | POST `diagnostics/{track_id}/submit` | Privat | 201 DiagnosticAttempt; semua ID soal wajib ada |
 | Hasil terakhir | GET `diagnostics/latest?career_track={id}` | Privat | objek attempt terbaru milik user; 404 jika belum ada; filter ID invalid 400 |
-| Dashboard | GET `progress` | Privat | total_xp, completed_lessons_count, competencies[], skills[] |
+| Dashboard | GET `progress` | Privat | total_xp, completed_lessons_count, completed_lesson_ids[], competencies[], skills[]; IDs milik user |
 | Peta skill | GET `learning-path?career_track={slug}` | Privat | A; skill_id, skill_slug, status, mastery, xp, missing_prerequisites[] |
 | Roadmap | GET `roadmap?skill={slug}` atau `?competency={slug}` atau `?career_track={slug}` | Privat | tepat satu target; target, total_steps, remaining_minutes, remaining_hours, already_satisfied[], steps[] |
-| Materi | GET `lessons?skill={id}`, `skills/{id}/lessons`, `lessons/{id}` | Publik | kedua list P; content_url, content_type, duration, provider, license, license_url, attribution_required, link_status |
+| Materi | GET `lessons?skill={id}`, `skills/{id}/lessons`, `lessons/{id}` | Publik | kedua list P; content_url, content_type, duration, provider, license, license_url, license_verified, redistributable, commercial_use_allowed, attribution_required, link_status |
 | Study plan | GET `skills/{slug}/study-plan` | Publik | P; id, lesson, order, prompt, checkpoint_question, estimated_minutes, study_url, provider, license |
 | Checkpoint | POST `study-steps/{id}/checkpoint` | Privat | 200 `{correct, feedback}`; tidak menyimpan completion atau XP |
 | Selesai lesson | POST `lesson/{id}/complete` | Privat | tanpa body; 200 status, lesson_id, lesson_title, xp_earned, newly_completed, current_skill_mastery, current_skill_xp |
@@ -171,21 +171,22 @@ Belum ada envelope error tunggal. Tangani semuanya:
 
 ## Gap backend dan kriteria penerimaan
 
-G1 diselesaikan pada fase 3. Pada fase 4, G6 dijelaskan lewat label berbeda dan
-tes ambang; kebijakan backend 70/85 tetap dipertahankan. Gap lainnya tetap backlog.
+G1 diselesaikan pada fase 3; G3 completion IDs + keputusan checkpoint sementara
+pada fase 5. Pada fase 4, G6 dijelaskan lewat label berbeda dan tes ambang;
+kebijakan backend 70/85 tetap dipertahankan. Gap lainnya tetap backlog.
 
 | ID / prioritas | Temuan dan sumber | Dampak / kriteria selesai |
 |---|---|---|
 | G1 / selesai fase 3 | Latest memakai first() dengan urutan -completed_at, -created_at, -id | 0→404, 1/2+→200 terbaru; tie-break, isolasi user/track dan filter invalid diuji |
 | G2 / sebelum hasil assessment persisten | `assessments/urls.py`: tidak ada GET submission | Tambahkan list/detail milik user; refresh halaman dapat memuat hasil; user lain mendapat 404 |
-| G3 / sebelum badge selesai belajar | `learning/serializers.py`: progress hanya jumlah completed lesson, tanpa ID; checkpoint tidak persisten | Ekspos completed lesson IDs/status per user; UI tidak menebak completion dari mastery; tentukan apakah checkpoint perlu disimpan |
+| G3 / selesai fase 5 | `progress` mengirim completed_lesson_ids per user | UI memakai ID server; checkpoint tetap feedback sementara, bukan completion/XP/evidence; isolasi user, replay dan rollback diuji |
 | G4 / sebelum UI eligibility | `credentials/urls.py`: eligibility hanya service internal | Tambahkan endpoint read-only dengan eligible, alasan, kebutuhan yang belum terpenuhi; jangan mencoba issue hanya untuk mengecek |
 | G5 / sebelum credential final | `credentials/services.py`: rata-rata >=70 + satu assessment lulus; lesson bisa memberi 70 mastery | Tetapkan skill wajib dan evidence lulus per skill; draft/mock tidak menerbitkan credential final; uji jalur penolakan |
 | G6 / label dipisahkan fase 4 | `learning/services.py`: roadmap satisfied >=70, learning-path mastered >=85 | UI memakai “cukup untuk roadmap”, bukan lulus/mastered; 69.9/70/84.9/85 diuji; mastery dari membaca/diagnostic bukan bukti assessment. Kebijakan belum disatukan |
 | G7 / sebelum mode demo/final | `curriculum/importer.py` hanya memperingatkan draft; serializer submission/proof tidak mengirim provider/review status | Ekspos provenance yang stabil, termasuk fallback; UI bisa membedakan mock/live/draft tanpa menebak dari tx hash atau feedback |
 | G8 / sebelum halaman standar | Serializer katalog tidak mengekspos learning_outcomes, observable_behaviors, versi; verifikasi publik tidak memuat snapshot standar | Ekspos field publik yang diperlukan; recruiter melihat versi dan kriteria saat penerbitan, bukan standar terbaru |
 | G9 / sebelum submit provider nyata | Submission bebas, sinkron, tanpa idempotency dan error provider konsisten | Validasi evidence per tipe; normalkan failure; retry tidak membuat submission/XP ganda; GET hasil untuk recovery |
-| G10 / sebelum generated API client | learning-path filter tidak dianotasi; checkpoint 200 tidak memiliki response schema; JSONField questions/skill_scores masih generik | Lengkapi OpenAPI dan error utama; cocokkan generated types dengan respons runtime |
+| G10 / sebagian selesai fase 5 | Checkpoint 200 memakai StudyCheckpointResponseSerializer; filter learning-path belum dianotasi; JSONField questions/skill_scores masih generik | Lengkapi schema yang tersisa; cocokkan generated types dengan respons runtime |
 
 Tambahan: AI skill-gap HTTP endpoint hanya menerima career_track_id walaupun
 service internal mendukung target lebih sempit. Roadmap sudah mendukung skill
@@ -202,10 +203,13 @@ dua attempt. Data dibuat di SQLite in-memory. OpenAPI dihasilkan ulang dari kode
 tanpa snapshot besar yang mudah basi.
 
 Fase 1 auth dan fondasi UI sudah diimplementasikan; lihat README untuk uji client
-dan smoke test browser dengan database sementara. G1 sudah selesai; G2/G3/G4 perlu
+dan smoke test browser dengan database sementara. G1/G3 sudah selesai; G2/G4 perlu
 diselesaikan sebelum alur hasil dan progress dinyatakan lengkap; G5/G7/G8 sebelum
 credential final ditampilkan. Tidak ada klaim bahwa frontend penuh atau deployment
 sudah diuji. Katalog, diagnostic dan roadmap diuji dengan Django sementara;
 provider nyata belum diuji. Roadmap memakai mastery tersimpan, bukan hanya attempt
 terakhir. GET tidak mengubah progress; target kosong tanpa skill adalah 400,
 sedangkan target dengan mastery cukup menghasilkan 200 dengan steps kosong.
+Materi/checkpoint/completion juga diuji dengan Django sementara. Completion adalah
+aktivitas self-reported, bukan kelulusan assessment. Licence metadata saat ini
+belum diverifikasi manusia; link-out tidak berarti izin menyalin/redistribusi.

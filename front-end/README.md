@@ -88,6 +88,45 @@ URL dapat dibuka kembali setelah login ulang. Roadmap dihitung saat dimuat,
 bukan snapshot/rencana yang disimpan lintas perangkat. Materi, assessment dan
 credential tetap fase lanjutan; tidak ada mutasi completion pada fase ini.
 
+## Status fase 5 — materi, checkpoint dan completion
+
+`/study?track={id}&learn={skill_id}` membuka materi suatu skill dengan konteks
+target tetap di query. Roadmap memberi tautan setiap langkah; katalog memberi
+tautan skill pilihan, termasuk untuk belajar ulang setelah roadmap kosong.
+Skill materi harus berada pada career track aktif target. Semua halaman
+pagination lesson dan study plan dimuat; materi kosong dan materi tanpa study
+plan dibedakan. Materi tetap di penerbit, tidak di-crawl, disalin, atau di-embed.
+
+UI menampilkan provider, lisensi yang dicatat, status verifikasi lisensi,
+attribution dan status tautan terakhir. Paket kurikulum saat ini belum melakukan
+verifikasi lisensi satu per satu: tidak ada klaim “aman disalin”. URL hanya
+HTTP(S) tanpa credentials; URL kosong/unsafe dan status broken tidak menjadi
+tautan aktif. Link eksternal memakai tab baru + noopener/noreferrer. Pemeriksaan
+ini bukan pengecekan reachability sumber saat ini atau audit lisensi hukum.
+
+Study plan memuat instruksi, bagian sumber, estimasi dan checkpoint teks singkat.
+Checkpoint dinilai server tanpa kunci jawaban di client. HTTP 200 dengan correct
+false tetap berarti jawaban belum sesuai. Feedback tidak persisten dan tidak
+memberi completion, XP, atau evidence credential; reload menghapus feedback.
+
+G3 diselesaikan untuk status completion: `progress` kini mengirim
+`completed_lesson_ids` milik user. Badge/tombol berasal dari ID tersebut, bukan
+mastery atau jumlah completion saja. Completion adalah pernyataan eksplisit
+“saya selesai mempelajari”, bukan efek membuka link atau menjawab checkpoint.
+Reward lama backend tetap +50 XP per lesson baru dan mastery belajar maksimal
+70, tanpa menurunkan mastery yang lebih tinggi. Transaksi dan lock user pada
+database yang mendukung row locking menjaga completion/reward bersama; rollback
+dan replay sequential diuji. Ini bukan benchmark konkurensi PostgreSQL.
+
+Setelah POST, progress diambil ulang. Network/5xx/respons invalid tidak diulang
+otomatis; progress diberi status belum pasti dan tombol completion dinonaktifkan
+sampai pengguna memperbarui progress. Jawaban checkpoint tetap ada saat gagal.
+Completion tersimpan di backend dan kembali setelah reload/login; target hanya
+di URL. Tidak ada migrasi database atau dependensi runtime baru.
+
+Assessment dan credential tetap fase berikutnya. Selesai materi/70 mastery tidak
+membuktikan assessment lulus atau kelayakan credential (backlog G5 masih ada).
+
 Access dan refresh JWT disimpan **hanya di memori**, tidak di localStorage atau
 sessionStorage. Reload/tab baru meminta login ulang. Request privat dengan 401
 menggunakan satu refresh bersama dan retry satu kali; penolakan refresh mengakhiri
@@ -121,7 +160,7 @@ Next.js/Node, bukan penyajian folder statis atau `output: 'export'`.
 [aturan environment Next.js](https://nextjs.org/docs/app/guides/environment-variables).
 Jangan menaruh secret di variabel `NEXT_PUBLIC_*`. Variabel `VITE_*` tidak lagi dipakai.
 
-Routing sekarang menggunakan `/`, `/login`, `/register`, `/profile`, `/catalog`, `/diagnostic`, `/diagnostic/result`, dan `/roadmap`, bukan
+Routing sekarang menggunakan `/`, `/login`, `/register`, `/profile`, `/catalog`, `/diagnostic`, `/diagnostic/result`, `/roadmap`, dan `/study`, bukan
 `#/...`. Gunakan Link Next.js untuk navigasi internal agar sesi di memori tetap
 bertahan. Shared layout menjaga shell, sementara pages menyediakan metadata dan
 konten masing-masing route. Form/sesi tetap Client Components; snapshot SSR selalu
@@ -151,12 +190,19 @@ Tiga tes fase 4 menambah target slug/routing, validasi urutan dan ringkasan
 roadmap, empty route, GET berautentikasi/read-only, error dan cancellation:
 total 20 tes Node. Backend roadmap memiliki 17 tes; digabung assessment menjadi
 29 tes, termasuk diagnostic -> roadmap, isolasi user dan ambang 70/85.
+Lima tes fase 5 menambah URL aman, pagination materi/study plan, parent track,
+empty/unplanned content, progress IDs, payload checkpoint, false feedback,
+completion tanpa body dan lost response: total 25 tes Node.
+Learning + assessment + credential memiliki 55 tes, termasuk rollback reward,
+completion IDs per-user, completion tidak disimpulkan dari diagnostic, dan
+checkpoint tidak mengubah XP/completion. Probe API sekarang memeriksa 26 request
+serta schema checkpoint; schema filter learning-path tetap backlog G10.
 
 Jalankan tes backend terkait dari root repo tanpa memakai database proyek:
 
 ```powershell
 $env:DB_ENGINE = 'sqlite'
-uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py test apps.learning.test_roadmap apps.assessments
+uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py test apps.learning apps.assessments apps.credentials
 ```
 
 Untuk menguji UI dengan database sementara, dari **root repo**:
@@ -175,7 +221,7 @@ npm run dev
 Server uji memakai SQLite in-memory: berhenti berarti seluruh akun uji hilang,
 database proyek tidak disentuh. Jangan gunakan server ini untuk deployment.
 
-Untuk fase 2–4, tambahkan `--catalog` pada perintah server uji. Flag ini mengimpor
+Untuk fase 2–5, tambahkan `--catalog` pada perintah server uji. Flag ini mengimpor
 kurikulum repo lewat `seed_demo`, menambah fixture kosong/inaktif, dan menetapkan
 dua item per halaman agar pagination teruji. Akun demo mengikuti backend:
 `student` / `progressio-demo-2026`. Jangan gunakan akun/password demo di produksi.
@@ -213,6 +259,21 @@ produksi + reload -> login memulihkan URL skill lengkap dan hasil roadmap.
 Backend dihentikan -> error; dihidupkan kembali dengan database uji baru ->
 retry berhasil dan memakai progress baru, bukan hasil client lama. Track tanpa
 skill menampilkan error katalog. Tidak ada error browser pada alur normal.
+
+Smoke test fase 5 (29 September 2026) dengan Django in-memory + kurikulum repo:
+roadmap -> HTTP Messages and Semantics memuat 3 lesson dan 3 checkpoint dengan
+pagination 2 item. Provider/lisensi belum terverifikasi ditampilkan; blank answer
+memfokuskan error summary, jawaban salah/benar memiliki feedback berbeda dan
+tidak menambah XP. Completion satu lesson menghasilkan 1/3, 50 XP dan mastery
+23.3 dari server; tombol lesson selesai disabled. Build produksi + reload/login
+memulihkan URL dan completion, tetapi feedback checkpoint hilang. Link sumber
+diperiksa sebagai HTTP(S) dengan noopener/noreferrer, tanpa menguji situs penerbit
+atau memverifikasi lisensinya. Tampilan 375 px, landscape dan reduced-motion
+diperiksa tanpa overflow; tidak ada error browser pada alur normal produksi.
+Backend mati saat checkpoint/completion mempertahankan jawaban dan menandai
+progress belum pasti; restart memakai database uji baru + refresh memulihkan
+progress terbaru dan tombol, bukan completion client lama. Empty/unplanned content
+dan unsafe URLs diuji otomatis; belum melalui smoke test browser tersendiri.
 Smoke test browser fase 1 pada 29 September 2026 memverifikasi daftar -> masuk -> profil,
 muat ulang profil, logout/proteksi route, password salah, konfirmasi berbeda,
 username duplikat, kegagalan backend dengan isian tetap tersimpan, dan lebar
@@ -239,16 +300,16 @@ jangan menormalisasi semua endpoint Django ke satu bentuk URL.
 - `src/catalog.js`: pagination, validasi URL dan relasi target.
 - `src/Diagnostic.jsx` dan `src/diagnostic.js`: kuis, hasil terbaru dan kontrak diagnostic.
 - `src/Roadmap.jsx` dan `src/roadmap.js`: roadmap dan validasi kontrak server.
+- `src/Study.jsx` dan `src/study.js`: materi, checkpoint dan completion berbasis server.
 - `src/navigation.js`: tujuan login internal yang aman.
 - `src/api.js`: API client, sesi dan refresh terkoordinasi.
 - `src/styles.css`: identitas visual dan responsivitas.
 - `next.config.mjs`: rewrite API ke Django.
 - `tests/`: tes client dan backend sementara untuk smoke test.
 
-Fase 4 menyambungkan roadmap dari target, mastery dan prasyarat.
-Langkah berikutnya adalah materi/study plan dari sumber resmi dan progress
-belajar; selesaikan G3 sebelum memberi badge completion. Assessment/credential
-tetap memerlukan backlog yang terkait, bukan sekadar mastery atau selesai membaca.
+Fase 5 menyambungkan materi/study plan, checkpoint latihan dan completion
+persisten. Langkah berikutnya adalah assessment/evidence dan hasil persisten
+(G2/G9); credential tetap memerlukan G4/G5/G7/G8, bukan hanya mastery/selesai membaca.
 Kontrak backend dan gap integrasi tetap tersedia di [API_CONTRACT.md](API_CONTRACT.md).
 
 ## Probe fase 0

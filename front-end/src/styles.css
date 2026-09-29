@@ -111,6 +111,13 @@ dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 .roadmap-steps li { overflow-wrap: anywhere; }
 .roadmap-steps summary { cursor: pointer; padding: 12px 0; min-height: 48px; }
 .roadmap-steps details ul { padding-left: 24px; }
+.study-content > .profile-actions { margin-bottom: 24px; }
+.study-content > .profile-card { margin-top: 24px; overflow-wrap: anywhere; }
+.study-content h2 { font-size: 24px; }
+.study-step { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 24px; }
+.study-step h3 { margin-top: 0; }
+.checkpoint-form { padding: 20px; margin-top: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.checkpoint-form h4 { margin-top: 0; }
 .catalog-fields { margin-top: 28px; }
 .catalog-description { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; overflow-wrap: anywhere; }
 .catalog-description h3, .target-result h3 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.5px; }

@@ -14,7 +14,8 @@ class LessonSerializer(serializers.ModelSerializer):
             'id', 'skill', 'skill_title', 'title',
             'content_type', 'content_url', 'duration', 'order',
             'provider', 'authority_level', 'license', 'license_url',
-            'attribution_required', 'link_status',
+            'attribution_required', 'link_status', 'license_verified',
+            'redistributable', 'commercial_use_allowed',
             'created_at', 'updated_at'
         ]
 
@@ -68,6 +69,7 @@ class CompetencyProgressSerializer(serializers.ModelSerializer):
 class UserProgressOverviewSerializer(serializers.Serializer):
     total_xp = serializers.IntegerField()
     completed_lessons_count = serializers.IntegerField()
+    completed_lesson_ids = serializers.ListField(child=serializers.IntegerField())
     competencies = CompetencyProgressSerializer(
         source='competency_progresses', many=True
     )

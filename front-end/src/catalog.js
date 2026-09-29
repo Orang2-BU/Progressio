@@ -1,18 +1,16 @@
 import { ApiError, publicRequest } from './api.js';
 
-export async function listCatalog(path, options) {
+export async function listPages(path, options) {
   const items = [];
   const seen = new Set();
   let current = path;
-  // ponytail: load every page of a small taxonomy branch; add server search for large catalogs.
+  // ponytail: load all pages of small catalog/study lists; use server search/paging for large collections.
   while (current) {
     if (seen.has(current)) throw new ApiError('Pagination katalog berulang. Coba muat ulang.');
     seen.add(current);
     const data = await publicRequest(current, options);
     if (!data || !Array.isArray(data.results) || !Number.isInteger(data.count) ||
-        !data.results.every((item) => item && Number.isSafeInteger(item.id) && item.id > 0 && typeof item.title === 'string' && typeof item.slug === 'string' &&
-          ['description', 'difficulty'].every((key) => item[key] === undefined || typeof item[key] === 'string') &&
-          ['career_track', 'competency', 'estimated_learning_minutes'].every((key) => item[key] === undefined || (Number.isSafeInteger(item[key]) && item[key] >= 0)))) {
+        !data.results.every((item) => item && Number.isSafeInteger(item.id) && item.id > 0)) {
       throw new ApiError('Format katalog dari server tidak valid.');
     }
     items.push(...data.results);
@@ -24,6 +22,16 @@ export async function listCatalog(path, options) {
     const url = new URL(path, 'https://catalog.local');
     url.searchParams.set('page', page);
     current = url.pathname.slice(1) + url.search;
+  }
+  return items;
+}
+
+export async function listCatalog(path, options) {
+  const items = await listPages(path, options);
+  if (!items.every((item) => typeof item.title === 'string' && typeof item.slug === 'string' &&
+      ['description', 'difficulty'].every((key) => item[key] === undefined || typeof item[key] === 'string') &&
+      ['career_track', 'competency', 'estimated_learning_minutes'].every((key) => item[key] === undefined || (Number.isSafeInteger(item[key]) && item[key] >= 0)))) {
+    throw new ApiError('Format katalog dari server tidak valid.');
   }
   return items;
 }

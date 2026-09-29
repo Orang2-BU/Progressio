@@ -19,6 +19,7 @@ from .serializers import (
     RoadmapSerializer,
     StudyStepSerializer,
     StudyCheckpointRequestSerializer,
+    StudyCheckpointResponseSerializer,
 )
 from .services import ProgressService, LearningPathService
 
@@ -236,7 +237,7 @@ class StudyCheckpointView(APIView):
         summary="Submit Study Checkpoint",
         request=StudyCheckpointRequestSerializer,
         responses={
-            200: OpenApiResponse(description="Whether the checkpoint answer was correct."),
+            200: OpenApiResponse(response=StudyCheckpointResponseSerializer, description="Temporary feedback; does not record completion or XP."),
         },
     )
     def post(self, request, pk, *args, **kwargs):

@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from apps.curriculum.importer import import_track
 
-from .models import Lesson, StudyStep
+from .models import Lesson, StudyStep, LessonCompletion, SkillProgress
 from .tasks import check_resource_links, check_url
 
 User = get_user_model()
@@ -92,6 +92,18 @@ class StudyPlanTests(TestCase):
         for step in StudyStep.objects.select_related('lesson', 'lesson__skill'):
             self.assertEqual(step.lesson.is_managed, True)
             self.assertTrue(step.lesson.content_url)
+
+    def test_checkpoint_does_not_complete_lessons_or_award_xp_and_licenses_are_honest(self):
+        self.client.force_login(self.user)
+        step = StudyStep.objects.get(checkpoint_answer='201')
+        for answer in ('201', '200'):
+            self.client.post(reverse('study-checkpoint', kwargs={'pk': step.pk}), {'answer': answer})
+        self.assertFalse(LessonCompletion.objects.filter(user=self.user).exists())
+        self.assertFalse(SkillProgress.objects.filter(user=self.user).exists())
+        lesson = self.client.get(reverse('lesson-detail', args=[step.lesson_id])).json()
+        self.assertFalse(lesson['license_verified'])
+        self.assertIsInstance(lesson['redistributable'], bool)
+        self.assertIsInstance(lesson['commercial_use_allowed'], bool)
 
 
 class LinkCheckTests(TestCase):

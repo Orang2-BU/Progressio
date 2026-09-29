@@ -78,8 +78,37 @@ class LearningAndProgressTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_xp'], 50)
         self.assertEqual(response.data['completed_lessons_count'], 1)
+        self.assertEqual(response.data['completed_lesson_ids'], [self.lesson1.id])
         self.assertEqual(len(response.data['skills']), 1)
         self.assertEqual(len(response.data['competencies']), 1)
+
+    def test_completion_ids_persist_and_are_isolated_without_diagnostic_inference(self):
+        self.client.force_authenticate(user=self.user)
+        self.assertEqual(self.client.get(reverse('user-progress')).data['completed_lesson_ids'], [])
+        SkillProgress.objects.create(user=self.user, skill=self.skill1, mastery=100, xp=0)
+        self.assertEqual(self.client.get(reverse('user-progress')).data['completed_lesson_ids'], [])
+        url = reverse('lesson-complete', args=[self.lesson1.id])
+        self.client.post(url)
+        self.client.post(url)
+        result = self.client.get(reverse('user-progress')).data
+        self.assertEqual(result['completed_lesson_ids'], [self.lesson1.id])
+        self.assertEqual(result['total_xp'], 50)
+        self.assertEqual(result['skills'][0]['mastery'], 100)
+        other = User.objects.create_user(username='other-learner')
+        self.client.force_authenticate(user=other)
+        self.assertEqual(self.client.get(reverse('user-progress')).data['completed_lesson_ids'], [])
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get(reverse('user-progress')).status_code, 401)
+        self.assertEqual(self.client.post(url).status_code, 401)
+
+    def test_failed_reward_rolls_back_completion_and_progress(self):
+        from unittest.mock import patch
+        from .services import ProgressService
+        with patch.object(ProgressService, 'recalculate_competency_progress', side_effect=RuntimeError('failed')):
+            with self.assertRaises(RuntimeError):
+                ProgressService.complete_lesson(self.user, self.lesson1)
+        self.assertFalse(LessonCompletion.objects.filter(user=self.user).exists())
+        self.assertFalse(SkillProgress.objects.filter(user=self.user).exists())
 
     def test_learning_path_graph_status(self):
         self.client.force_authenticate(user=self.user)

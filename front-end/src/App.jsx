@@ -175,7 +175,7 @@ export default function App({ children }) {
   const router = useRouter();
   const main = useRef(null);
   const publicRoute = ['/login', '/register'].includes(route);
-  const privateRoute = ['/', '/profile', '/catalog', '/diagnostic', '/diagnostic/result', '/roadmap'].includes(route);
+  const privateRoute = ['/', '/profile', '/catalog', '/diagnostic', '/diagnostic/result', '/roadmap', '/study'].includes(route);
   useEffect(() => {
     if (!user && privateRoute) router.replace('/login?next=' + encodeURIComponent(window.location.pathname + window.location.search));
     if (user && publicRoute) router.replace(loginDestination(new URLSearchParams(window.location.search).get('next')));
