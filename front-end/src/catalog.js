@@ -62,3 +62,16 @@ export function resolveTarget(selection, tracks, competencies, skills) {
   const record = { career_track: track, competency, skill }[selection.target];
   return record ? { ...record, kind: selection.target, track, competency, skill } : null;
 }
+
+export async function loadTarget(query, options) {
+  const selection = parseSelection(new URLSearchParams(query));
+  if (!selection.track) throw new ApiError('Pilih career track terlebih dahulu.');
+  const [track, competency, skill] = await Promise.all([
+    publicRequest(`career-tracks/${selection.track}`, options),
+    selection.competency ? publicRequest(`competencies/${selection.competency}`, options) : null,
+    selection.skill ? publicRequest(`skills/${selection.skill}`, options) : null,
+  ]);
+  const target = resolveTarget(selection, [track], competency ? [competency] : [], skill ? [skill] : []);
+  if (!target || typeof target.title !== 'string' || typeof target.slug !== 'string' || !target.slug) throw new ApiError('Target dari server tidak valid.');
+  return target;
+}

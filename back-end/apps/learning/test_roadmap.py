@@ -196,3 +196,40 @@ class RoadmapEndpointTests(RoadmapTestCase):
         response = self.client.get(reverse('roadmap'), {'skill': 'quantum-computing'})
 
         self.assertEqual(response.status_code, 404)
+
+    def test_roadmap_threshold_is_not_learning_path_mastered_threshold(self):
+        target = Skill.objects.get(slug='program-control-flow')
+        for mastery in (69.9, 70, 84.9, 85):
+            with self.subTest(mastery=mastery):
+                self.master(target.slug, mastery)
+                route = LearningPathService.get_roadmap(self.user, target_skill=target)
+                self.assertEqual(bool(route['steps']), mastery < 70)
+                node = next(n for n in LearningPathService.get_learning_path(self.user, career_track=self.track) if n['skill_id'] == target.id)
+                self.assertEqual(node['status'] == 'mastered', mastery >= 85)
+
+    def test_diagnostic_updates_roadmap_without_latest_score_or_cross_user_leak(self):
+        from rest_framework.test import APIClient
+        from apps.assessments.models import DiagnosticQuestion
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        route = reverse('roadmap')
+        params = {'career_track': self.track.slug}
+        self.assertEqual(client.get(route, params).data['total_steps'], 7)
+        self.assertEqual(SkillProgress.objects.filter(user=self.user).count(), 0)
+        questions = list(DiagnosticQuestion.objects.filter(career_track=self.track, is_active=True))
+        self.assertTrue(questions)
+        submit = reverse('diagnostic-submit', args=[self.track.id])
+        correct = {str(q.id): q.correct_answer for q in questions}
+        response = client.post(submit, {'answers': correct}, format='json')
+        self.assertEqual(response.status_code, 201)
+        before = list(SkillProgress.objects.filter(user=self.user).values('skill_id', 'mastery', 'xp', 'last_assessed_at'))
+        result = client.get(route, params)
+        self.assertEqual(result.data['steps'], [])
+        self.assertEqual(result.data['remaining_minutes'], 0)
+        self.assertEqual(list(SkillProgress.objects.filter(user=self.user).values('skill_id', 'mastery', 'xp', 'last_assessed_at')), before)
+        response = client.post(submit, {'answers': {str(q.id): '' for q in questions}}, format='json')
+        self.assertEqual(response.data['overall_score'], 0)
+        self.assertEqual(client.get(route, params).data['steps'], [])
+        other = User.objects.create_user(username='other-roadmap')
+        client.force_authenticate(user=other)
+        self.assertEqual(client.get(route, params).data['total_steps'], 7)

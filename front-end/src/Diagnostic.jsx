@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { request } from './api.js';
-import { diagnosticTarget, validateQuestions, diagnosticPayload, validateAttempt } from './diagnostic.js';
+import { loadTarget } from './catalog.js';
+import { validateQuestions, diagnosticPayload, validateAttempt } from './diagnostic.js';
 
 export default function Diagnostic({ result = false }) {
   const query = useSearchParams().toString();
@@ -31,7 +32,7 @@ function DiagnosticFlow({ query, result }) {
     const controller = new AbortController();
     setState({ loading: true });
     (async () => {
-      const target = await diagnosticTarget(query, { signal: controller.signal });
+      const target = await loadTarget(query, { signal: controller.signal });
       let data;
       try {
         data = await request(result ? `diagnostics/latest?career_track=${target.track.id}` : `diagnostics/${target.track.id}`, { signal: controller.signal });
@@ -106,7 +107,8 @@ function DiagnosticFlow({ query, result }) {
       <p className="hint">Ini snapshot attempt terbaru. Mastery tersimpan tidak diturunkan oleh attempt yang lebih rendah. Hasil ini belum membuktikan kelayakan credential.</p>
       <h3>Pengukuran per skill</h3><ul className="diagnostic-scores">{data.skill_scores.map((s) => <li key={s.skill_id}><strong>{s.skill_title}</strong><span>{s.score} / 100 · {s.correct_answers}/{s.total_questions} benar</span>
         <small>{data.recommended_skill_ids.includes(s.skill_id) ? 'Prioritas pengembangan menurut server' : 'Tidak masuk rekomendasi pengembangan pada attempt ini'}</small></li>)}</ul>
-      <p>Roadmap berdasarkan hasil dan prasyarat akan disambungkan pada fase berikutnya.</p>
+      <p>Roadmap menggunakan mastery tersimpan dan prasyarat, bukan hanya skor attempt ini.</p>
+      <Link className="button primary" href={`/roadmap${suffix}`}>Lihat roadmap target</Link>
       <button className="button secondary" onClick={() => setRevision(revision + 1)}>Muat ulang hasil terbaru</button>
     </div>}
   </section></WorkspaceLayout>;

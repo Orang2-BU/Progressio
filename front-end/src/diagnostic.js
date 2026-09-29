@@ -1,18 +1,4 @@
-import { ApiError, publicRequest } from './api.js';
-import { parseSelection, resolveTarget } from './catalog.js';
-
-export async function diagnosticTarget(query, options) {
-  const selection = parseSelection(new URLSearchParams(query));
-  if (!selection.track) throw new ApiError('Pilih career track terlebih dahulu.');
-  const [track, competency, skill] = await Promise.all([
-    publicRequest(`career-tracks/${selection.track}`, options),
-    selection.competency ? publicRequest(`competencies/${selection.competency}`, options) : null,
-    selection.skill ? publicRequest(`skills/${selection.skill}`, options) : null,
-  ]);
-  const target = resolveTarget(selection, [track], competency ? [competency] : [], skill ? [skill] : []);
-  if (!target || typeof target.title !== 'string') throw new ApiError('Target dari server tidak valid.');
-  return target;
-}
+import { ApiError } from './api.js';
 
 export function validateQuestions(data) {
   const ids = new Set();

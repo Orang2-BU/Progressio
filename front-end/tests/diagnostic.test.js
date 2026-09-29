@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { diagnosticTarget, validateQuestions, diagnosticPayload, validateAttempt } from '../src/diagnostic.js';
+import { validateQuestions, diagnosticPayload, validateAttempt } from '../src/diagnostic.js';
+import { loadTarget } from '../src/catalog.js';
 import { login, logout, request } from '../src/api.js';
 import { loginDestination } from '../src/navigation.js';
 
@@ -22,16 +23,16 @@ test('questions, incomplete answers, explicit unknown and server result contract
   assert.equal(loginDestination('https://evil.test/diagnostic'), '/');
 });
 test('diagnostic target validates the selected parent chain using public endpoints', async () => {
-  const records = { 'career-tracks/10': { id: 10, title: 'Backend', is_active: true },
-    'competencies/20': { id: 20, title: 'API', career_track: 10 }, 'skills/30': { id: 30, title: 'REST', competency: 20 } };
+  const records = { 'career-tracks/10': { id: 10, title: 'Backend', slug: 'backend', is_active: true },
+    'competencies/20': { id: 20, title: 'API', slug: 'api', career_track: 10 }, 'skills/30': { id: 30, title: 'REST', slug: 'rest', competency: 20 } };
   globalThis.fetch = async (url, options) => {
     assert.equal(options.headers.Authorization, undefined);
     return new Response(JSON.stringify(records[url.replace('/api/v1/', '')]));
   };
-  assert.equal((await diagnosticTarget('track=10&competency=20&skill=30&target=skill')).track.id, 10);
+  assert.equal((await loadTarget('track=10&competency=20&skill=30&target=skill')).track.id, 10);
   records['skills/30'].competency = 21;
-  await assert.rejects(diagnosticTarget('track=10&competency=20&skill=30&target=skill'), /bukan bagian/);
-  await assert.rejects(diagnosticTarget(''), /Pilih career track/);
+  await assert.rejects(loadTarget('track=10&competency=20&skill=30&target=skill'), /bukan bagian/);
+  await assert.rejects(loadTarget(''), /Pilih career track/);
 });
 test('lost diagnostic POST response is never automatically submitted again', async () => {
   let posts = 0;

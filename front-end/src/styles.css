@@ -102,6 +102,15 @@ dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 .diagnostic-scores { list-style: none; padding: 0; }
 .diagnostic-scores li { display: grid; gap: 8px; padding: 20px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .diagnostic-scores small { color: var(--muted); }
+.roadmap-content > .profile-actions { margin-bottom: 20px; }
+.roadmap-content > .hint { margin-bottom: 24px; }
+.roadmap-content > section { margin-top: 28px; }
+.roadmap-steps { list-style: none; padding: 0; display: grid; gap: 20px; }
+.roadmap-steps h3 { margin-top: 0; }
+.roadmap-steps .eyebrow { margin-bottom: 12px; }
+.roadmap-steps li { overflow-wrap: anywhere; }
+.roadmap-steps summary { cursor: pointer; padding: 12px 0; min-height: 48px; }
+.roadmap-steps details ul { padding-left: 24px; }
 .catalog-fields { margin-top: 28px; }
 .catalog-description { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; overflow-wrap: anywhere; }
 .catalog-description h3, .target-result h3 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.5px; }

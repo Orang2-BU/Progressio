@@ -56,7 +56,37 @@ Gangguan POST tidak diulang otomatis: input dipertahankan, pengguna diminta
 memeriksa hasil terbaru sebelum memilih mengirim attempt baru. Backend belum
 menyediakan idempotency; jangan menganggap retry menjamin satu record saja.
 
-Roadmap, materi, assessment dan credential tetap fase berikutnya.
+Pada akhir fase 3, roadmap, materi, assessment dan credential masih fase berikutnya.
+
+## Status fase 4 — roadmap personal
+
+`/roadmap` dibuka dari katalog atau hasil diagnostic, dengan query target yang
+sama. Career track, competency dan skill divalidasi lewat katalog; request API
+memakai tepat satu **slug dari server**, bukan ID atau slug yang dipercaya dari
+URL. Resolver target sekarang digunakan bersama oleh diagnostic dan roadmap.
+
+Roadmap menampilkan urutan skill/prasyarat dari server, estimasi belajar tersisa,
+mastery tersimpan, langkah bagian target versus prasyarat target, serta skill
+yang sudah cukup untuk jalur ini. Prasyarat memakai details/summary native yang
+dapat dibuka lewat keyboard. Tidak ada library diagram atau mesin roadmap baru.
+Loading, error/retry, target invalid dan roadmap tanpa langkah dibedakan.
+Track tanpa skill mendapat error backend, bukan dianggap target sudah tercapai.
+
+Diagnostic belum wajib. Tanpa progress backend memakai mastery 0; setelah
+diagnostic, roadmap otomatis memakai mastery yang diperbarui server. Mastery
+dapat pula berasal dari aktivitas belajar/assessment. Attempt terbaru yang
+lebih rendah tidak menurunkan mastery sebelumnya, jadi roadmap tidak selalu
+mengikuti skor attempt terakhir. GET/refresh roadmap tidak mengubah mastery/XP.
+
+G6 dijelaskan eksplisit di UI dan diuji pada 69.9/70/84.9/85: **cukup untuk
+roadmap** menggunakan 70, sementara learning-path **mastered** menggunakan 85.
+Kebijakan backend tidak diubah. Keduanya bukan evidence assessment atau bukti
+kelayakan credential. Jika semua langkah kosong, UI tetap menyatakan kebutuhan
+evidence, bukan menampilkan tombol penerbitan credential.
+
+URL dapat dibuka kembali setelah login ulang. Roadmap dihitung saat dimuat,
+bukan snapshot/rencana yang disimpan lintas perangkat. Materi, assessment dan
+credential tetap fase lanjutan; tidak ada mutasi completion pada fase ini.
 
 Access dan refresh JWT disimpan **hanya di memori**, tidak di localStorage atau
 sessionStorage. Reload/tab baru meminta login ulang. Request privat dengan 401
@@ -91,7 +121,7 @@ Next.js/Node, bukan penyajian folder statis atau `output: 'export'`.
 [aturan environment Next.js](https://nextjs.org/docs/app/guides/environment-variables).
 Jangan menaruh secret di variabel `NEXT_PUBLIC_*`. Variabel `VITE_*` tidak lagi dipakai.
 
-Routing sekarang menggunakan `/`, `/login`, `/register`, `/profile`, `/catalog`, `/diagnostic`, dan `/diagnostic/result`, bukan
+Routing sekarang menggunakan `/`, `/login`, `/register`, `/profile`, `/catalog`, `/diagnostic`, `/diagnostic/result`, dan `/roadmap`, bukan
 `#/...`. Gunakan Link Next.js untuk navigasi internal agar sesi di memori tetap
 bertahan. Shared layout menjaga shell, sementara pages menyediakan metadata dan
 konten masing-masing route. Form/sesi tetap Client Components; snapshot SSR selalu
@@ -117,6 +147,17 @@ Tiga tes fase 3 menambah validasi soal/payload/hasil, cakupan target, dan larang
 retry otomatis POST yang kehilangan respons: total 17 tes Node.
 Backend assessment memiliki 12 tes, termasuk attempt berulang, skor nol,
 mastery tidak menurun, tanpa XP, tie-break terbaru dan isolasi user/track.
+Tiga tes fase 4 menambah target slug/routing, validasi urutan dan ringkasan
+roadmap, empty route, GET berautentikasi/read-only, error dan cancellation:
+total 20 tes Node. Backend roadmap memiliki 17 tes; digabung assessment menjadi
+29 tes, termasuk diagnostic -> roadmap, isolasi user dan ambang 70/85.
+
+Jalankan tes backend terkait dari root repo tanpa memakai database proyek:
+
+```powershell
+$env:DB_ENGINE = 'sqlite'
+uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py test apps.learning.test_roadmap apps.assessments
+```
 
 Untuk menguji UI dengan database sementara, dari **root repo**:
 
@@ -134,7 +175,7 @@ npm run dev
 Server uji memakai SQLite in-memory: berhenti berarti seluruh akun uji hilang,
 database proyek tidak disentuh. Jangan gunakan server ini untuk deployment.
 
-Untuk fase 2, tambahkan `--catalog` pada perintah server uji. Flag ini mengimpor
+Untuk fase 2–4, tambahkan `--catalog` pada perintah server uji. Flag ini mengimpor
 kurikulum repo lewat `seed_demo`, menambah fixture kosong/inaktif, dan menetapkan
 dua item per halaman agar pagination teruji. Akun demo mengikuti backend:
 `student` / `progressio-demo-2026`. Jangan gunakan akun/password demo di produksi.
@@ -161,6 +202,17 @@ empty state berbeda. Hasil diperiksa pada lebar 375 px dan landscape 812 px;
 tidak ada overflow horizontal, reduced-motion menghasilkan transisi 0s.
 Tidak ditemukan error browser pada alur normal. Koneksi POST hilang diuji
 otomatis dengan respons terkontrol, bukan gangguan jaringan browser nyata.
+
+Smoke test fase 4 (29 September 2026), dengan Django/kurikulum in-memory:
+target career track -> 7 langkah, competency API Development -> 6 langkah,
+skill API Input Validation -> 6 langkah dengan 5 prasyarat sebelum target.
+Diagnostic 100 -> hasil -> roadmap yang sama menjadi 0 langkah tanpa klaim
+credential. Prasyarat dapat dibuka dengan Enter. Layout 375 x 812 dan landscape
+812 x 375 tidak overflow; reduced-motion menghasilkan transisi 0s. Build
+produksi + reload -> login memulihkan URL skill lengkap dan hasil roadmap.
+Backend dihentikan -> error; dihidupkan kembali dengan database uji baru ->
+retry berhasil dan memakai progress baru, bukan hasil client lama. Track tanpa
+skill menampilkan error katalog. Tidak ada error browser pada alur normal.
 Smoke test browser fase 1 pada 29 September 2026 memverifikasi daftar -> masuk -> profil,
 muat ulang profil, logout/proteksi route, password salah, konfirmasi berbeda,
 username duplikat, kegagalan backend dengan isian tetap tersimpan, dan lebar
@@ -186,15 +238,17 @@ jangan menormalisasi semua endpoint Django ke satu bentuk URL.
 - `src/Catalog.jsx`: UI pilihan bertingkat, detail dan ringkasan target.
 - `src/catalog.js`: pagination, validasi URL dan relasi target.
 - `src/Diagnostic.jsx` dan `src/diagnostic.js`: kuis, hasil terbaru dan kontrak diagnostic.
+- `src/Roadmap.jsx` dan `src/roadmap.js`: roadmap dan validasi kontrak server.
 - `src/navigation.js`: tujuan login internal yang aman.
 - `src/api.js`: API client, sesi dan refresh terkoordinasi.
 - `src/styles.css`: identitas visual dan responsivitas.
 - `next.config.mjs`: rewrite API ke Django.
 - `tests/`: tes client dan backend sementara untuk smoke test.
 
-Fase 3 menyambungkan diagnostic dan hasil titik awal serta menyelesaikan G1.
-Langkah berikutnya adalah roadmap dari target, hasil dan prasyarat; materi,
-assessment dan credential tetap fase lanjutan.
+Fase 4 menyambungkan roadmap dari target, mastery dan prasyarat.
+Langkah berikutnya adalah materi/study plan dari sumber resmi dan progress
+belajar; selesaikan G3 sebelum memberi badge completion. Assessment/credential
+tetap memerlukan backlog yang terkait, bukan sekadar mastery atau selesai membaca.
 Kontrak backend dan gap integrasi tetap tersedia di [API_CONTRACT.md](API_CONTRACT.md).
 
 ## Probe fase 0

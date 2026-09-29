@@ -108,7 +108,8 @@ export default function Catalog() {
       {copied?.href === href && <p className="hint" role="status">{copied.message}</p>}
       <p className="session-note">Pilihan tersimpan pada URL, bukan di profil server. Tautan dapat dibuka kembali; login tetap diperlukan.</p>
       {target && !pending && !error && !invalid && <Link className="button primary full" href={href.replace('/catalog', '/diagnostic')}>Ukur titik awal</Link>}
-      <p className="hint">Diagnostic mencakup seluruh career track, termasuk jika targetmu satu skill. Roadmap hadir pada fase berikutnya.</p>
+      {target && !pending && !error && !invalid && <Link className="button secondary full" href={href.replace('/catalog', '/roadmap')}>Lihat roadmap target</Link>}
+      <p className="hint">Diagnostic mencakup seluruh career track. Roadmap mengikuti cakupan target dan mastery tersimpan; diagnostic belum wajib.</p>
     </aside></div>
   </section></WorkspaceLayout>;
 }

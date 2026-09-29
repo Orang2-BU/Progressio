@@ -171,7 +171,8 @@ Belum ada envelope error tunggal. Tangani semuanya:
 
 ## Gap backend dan kriteria penerimaan
 
-G1 diselesaikan pada fase 3; gap lainnya tetap backlog.
+G1 diselesaikan pada fase 3. Pada fase 4, G6 dijelaskan lewat label berbeda dan
+tes ambang; kebijakan backend 70/85 tetap dipertahankan. Gap lainnya tetap backlog.
 
 | ID / prioritas | Temuan dan sumber | Dampak / kriteria selesai |
 |---|---|---|
@@ -180,7 +181,7 @@ G1 diselesaikan pada fase 3; gap lainnya tetap backlog.
 | G3 / sebelum badge selesai belajar | `learning/serializers.py`: progress hanya jumlah completed lesson, tanpa ID; checkpoint tidak persisten | Ekspos completed lesson IDs/status per user; UI tidak menebak completion dari mastery; tentukan apakah checkpoint perlu disimpan |
 | G4 / sebelum UI eligibility | `credentials/urls.py`: eligibility hanya service internal | Tambahkan endpoint read-only dengan eligible, alasan, kebutuhan yang belum terpenuhi; jangan mencoba issue hanya untuk mengecek |
 | G5 / sebelum credential final | `credentials/services.py`: rata-rata >=70 + satu assessment lulus; lesson bisa memberi 70 mastery | Tetapkan skill wajib dan evidence lulus per skill; draft/mock tidak menerbitkan credential final; uji jalur penolakan |
-| G6 / sebelum label penguasaan | `learning/services.py`: roadmap satisfied >=70, learning-path mastered >=85 | Satukan kebijakan atau beri arti status yang berbeda secara eksplisit; uji 69.9/70/84.9/85; aktivitas membaca bukan bukti assessment |
+| G6 / label dipisahkan fase 4 | `learning/services.py`: roadmap satisfied >=70, learning-path mastered >=85 | UI memakai “cukup untuk roadmap”, bukan lulus/mastered; 69.9/70/84.9/85 diuji; mastery dari membaca/diagnostic bukan bukti assessment. Kebijakan belum disatukan |
 | G7 / sebelum mode demo/final | `curriculum/importer.py` hanya memperingatkan draft; serializer submission/proof tidak mengirim provider/review status | Ekspos provenance yang stabil, termasuk fallback; UI bisa membedakan mock/live/draft tanpa menebak dari tx hash atau feedback |
 | G8 / sebelum halaman standar | Serializer katalog tidak mengekspos learning_outcomes, observable_behaviors, versi; verifikasi publik tidak memuat snapshot standar | Ekspos field publik yang diperlukan; recruiter melihat versi dan kriteria saat penerbitan, bukan standar terbaru |
 | G9 / sebelum submit provider nyata | Submission bebas, sinkron, tanpa idempotency dan error provider konsisten | Validasi evidence per tipe; normalkan failure; retry tidak membuat submission/XP ganda; GET hasil untuk recovery |
@@ -204,4 +205,7 @@ Fase 1 auth dan fondasi UI sudah diimplementasikan; lihat README untuk uji clien
 dan smoke test browser dengan database sementara. G1 sudah selesai; G2/G3/G4 perlu
 diselesaikan sebelum alur hasil dan progress dinyatakan lengkap; G5/G7/G8 sebelum
 credential final ditampilkan. Tidak ada klaim bahwa frontend penuh atau deployment
-sudah diuji. Katalog dan diagnostic diuji dengan Django sementara; provider nyata belum diuji.
+sudah diuji. Katalog, diagnostic dan roadmap diuji dengan Django sementara;
+provider nyata belum diuji. Roadmap memakai mastery tersimpan, bukan hanya attempt
+terakhir. GET tidak mengubah progress; target kosong tanpa skill adalah 400,
+sedangkan target dengan mastery cukup menghasilkan 200 dengan steps kosong.
