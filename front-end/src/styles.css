@@ -94,3 +94,20 @@ dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .auth-layout { gap: 32px; } .auth-story { padding: 32px; } .workspace { grid-template-columns: 200px minmax(0,1fr); } .sidebar { padding: 32px 20px; } .workspace-content { padding: 32px; } .welcome-card { grid-template-columns: 1fr; } .path-graphic { flex-direction: row; } .path-graphic span { width: auto; padding: 8px 12px; font-size: 12px; } .path-graphic i { width: 16px; height: 1px; } }
 @media (max-width: 650px) { .topbar { padding: 20px; } .brand-tagline { display: none; } .auth-layout { display: flex; flex-direction: column-reverse; padding: 0 20px; margin: 24px auto 40px; gap: 24px; } .auth-panel { max-width: none; width: 100%; } .auth-story { width: 100%; } .auth-story h1 { font-size: 36px; } .workspace { display: block; } .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 16px 20px; } .sidebar > .eyebrow, .sidebar-note { display: none; } .sidebar nav { display: flex; } .sidebar nav a { flex: 1; } .workspace-content { padding: 28px 20px; } .workspace-content > h1 { font-size: 32px; } .welcome-card { padding: 24px; } .welcome-card h2 { font-size: 28px; } dl { grid-template-columns: 1fr; } .profile-card { padding: 20px; } .footer { padding: 20px; font-size: 11px; } .account-label { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
+.catalog-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.catalog-fields { margin-top: 28px; }
+.catalog-description { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; overflow-wrap: anywhere; }
+.catalog-description h3, .target-result h3 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.5px; }
+.catalog-description p { color: var(--muted); font-size: 14px; }
+.catalog-description h4 { margin-bottom: 8px; }
+.catalog-description ul { padding-left: 20px; font-size: 14px; }
+.target-summary h2 { font-size: 24px; }
+.target-summary legend { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.target-option { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-height: 48px; cursor: pointer; }
+.target-option:has(:checked) { border-color: var(--ink); background: #e8fdc9; }
+.target-option:has(:disabled) { color: var(--muted); cursor: default; }
+.target-option input { width: 18px; min-height: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--ink); }
+.target-result { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 24px; min-height: 130px; overflow-wrap: anywhere; }
+.target-result .eyebrow { margin-bottom: 12px; }
+@media (max-width: 1100px) { .catalog-grid { grid-template-columns: 1fr; } }
+@media (max-width: 650px) { .sidebar nav { flex-wrap: wrap; } .sidebar nav a { white-space: nowrap; gap: 4px; padding: 12px 8px; font-size: 12px; } }

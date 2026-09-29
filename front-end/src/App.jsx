@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { getSession, getServerSession, subscribe, login, register, logout, reloadProfile } from './api.js';
+import { loginDestination } from './navigation.js';
 
 const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
@@ -38,8 +39,9 @@ function AuthForm({ mode, notice, onRegistered }) {
         await register(values);
         if (alive.current) onRegistered(values.username);
       } else {
+        const destination = loginDestination(new URLSearchParams(window.location.search).get('next'));
         await login({ username: values.username, password: values.password });
-        if (alive.current) router.replace('/');
+        if (alive.current) router.replace(destination);
       }
     } catch (error) {
       if (alive.current) { setMessage(error.message); setErrors(error.fields || {}); }
@@ -111,6 +113,17 @@ function AuthForm({ mode, notice, onRegistered }) {
   </div>;
 }
 
+export function WorkspaceLayout({ children }) {
+  const path = usePathname()?.replace(/\/$/, '') || '/';
+  return <div className="workspace">
+    <aside className="sidebar"><p className="eyebrow">WORKSPACE</p>
+      <nav aria-label="Navigasi workspace">{[['/', 'Ringkasan'], ['/catalog', 'Pilih target'], ['/profile', 'Profil akun']].map(([href, label]) =>
+        <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>{label}<span aria-hidden="true">↗</span></Link>)}</nav>
+      <div className="sidebar-note"><span className="eyebrow">TARGET → BUKTI</span><p>Kurikulum adalah standar penilaian kemampuan, bukan daftar materi yang wajib dibaca.</p><small>Target dipilih dahulu. Pengukuran dan roadmap hadir pada fase berikutnya.</small></div>
+    </aside>{children}
+  </div>;
+}
+
 function Workspace({ user, profile }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -119,19 +132,14 @@ function Workspace({ user, profile }) {
     try { await reloadProfile(); } catch (issue) { setError(issue.message); }
     finally { setBusy(false); }
   }
-  return <div className="workspace">
-    <aside className="sidebar"><p className="eyebrow">WORKSPACE</p>
-      <nav aria-label="Navigasi workspace"><Link href="/" aria-current={!profile ? 'page' : undefined}>Ringkasan <span aria-hidden="true">↗</span></Link>
-        <Link href="/profile" aria-current={profile ? 'page' : undefined}>Profil akun <span aria-hidden="true">↗</span></Link></nav>
-      <div className="sidebar-note"><span className="eyebrow">LANGKAH BERIKUTNYA</span><p>Pilih target, ukur titik awal, lalu ikuti roadmap pribadimu.</p><small>Alur ini hadir pada fase berikutnya.</small></div>
-    </aside>
+  return <WorkspaceLayout>
     <section className="workspace-content">
       <p className="eyebrow">{profile ? 'AKUN PROGRESSIO' : 'TITIK AWAL YANG BAIK'}</p>
       <h1>{profile ? 'Profil akun' : <>Halo, <span>{user.username}.</span></>}</h1>
       <p className="intro">{profile ? 'Informasi akunmu diambil langsung dari server.' : 'Akunmu siap. Perjalanan berikutnya dimulai dari tujuan yang kamu pilih.'}</p>
       {!profile && <div className="welcome-card"><div><span className="eyebrow">FONDASI PERJALANANMU</span>
         <h2>Kenali dirimu.<br />Tentukan arahmu.</h2><p>Progressio menghubungkan target keahlian, hasil penilaian, dan bukti kemampuan dalam satu perjalanan.</p>
-        <Link className="button primary" href="/profile">Lihat profil akun <span aria-hidden="true">↗</span></Link></div>
+        <Link className="button primary" href="/catalog">Pilih target keahlian <span aria-hidden="true">↗</span></Link></div>
         <div className="path-graphic" aria-hidden="true"><span>Target</span><i /><span>Assessment</span><i /><span>Proof</span></div>
       </div>}
       <div className="profile-card"><div className="section-heading"><h2>Identitas akun</h2><span className="status">Terhubung</span></div>
@@ -143,7 +151,7 @@ function Workspace({ user, profile }) {
           <span className="hint">Profil ditampilkan sebagai informasi baca saja.</span></div>
       </div>
     </section>
-  </div>;
+  </WorkspaceLayout>;
 }
 
 export function AuthPage({ mode }) {
@@ -167,12 +175,13 @@ export default function App({ children }) {
   const router = useRouter();
   const main = useRef(null);
   const publicRoute = ['/login', '/register'].includes(route);
+  const privateRoute = ['/', '/profile', '/catalog'].includes(route);
   useEffect(() => {
-    if (!user && !publicRoute && ['/', '/profile'].includes(route)) router.replace('/login');
-    if (user && publicRoute) router.replace('/');
+    if (!user && privateRoute) router.replace('/login?next=' + encodeURIComponent(window.location.pathname + window.location.search));
+    if (user && publicRoute) router.replace(loginDestination(new URLSearchParams(window.location.search).get('next')));
     main.current?.focus();
-  }, [route, user, publicRoute, router]);
-  const redirecting = (!user && ['/', '/profile'].includes(route)) || (user && publicRoute);
+  }, [route, user, publicRoute, privateRoute, router]);
+  const redirecting = (!user && privateRoute) || (user && publicRoute);
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     <header className="topbar"><Brand /><div className="header-right">
       {user ? <><span className="account-label">{roleNames[user.role] || user.role}</span><button className="button secondary compact" onClick={() => { logout('Kamu sudah keluar dari akun.'); router.replace('/login'); }}>Keluar</button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}

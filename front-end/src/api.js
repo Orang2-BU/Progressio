@@ -29,7 +29,7 @@ export function logout(reason = '') {
   publish(null, reason);
 }
 
-async function send(path, { method = 'GET', body, access } = {}) {
+async function send(path, { method = 'GET', body, access, signal } = {}) {
   let response;
   try {
     response = await fetch(base + path, {
@@ -38,9 +38,10 @@ async function send(path, { method = 'GET', body, access } = {}) {
         ...(access && { Authorization: `Bearer ${access}` }) },
       ...(body !== undefined && { body: JSON.stringify(body) }),
       credentials: 'omit',
-      signal: AbortSignal.timeout(15000),
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000),
     });
   } catch {
+    if (signal?.aborted) throw signal.reason;
     throw new ApiError('Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.');
   }
   let data;
@@ -95,6 +96,7 @@ export async function request(path, options = {}) {
   }
 }
 
+export const publicRequest = (path, options) => send(path, options);
 export const register = (body) => send('auth/register', { method: 'POST', body });
 export async function login(body) {
   logout();

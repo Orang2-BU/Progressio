@@ -11,6 +11,29 @@ recruiter mengikuti backend; menu belajar/assessment belum diimplementasikan.
 Warna mengikuti identitas aplikasi Mobile; form memakai label, fokus keyboard,
 ringkasan error dan pesan status yang dapat diakses.
 
+## Status fase 2 — katalog dan target
+
+`/catalog` memakai API Django untuk memilih career track -> competency -> skill.
+Semua halaman pagination dimuat untuk masing-masing cabang. Perubahan parent
+mereset child; request lama dibatalkan agar respons terlambat tidak mengganti
+pilihan baru. Loading, data kosong, error/retry, dan URL invalid dibedakan.
+
+Cakupan target dapat career track, competency, atau skill. Ringkasan memakai ID,
+slug dan hubungan parent yang dikembalikan server, bukan ID seed/hardcode.
+Detail skill menampilkan prasyarat dan estimasi belajar. Memilih target tidak
+mengubah mastery, XP, atau menerbitkan credential; jumlah materi bukan kriteria
+credential. Kriteria lengkap/versi standar masih memerlukan backlog G8.
+
+Pilihan tersimpan **hanya di URL**, contoh bentuk `/catalog?track={id}&competency={id}&skill={id}&target=skill`.
+Tombol salin tautan memakai clipboard; jika izin ditolak, salin bilah alamat.
+Reload meminta login ulang tetapi URL target dipulihkan melalui parameter `next`
+yang dibatasi ke route internal. Back/Forward memulihkan pilihan. Ini bukan
+preferensi akun lintas perangkat di backend. Navigasi ke `/catalog` tanpa query
+memulai pilihan baru; gunakan URL target atau Back untuk membuka pilihan lama.
+
+Scope fase 2 ini adalah katalog/pemilihan target. Diagnostic, roadmap, materi,
+assessment dan credential belum menjadi fitur web yang selesai.
+
 Access dan refresh JWT disimpan **hanya di memori**, tidak di localStorage atau
 sessionStorage. Reload/tab baru meminta login ulang. Request privat dengan 401
 menggunakan satu refresh bersama dan retry satu kali; penolakan refresh mengakhiri
@@ -44,14 +67,14 @@ Next.js/Node, bukan penyajian folder statis atau `output: 'export'`.
 [aturan environment Next.js](https://nextjs.org/docs/app/guides/environment-variables).
 Jangan menaruh secret di variabel `NEXT_PUBLIC_*`. Variabel `VITE_*` tidak lagi dipakai.
 
-Routing sekarang menggunakan `/`, `/login`, `/register`, dan `/profile`, bukan
+Routing sekarang menggunakan `/`, `/login`, `/register`, `/profile`, dan `/catalog`, bukan
 `#/...`. Gunakan Link Next.js untuk navigasi internal agar sesi di memori tetap
 bertahan. Shared layout menjaga shell, sementara pages menyediakan metadata dan
 konten masing-masing route. Form/sesi tetap Client Components; snapshot SSR selalu
 anonim dan tidak merender profil privat. Proteksi UI dilakukan di client karena
 token hanya di memori; otorisasi data tetap wajib ditegakkan Django.
 
-## Uji fase 1
+## Uji frontend
 
 ```powershell
 cd front-end
@@ -63,6 +86,9 @@ Delapan pengujian Node mencakup payload register, login/profil, snapshot SSR ano
 konfigurasi proxy dengan/tanpa slash akhir, login gagal,
 refresh bersamaan, refresh ditolak, logout saat refresh, serta error field,
 non-JSON dan jaringan. Tidak memerlukan framework test tambahan.
+Enam tes tambahan fase 2 mencakup pagination/filter tanpa token publik, format
+respons rusak, pembatalan request, round-trip URL semua cakupan target, parent
+tidak cocok/inaktif/ID invalid, dan return-to-login tanpa open redirect.
 
 Untuk menguji UI dengan database sementara, dari **root repo**:
 
@@ -79,6 +105,24 @@ npm run dev
 
 Server uji memakai SQLite in-memory: berhenti berarti seluruh akun uji hilang,
 database proyek tidak disentuh. Jangan gunakan server ini untuk deployment.
+
+Untuk fase 2, tambahkan `--catalog` pada perintah server uji. Flag ini mengimpor
+kurikulum repo lewat `seed_demo`, menambah fixture kosong/inaktif, dan menetapkan
+dua item per halaman agar pagination teruji. Akun demo mengikuti backend:
+`student` / `progressio-demo-2026`. Jangan gunakan akun/password demo di produksi.
+Tanpa flag ini, server tetap kosong untuk uji registrasi atau empty state.
+
+Smoke test fase 2 (29 September 2026) memakai Django in-memory dengan kurikulum
+repo, bukan mock katalog. Terverifikasi pada dev dan server produksi: pagination
+dua item per halaman, pilihan bertingkat, target career track/skill (semua cakupan
+diuji otomatis), prasyarat skill,
+reset child saat parent berubah, Back, dan pemulihan URL lengkap setelah reload
+lalu login. URL dengan skill dari competency lain ditolak. Backend mati memicu
+error/retry; retry berhasil memuat empty state saat backend kosong dihidupkan.
+Clipboard ditolak dalam browser uji dan fallback salin bilah alamat tampil.
+Layout diperiksa pada 375 x 812 dan 812 x 375 tanpa overflow horizontal;
+reduced-motion aktif menghasilkan transisi 0s. Tidak ada error hidrasi pada alur
+normal. Uji ini belum mencakup diagnostic atau penerbitan credential.
 Smoke test browser fase 1 pada 29 September 2026 memverifikasi daftar -> masuk -> profil,
 muat ulang profil, logout/proteksi route, password salah, konfirmasi berbeda,
 username duplikat, kegagalan backend dengan isian tetap tersimpan, dan lebar
@@ -101,13 +145,17 @@ jangan menormalisasi semua endpoint Django ke satu bentuk URL.
 
 - `src/app/`: layout, pages, metadata dan halaman 404 App Router.
 - `src/App.jsx`: shell dan komponen interaktif auth/workspace.
+- `src/Catalog.jsx`: UI pilihan bertingkat, detail dan ringkasan target.
+- `src/catalog.js`: pagination, validasi URL dan relasi target.
+- `src/navigation.js`: tujuan login internal yang aman.
 - `src/api.js`: API client, sesi dan refresh terkoordinasi.
 - `src/styles.css`: identitas visual dan responsivitas.
 - `next.config.mjs`: rewrite API ke Django.
 - `tests/`: tes client dan backend sementara untuk smoke test.
 
-Fase 2 menyambungkan katalog/target dan alur pengukuran sesuai plan; roadmap,
-materi, assessment dan credential belum dianggap selesai oleh fase ini.
+Fase 2 menyambungkan katalog/target. Langkah berikutnya adalah diagnostic dan
+hasil titik awal; selesaikan G1 dan uji attempt berulang sebelum memakai endpoint
+latest. Roadmap, materi, assessment dan credential tetap fase lanjutan.
 Kontrak backend dan gap integrasi tetap tersedia di [API_CONTRACT.md](API_CONTRACT.md).
 
 ## Probe fase 0

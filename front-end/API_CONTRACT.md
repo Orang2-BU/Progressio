@@ -78,6 +78,12 @@ mastery, prerequisites (slug[]), is_target, order.
 Tidak ada penyimpanan target pilihan user di backend. Untuk MVP, target dapat
 diwakili di URL halaman web; lintas perangkat memerlukan endpoint preferensi.
 
+Implementasi Fase 2: `/catalog?track={id}&competency={id}&skill={id}&target=skill`.
+`target` opsional/default `career_track`; nilai lain `competency` atau `skill`.
+Parent divalidasi dari respons katalog; slug tetap diambil dari server. Pilihan
+URL tidak memperbarui skill graph, mastery, XP, atau status credential. Return
+ke URL target setelah login hanya mengizinkan route internal yang diketahui.
+
 ## Payload dan respons kunci
 
 Diagnostic memakai ID database soal sebagai key string. Contoh ini ilustrasi;
