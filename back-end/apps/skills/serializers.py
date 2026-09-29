@@ -42,5 +42,5 @@ class SkillDetailSerializer(serializers.ModelSerializer):
             'id', 'competency', 'competency_title',
             'title', 'slug', 'description', 'difficulty',
             'estimated_learning_minutes', 'prerequisites',
-            'lesson_count', 'created_at', 'updated_at'
+            'lesson_count', 'learning_outcomes', 'created_at', 'updated_at'
         ]

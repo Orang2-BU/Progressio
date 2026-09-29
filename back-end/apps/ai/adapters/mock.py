@@ -109,7 +109,7 @@ class MockAIAdapter(BaseAIAdapter):
     def evaluate_submission(self, assessment, submission_content):
         # Deterministic offline rubric. This never trusts a client-supplied score.
         evidence_parts = []
-        for key in ('code', 'repository_summary', 'readme', 'test_output'):
+        for key in ('code', 'text', 'repository_summary', 'readme', 'test_output'):
             value = submission_content.get(key, '')
             if isinstance(value, str):
                 evidence_parts.append(value)

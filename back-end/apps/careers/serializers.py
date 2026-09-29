@@ -22,5 +22,5 @@ class CareerTrackDetailSerializer(serializers.ModelSerializer):
         model = CareerTrack
         fields = [
             'id', 'title', 'slug', 'description', 'is_active',
-            'competency_count', 'created_at', 'updated_at'
+            'competency_count', 'curriculum_version', 'curriculum_schema_version', 'created_at', 'updated_at'
         ]

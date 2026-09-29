@@ -72,7 +72,30 @@ class AssessmentSubmitView(APIView):
             user=request.user,
             assessment=assessment,
             content=content,
+            request_id=serializer.validated_data.get('request_id'),
         )
 
         response_serializer = SubmissionResponseSerializer(submission)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SubmissionListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SubmissionResponseSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['assessment', 'request_id']
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Submission.objects.none()
+        return Submission.objects.filter(user=self.request.user).select_related('assessment', 'user').order_by('-created_at', '-pk')
+
+
+class SubmissionDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SubmissionResponseSerializer
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Submission.objects.none()
+        return Submission.objects.filter(user=self.request.user).select_related('assessment', 'user')

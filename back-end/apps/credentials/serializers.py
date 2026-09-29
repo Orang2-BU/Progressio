@@ -67,6 +67,7 @@ class CredentialDetailSerializer(serializers.ModelSerializer):
 
 
 class CredentialIssueRequestSerializer(serializers.Serializer):
+    demo = serializers.BooleanField(default=False)
     competency_id = serializers.IntegerField(
         required=True,
         help_text="ID of the completed competency to issue a credential for."

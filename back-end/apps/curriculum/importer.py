@@ -257,6 +257,7 @@ class CurriculumImporter:
                 config = {'rubric': rules['rubric']}
                 questions = []
 
+            config['review_status'] = rules['review_status']
             _, created = Assessment.objects.update_or_create(
                 source_id=record['id'],
                 is_managed=True,

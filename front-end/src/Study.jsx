@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { loadStudy, loadProgress, sourceHref, submitCheckpoint, completeLesson } from './study.js';
+import { proofHref } from './proof.js';
 
 export default function Study() {
   const query = useSearchParams().toString();
@@ -59,6 +60,7 @@ function StudyFlow({ query }) {
     {state.error && <div className="error-summary" role="alert"><p>{state.error}</p><button className="button secondary" onClick={() => setRevision((n) => n + 1)}>Coba lagi</button></div>}
     {state.skill && <>
       <section className="profile-card" aria-labelledby="study-progress"><h2 id="study-progress">Aktivitas belajar, bukan evidence</h2>
+        <Link className="button primary" href={proofHref(query, state.skill.id)}>Uji skill melalui assessment</Link>
         <p>Target: {state.target.title}. Skill yang dipelajari: {state.skill.title}.</p>
         <p className="hint">Completion adalah laporan aktivitasmu. Backend memberi XP dan dapat menaikkan mastery belajar hingga 70; ini tidak mengukur penguasaan melalui assessment. Checkpoint hanya feedback sementara, tidak tersimpan dan tidak memberi XP/completion.</p>
         {state.progress ? <dl><div><dt>Materi skill ini selesai</dt><dd>{state.lessons.filter((l) => state.progress.completed_lesson_ids.includes(l.id)).length} / {state.lessons.length}</dd></div>

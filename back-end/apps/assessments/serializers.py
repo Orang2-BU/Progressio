@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import json
+from urllib.parse import urlsplit
 from .models import Assessment, Submission, DiagnosticQuestion, DiagnosticAttempt
 
 
@@ -19,6 +20,14 @@ class AssessmentListSerializer(serializers.ModelSerializer):
 
 
 class AssessmentDetailSerializer(serializers.ModelSerializer):
+    review_status = serializers.SerializerMethodField()
+    rubric = serializers.SerializerMethodField()
+
+    def get_review_status(self, obj) -> str:
+        return obj.grading_config.get('review_status', 'unreviewed')
+
+    def get_rubric(self, obj) -> list:
+        return obj.grading_config.get('rubric', [])
     skill_title = serializers.CharField(
         source='skill.title', read_only=True
     )
@@ -30,12 +39,13 @@ class AssessmentDetailSerializer(serializers.ModelSerializer):
             'assessment_type', 'instructions',
             'objective', 'expected_evidence', 'mastery_criteria',
             'passing_score', 'max_score', 'estimated_minutes',
-            'evaluation_mode', 'questions',
+            'evaluation_mode', 'questions', 'review_status', 'rubric',
             'created_at', 'updated_at'
         ]
 
 
 class SubmissionRequestSerializer(serializers.Serializer):
+    request_id = serializers.UUIDField(required=False)
     content = serializers.DictField(
         required=False,
         default=dict,
@@ -45,6 +55,14 @@ class SubmissionRequestSerializer(serializers.Serializer):
     def validate_content(self, value):
         if len(json.dumps(value, ensure_ascii=False).encode('utf-8')) > 200_000:
             raise serializers.ValidationError('Submission content must not exceed 200 KB.')
+        for key in ('github_url', 'demo_url', 'file_url'):
+            if value.get(key):
+                try:
+                    url = urlsplit(value[key])
+                    if len(value[key]) > 500 or url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password:
+                        raise ValueError()
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError(f'{key} must be an HTTP(S) URL without credentials, at most 500 characters.')
         return value
 
     def validate(self, attrs):
@@ -73,7 +91,7 @@ class SubmissionResponseSerializer(serializers.ModelSerializer):
             'id', 'assessment', 'assessment_title',
             'user', 'user_username', 'status',
             'content', 'score', 'feedback',
-            'submitted_at', 'is_passed',
+            'submitted_at', 'is_passed', 'request_id', 'evaluation',
             'created_at', 'updated_at'
         ]
 

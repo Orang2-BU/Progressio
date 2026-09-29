@@ -96,7 +96,8 @@ class CredentialIssueView(APIView):
         credential = CredentialService.issue_credential(
             user=request.user,
             competency=competency,
-            evidence_data=evidence_data
+            evidence_data=evidence_data,
+            demo=serializer.validated_data['demo'],
         )
 
         response_serializer = CredentialDetailSerializer(
@@ -104,3 +105,12 @@ class CredentialIssueView(APIView):
             context={'request': request},
         )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CredentialEligibilityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(summary='Read credential eligibility', responses={200: dict})
+    def get(self, request, pk):
+        competency = get_object_or_404(Competency, pk=pk)
+        return Response(CredentialService.eligibility(request.user, competency))

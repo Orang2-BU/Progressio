@@ -66,6 +66,8 @@ Seluruh GET di tabel mengembalikan 200 kecuali dinyatakan lain.
 | Selesai lesson | POST `lesson/{id}/complete` | Privat | tanpa body; 200 status, lesson_id, lesson_title, xp_earned, newly_completed, current_skill_mastery, current_skill_xp |
 | Assessment | GET `assessments/?skill={id}`, `assessments/{id}` | Publik | list P; detail instructions, objective, expected_evidence, mastery_criteria, questions, estimated_minutes |
 | Submission | POST `assessments/{id}/submit` | Privat | 201 submission; penilaian sinkron dalam request |
+| Hasil submission | GET `assessments/submissions/?assessment={id}&request_id={uuid}`, `assessments/submissions/{id}` | Privat | List P/detail milik akun, termasuk evaluation snapshot |
+| Kelayakan credential | GET `credentials/eligibility/{competency_id}` | Privat | eligible final, demo_ready, reason, missing_skills, score, submission_ids, provenance/version |
 | Daftar credential | GET `credentials/?status=issued&competency={id}` | Privat | P milik user; id UUID, competency, status, score, issued_at |
 | Terbitkan credential | POST `credentials/issue` | Privat | 201 detail; penolakan kelayakan 400 |
 | Detail credential | GET `credentials/{uuid}` | Privat | hanya pemilik; metadata, evidences, is_valid, verification_url |
@@ -111,17 +113,21 @@ Challenge/project memakai JSON evidence, contoh form yang kompatibel dengan mock
 {"content":{"code":"...","readme":"...","test_output":"...","repository_summary":"...","files":{"openapi.yaml":"..."}}}
 ```
 
-`content` masih DictField bebas (default `{}`), batas 200.000 byte dari
-JSON UTF-8 yang diserialisasi Python. Bentuk per tipe belum divalidasi ketat.
+`content` dibatasi 200.000 byte JSON UTF-8. Quiz dengan soal publik harus menjawab
+semua ID dengan pilihan valid tanpa ID tambahan; AI memerlukan isi `text`/`code`.
 Top-level `score` ditolak 400. Belum ada upload multipart, eksekusi kode sandbox,
 atau pengambilan isi repository otomatis; URL saja bukan isi evidence.
-Jawaban kuis yang hilang dinilai salah, bukan otomatis error validasi.
+Quiz legacy tanpa soal publik mempertahankan grading lama; UI tidak menyediakan
+submit untuk quiz tersebut. URL pendukung HTTP(S), tanpa credentials, max 500 karakter.
 
 Respons submission: `id, assessment, assessment_title, user, user_username,
-status, content, score, feedback, submitted_at, is_passed, created_at, updated_at`.
-Jangan polling: belum ada endpoint GET submission. Jangan retry otomatis POST
-ketika timeout karena request sebelumnya mungkin sudah tersimpan.
-Skor dinilai di server; `max_score` dibaca dari detail assessment.
+status, content, score, feedback, submitted_at, is_passed, request_id, evaluation,
+created_at, updated_at`. `evaluation` memuat provider, review_status, versi,
+threshold dan kriteria snapshot. GET `assessments/submissions/?assessment={id}&request_id={uuid}`
+dan `assessments/submissions/{id}` hanya milik user. POST opsional `request_id`
+UUID memberi replay aman untuk payload sama; payload berbeda dengan ID sama 400.
+Client web selalu memakai UUID. Recovery lewat GET, retry eksplisit, bukan otomatis.
+Threshold hasil baru dipin di evaluation; perubahan assessment tidak menulis ulang hasil.
 
 ```json
 {"answer":"jawaban checkpoint"}
@@ -135,9 +141,12 @@ Nilai salah tetap HTTP 200 dengan `correct:false`.
 ```
 
 Hanya competency_id wajib. submission_id opsional/null; harus milik user,
-lulus, completed, dan sesuai competency. Jika dihilangkan backend memilih
-submission lulus terbaik. Credential issued yang sudah ada dikembalikan lagi
-dengan HTTP 201, sehingga status 201 tidak selalu berarti record baru.
+lulus, completed, dan termasuk evidence terpilih. Backend memilih evidence
+tiap skill dengan prioritas reviewed/non-mock, lalu skor normalisasi terbaik.
+`demo` default false; true membuat draft invalid hanya jika semua skill punya
+evidence lulus versi aktif. Final memerlukan reviewed track/grade, versi/schema,
+provider non-mock dan proof http terkonfirmasi. Record versi/evidence/mode sama
+dikembalikan dengan HTTP 201, sehingga 201 tidak selalu berarti record baru.
 URL publik frontend harus berbentuk `/verify/{uuid}`. Set `PUBLIC_WEB_URL` di backend;
 jika kosong, verification_url mengarah ke API JSON.
 
@@ -162,7 +171,7 @@ Belum ada envelope error tunggal. Tangani semuanya:
 - 403: izin/CSRF; jangan mengulang refresh terus-menerus.
 - 404: record tidak ditemukan, bukan milik user, atau belum ada diagnostic.
 - 5xx/network/timeout: pertahankan input; jangan berasumsi body selalu JSON.
-  Error provider AI belum diterjemahkan ke kontrak 503 yang konsisten.
+  Failure evaluator sekarang 400 detail generik + rollback; 503 belum digunakan.
 - Loading, hasil kosong, dan error harus dibedakan. Kosong pada diagnostic GET
   juga bisa berarti track tidak ditemukan/tidak aktif (query list mengembalikan []).
 - Semua skor/feedback dianggap data server; render teks aman, jangan HTML mentah.
@@ -178,14 +187,14 @@ kebijakan backend 70/85 tetap dipertahankan. Gap lainnya tetap backlog.
 | ID / prioritas | Temuan dan sumber | Dampak / kriteria selesai |
 |---|---|---|
 | G1 / selesai fase 3 | Latest memakai first() dengan urutan -completed_at, -created_at, -id | 0→404, 1/2+→200 terbaru; tie-break, isolasi user/track dan filter invalid diuji |
-| G2 / sebelum hasil assessment persisten | `assessments/urls.py`: tidak ada GET submission | Tambahkan list/detail milik user; refresh halaman dapat memuat hasil; user lain mendapat 404 |
+| G2 / selesai fase 6 | GET submission list/detail milik akun | Recovery/filter request ID, hasil tertentu setelah login ulang; user lain 404 |
 | G3 / selesai fase 5 | `progress` mengirim completed_lesson_ids per user | UI memakai ID server; checkpoint tetap feedback sementara, bukan completion/XP/evidence; isolasi user, replay dan rollback diuji |
-| G4 / sebelum UI eligibility | `credentials/urls.py`: eligibility hanya service internal | Tambahkan endpoint read-only dengan eligible, alasan, kebutuhan yang belum terpenuhi; jangan mencoba issue hanya untuk mengecek |
-| G5 / sebelum credential final | `credentials/services.py`: rata-rata >=70 + satu assessment lulus; lesson bisa memberi 70 mastery | Tetapkan skill wajib dan evidence lulus per skill; draft/mock tidak menerbitkan credential final; uji jalur penolakan |
+| G4 / selesai fase 6 | GET credentials/eligibility/{competency_id} | eligible, demo_ready, reason, missing_skills, submission_ids, score, version/status/provider; read-only |
+| G5 / gate fase 6 | Semua skill wajib evidence lulus versi aktif | Final hanya reviewed non-mock + reviewed/versioned track aktif + proof http; demo eksplisit menghasilkan draft invalid |
 | G6 / label dipisahkan fase 4 | `learning/services.py`: roadmap satisfied >=70, learning-path mastered >=85 | UI memakai “cukup untuk roadmap”, bukan lulus/mastered; 69.9/70/84.9/85 diuji; mastery dari membaca/diagnostic bukan bukti assessment. Kebijakan belum disatukan |
-| G7 / sebelum mode demo/final | `curriculum/importer.py` hanya memperingatkan draft; serializer submission/proof tidak mengirim provider/review status | Ekspos provenance yang stabil, termasuk fallback; UI bisa membedakan mock/live/draft tanpa menebak dari tx hash atau feedback |
-| G8 / sebelum halaman standar | Serializer katalog tidak mengekspos learning_outcomes, observable_behaviors, versi; verifikasi publik tidak memuat snapshot standar | Ekspos field publik yang diperlukan; recruiter melihat versi dan kriteria saat penerbitan, bukan standar terbaru |
-| G9 / sebelum submit provider nyata | Submission bebas, sinkron, tanpa idempotency dan error provider konsisten | Validasi evidence per tipe; normalkan failure; retry tidak membuat submission/XP ganda; GET hasil untuk recovery |
+| G7 / selesai untuk record baru fase 6 | Submission evaluation dan credential metadata menyimpan provenance | Mock/fallback/draft berbeda dari final; record lama tanpa provenance tidak memenuhi issuance baru |
+| G8 / fase 6 | Detail katalog mengekspos outcome/behavior/versi; public verification.standard disnapshot | Criteria/provenance masuk hash baru; email/raw content tidak dipublikasikan |
+| G9 / recovery fase 6 | Validasi evidence, transaction, UUID unique per-user, GET recovery | Replay submission/XP dan provider failure diuji; grading sinkron dan provider nyata/load test masih belum diuji |
 | G10 / sebagian selesai fase 5 | Checkpoint 200 memakai StudyCheckpointResponseSerializer; filter learning-path belum dianotasi; JSONField questions/skill_scores masih generik | Lengkapi schema yang tersisa; cocokkan generated types dengan respons runtime |
 
 Tambahan: AI skill-gap HTTP endpoint hanya menerima career_track_id walaupun
@@ -203,10 +212,9 @@ dua attempt. Data dibuat di SQLite in-memory. OpenAPI dihasilkan ulang dari kode
 tanpa snapshot besar yang mudah basi.
 
 Fase 1 auth dan fondasi UI sudah diimplementasikan; lihat README untuk uji client
-dan smoke test browser dengan database sementara. G1/G3 sudah selesai; G2/G4 perlu
-diselesaikan sebelum alur hasil dan progress dinyatakan lengkap; G5/G7/G8 sebelum
-credential final ditampilkan. Tidak ada klaim bahwa frontend penuh atau deployment
-sudah diuji. Katalog, diagnostic dan roadmap diuji dengan Django sementara;
+dan smoke test browser dengan database sementara. Fase 0–6 kini tersambung untuk
+demo; G5 memblokir final pada paket draft/provider mock. Deployment produksi belum
+diuji. Katalog, diagnostic dan roadmap diuji dengan Django sementara;
 provider nyata belum diuji. Roadmap memakai mastery tersimpan, bukan hanya attempt
 terakhir. GET tidak mengubah progress; target kosong tanpa skill adalah 400,
 sedangkan target dengan mastery cukup menghasilkan 200 dengan steps kosong.

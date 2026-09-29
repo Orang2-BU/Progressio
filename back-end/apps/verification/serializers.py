@@ -12,18 +12,15 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
     """
     credential_id = serializers.UUIDField(source='id', read_only=True)
     student_name = serializers.SerializerMethodField()
-    competency_title = serializers.CharField(
-        source='competency.title', read_only=True
-    )
-    career_track_title = serializers.CharField(
-        source='competency.career_track.title', read_only=True
-    )
+    competency_title = serializers.SerializerMethodField()
+    career_track_title = serializers.SerializerMethodField()
     is_valid = serializers.SerializerMethodField()
     integrity_verified = serializers.SerializerMethodField()
     integrity_reason = serializers.SerializerMethodField()
     verification_url = serializers.SerializerMethodField()
     evidences = EvidenceSerializer(many=True, read_only=True)
     blockchain_proof = BlockchainProofSerializer(read_only=True)
+    standard = serializers.SerializerMethodField()
 
     class Meta:
         model = Credential
@@ -41,7 +38,7 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
             'integrity_verified',
             'integrity_reason',
             'verification_url',
-            'created_at'
+            'created_at', 'standard',
         ]
 
     @extend_schema_field(serializers.CharField())
@@ -77,3 +74,14 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.URLField())
     def get_verification_url(self, obj) -> str:
         return build_verification_url(self, obj)
+
+    def get_standard(self, obj) -> dict:
+        # Public snapshot deliberately omits student_email and raw private submission content.
+        return {key: obj.metadata.get(key) for key in ('curriculum_version', 'curriculum_schema_version',
+            'observable_behaviors', 'skill_standards', 'mode', 'proof_provider')}
+
+    def get_competency_title(self, obj) -> str:
+        return obj.metadata.get('competency_title', obj.competency.title)
+
+    def get_career_track_title(self, obj) -> str:
+        return obj.metadata.get('career_track_title', obj.competency.career_track.title)

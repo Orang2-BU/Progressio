@@ -117,6 +117,8 @@ class Submission(TimestampMixin):
         EVALUATING = 'evaluating', 'Evaluating'
         COMPLETED = 'completed', 'Completed'
 
+    request_id = models.UUIDField(null=True, blank=True)
+    evaluation = models.JSONField(default=dict, blank=True)
     assessment = models.ForeignKey(
         Assessment,
         on_delete=models.CASCADE,
@@ -155,6 +157,7 @@ class Submission(TimestampMixin):
 
     class Meta:
         db_table = 'submissions'
+        constraints = [models.UniqueConstraint(fields=['user', 'request_id'], name='unique_submission_request')]
         ordering = ['-created_at']
         verbose_name = 'Submission'
         verbose_name_plural = 'Submissions'
@@ -165,8 +168,8 @@ class Submission(TimestampMixin):
     @property
     def is_passed(self):
         """Returns True if submission scored >= assessment passing_score."""
-        if self.score is not None and self.assessment is not None:
-            return self.score >= self.assessment.passing_score
+        if self.status == self.Status.COMPLETED and self.score is not None and self.assessment is not None:
+            return self.score >= self.evaluation.get('passing_score', self.assessment.passing_score)
         return False
 
 

@@ -30,5 +30,5 @@ class CompetencyDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'career_track', 'career_track_title',
             'title', 'slug', 'description', 'order',
-            'skill_count', 'created_at', 'updated_at'
+            'skill_count', 'learning_outcomes', 'observable_behaviors', 'created_at', 'updated_at'
         ]

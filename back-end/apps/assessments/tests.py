@@ -113,6 +113,66 @@ class AssessmentModelAndAPITests(TestCase):
         response = self.client.post(url, {'content': {}}, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_request_replay_conflict_recovery_and_user_isolation(self):
+        import uuid
+        self.client.force_authenticate(user=self.user)
+        body = {'request_id': str(uuid.uuid4()), 'content': {'answers': {'q1': 'A', 'q2': 'B', 'q3': 'C', 'q4': 'D'}}}
+        url = reverse('assessment-submit', args=[self.assessment.pk])
+        first = self.client.post(url, body, format='json')
+        second = self.client.post(url, body, format='json')
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(first.data['id'], second.data['id'])
+        self.assertEqual(Submission.objects.count(), 1)
+        self.assertEqual(SkillProgress.objects.get(user=self.user, skill=self.skill).xp, 100)
+        self.assertEqual(first.data['evaluation']['provider'], 'rules')
+        self.assessment.passing_score = 101; self.assessment.save()
+        self.assertTrue(self.client.get(reverse('submission-detail', args=[first.data['id']])).data['is_passed'])
+        latest = self.client.get(reverse('submission-list'), {'request_id': body['request_id']})
+        self.assertEqual(latest.data['results'][0]['id'], first.data['id'])
+        body['content']['answers']['q1'] = 'wrong'
+        self.assertEqual(self.client.post(url, body, format='json').status_code, 400)
+        self.client.force_authenticate(user=User.objects.create_user(username='other-results'))
+        self.assertEqual(self.client.get(reverse('submission-detail', args=[first.data['id']])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('submission-list')).data['count'], 0)
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get(reverse('submission-list')).status_code, 401)
+
+    def test_provider_failure_rolls_back_and_retry_uses_same_id(self):
+        import uuid
+        from unittest.mock import patch
+        self.client.force_authenticate(user=self.user)
+        self.assessment.evaluation_mode = 'ai'; self.assessment.save()
+        url = reverse('assessment-submit', args=[self.assessment.pk])
+        body = {'request_id': str(uuid.uuid4()), 'content': {'text': 'Example evidence'}}
+        with patch('apps.ai.services.AIService.get_adapter', side_effect=RuntimeError('secret provider detail')):
+            response = self.client.post(url, body, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn('secret', str(response.data))
+        self.assertEqual(Submission.objects.count(), 0)
+        with patch('apps.assessments.services.AssessmentEvaluationService._evaluate_with_ai', return_value={'score': 90, 'provider': 'mock-fallback'}):
+            result = self.client.post(url, body, format='json')
+        self.assertEqual(result.status_code, 201)
+        self.assertEqual(result.data['evaluation']['provider'], 'mock-fallback')
+        self.assertEqual(self.client.post(url, {'content': {'github_url': 'https://example.org'}}, format='json').status_code, 400)
+        self.assertEqual(self.client.post(url, {'content': {'text': 'evidence', 'github_url': 'javascript:alert(1)'}}, format='json').status_code, 400)
+        with patch('apps.assessments.services.AssessmentEvaluationService._evaluate_with_ai', return_value={'score': float('nan')}):
+            invalid = self.client.post(url, {'request_id': str(uuid.uuid4()), 'content': {'text': 'evidence'}}, format='json')
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(Submission.objects.count(), 1)
+
+    def test_public_quiz_requires_complete_valid_answers(self):
+        self.client.force_authenticate(user=self.user)
+        self.assessment.questions = [{'id': 'q1', 'prompt': 'Question', 'options': [{'value': 'A', 'label': 'First'}, {'value': 'B', 'label': 'Second'}]}]
+        self.assessment.grading_config = {'answer_key': {'q1': 'A'}}
+        self.assessment.save()
+        url = reverse('assessment-submit', args=[self.assessment.pk])
+        for answers in ({}, {'q1': 'unsafe'}, {'q1': 'A', 'unknown': 'A'}):
+            self.assertEqual(self.client.post(url, {'content': {'answers': answers}}, format='json').status_code, 400)
+        result = self.client.post(url, {'content': {'answers': {'q1': 'B'}}}, format='json')
+        self.assertEqual(result.status_code, 201)
+        self.assertFalse(result.data['is_passed'])
+        self.assertEqual(result.data['score'], 0)
+
 
 class DiagnosticAPITests(TestCase):
 

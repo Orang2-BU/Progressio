@@ -47,13 +47,13 @@ class BlockchainService:
             'credential_id': str(credential.id),
             # Slugs, not titles: a title may be reworded without changing what
             # was actually assessed.
-            'competency_id': credential.competency.slug,
+            'competency_id': metadata.get('competency_id', credential.competency.slug),
             'competency_title': metadata.get('competency_title', credential.competency.title),
             'career_track': metadata.get(
                 'career_track_title',
                 track.title if track else '',
             ),
-            'career_track_id': track.slug if track else '',
+            'career_track_id': metadata.get('career_track_id', track.slug if track else ''),
             # Which version of the standard graded this claim. Without it, two
             # credentials reading "API Development - 85" can mean different
             # things once the curriculum changes.
@@ -71,6 +71,8 @@ class BlockchainService:
             'issued_at': credential.issued_at.isoformat() if credential.issued_at else '',
             'evidence': evidence,
         }
+        if 'skill_standards' in metadata:
+            canonical_data['standard'] = {key: metadata.get(key) for key in ('skill_standards', 'observable_behaviors', 'mode', 'proof_provider', 'submission_ids')}
         canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
         return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
 

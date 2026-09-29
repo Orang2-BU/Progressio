@@ -56,7 +56,7 @@ export default function Roadmap() {
         <p className="hint">Ditentukan server dari mastery tersimpan, bukan tanda selesai membaca. Prasyarat di bawah skill yang sudah cukup tidak ditelusuri ulang oleh backend.</p>
         {data.already_satisfied.length ? <ul className="diagnostic-scores">{data.already_satisfied.map((s) => <li key={s.skill_slug}><strong>{s.skill_title}</strong><span>Mastery {s.mastery} / 100</span></li>)}</ul> : <p>Belum ada skill pada jalur ini yang dinyatakan cukup.</p>}
       </section>
-      <p className="session-note">Roadmap dihitung ulang, bukan rencana tersimpan. Membuka atau memperbaruinya tidak mengubah mastery/XP. Skill yang sudah cukup tetap dapat dipelajari kembali melalui katalog; assessment hadir pada fase berikutnya.</p>
+      <p className="session-note">Roadmap dihitung ulang, bukan rencana tersimpan. Membuka atau memperbaruinya tidak mengubah mastery/XP. Skill yang sudah cukup tetap dapat dipelajari dan diuji kembali melalui katalog. Buka assessment dari materi; kelayakan credential memerlukan evidence tiap skill.</p>
     </>}
   </section></WorkspaceLayout>;
 }

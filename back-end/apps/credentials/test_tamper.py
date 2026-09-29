@@ -37,7 +37,11 @@ class CredentialIntegrityTests(TestCase):
                 self.user, assessment, {'code': evidence, 'readme': evidence}
             )
 
-        self.credential = CredentialService.issue_credential(self.user, self.competency)
+        # Synthetic issued fixture tests hashing, not production eligibility.
+        self.credential = CredentialService.issue_credential(self.user, self.competency, demo=True)
+        self.credential.status = 'issued'
+        self.credential.save(update_fields=['status'])
+        BlockchainService.record_credential_on_chain(self.credential)
 
     def test_credential_is_issued_and_intact(self):
         self.assertEqual(self.credential.status, 'issued')
@@ -68,3 +72,8 @@ class CredentialIntegrityTests(TestCase):
 
         self.assertEqual(self.credential.status, 'revoked')
         self.assertFalse(self.credential.is_valid)
+
+    def test_editing_pinned_criteria_breaks_integrity(self):
+        self.credential.metadata['skill_standards'][0]['evaluation']['mastery_criteria'] = 'tampered'
+        self.credential.save(update_fields=['metadata'])
+        self.assertFalse(BlockchainService.verify_credential_integrity(self.credential)[0])

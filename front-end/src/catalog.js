@@ -1,14 +1,14 @@
 import { ApiError, publicRequest } from './api.js';
 
-export async function listPages(path, options) {
+export async function listPages(path, options, fetcher = publicRequest) {
   const items = [];
   const seen = new Set();
   let current = path;
-  // ponytail: load all pages of small catalog/study lists; use server search/paging for large collections.
+  // ponytail: load all pages of small catalog/study/submission lists; use server search/paging for large collections.
   while (current) {
     if (seen.has(current)) throw new ApiError('Pagination katalog berulang. Coba muat ulang.');
     seen.add(current);
-    const data = await publicRequest(current, options);
+    const data = await fetcher(current, options);
     if (!data || !Array.isArray(data.results) || !Number.isInteger(data.count) ||
         !data.results.every((item) => item && Number.isSafeInteger(item.id) && item.id > 0)) {
       throw new ApiError('Format katalog dari server tidak valid.');

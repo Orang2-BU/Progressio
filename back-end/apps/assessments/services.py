@@ -1,4 +1,7 @@
 from collections import defaultdict
+import math
+import os
+from django.contrib.auth import get_user_model
 
 from django.db import transaction
 from django.utils import timezone
@@ -15,8 +18,30 @@ class AssessmentEvaluationService:
 
     @classmethod
     @transaction.atomic
-    def submit_and_evaluate(cls, user, assessment, content):
+    def submit_and_evaluate(cls, user, assessment, content, request_id=None):
+        # ponytail: per-user transaction lock includes synchronous grading; use jobs if latency/throughput grows.
+        get_user_model().objects.select_for_update().get(pk=user.pk)
+        if request_id:
+            previous = Submission.objects.filter(user=user, request_id=request_id).first()
+            if previous:
+                if previous.assessment_id != assessment.pk or previous.content != content:
+                    raise ValidationError({'request_id': 'This request ID already belongs to a different payload.'})
+                return previous
+        if assessment.max_score <= 0 or assessment.passing_score > assessment.max_score:
+            raise ValidationError({'detail': 'Assessment scoring configuration is invalid.'})
+        if assessment.evaluation_mode == 'ai' and not any(
+            isinstance(content.get(key), str) and content[key].strip() for key in ('code', 'text')
+        ):
+            raise ValidationError({'content': 'Supply code or evidence text. URLs alone are not evaluated.'})
+        if assessment.evaluation_mode == 'rules' and assessment.questions:
+            answers = content.get('answers')
+            if not isinstance(answers, dict) or set(answers) != {str(q['id']) for q in assessment.questions}:
+                raise ValidationError({'content': 'Answer every public question, and no unknown question.'})
+            for question in assessment.questions:
+                if answers[str(question['id'])] not in [option['value'] for option in question['options']]:
+                    raise ValidationError({'content': 'Select an available answer option.'})
         submission = Submission.objects.create(
+            request_id=request_id,
             user=user,
             assessment=assessment,
             content=content,
@@ -32,19 +57,38 @@ class AssessmentEvaluationService:
         else:
             evaluation = cls._evaluate_with_rules(assessment, content)
 
-        score = max(0.0, min(float(evaluation['score']), float(assessment.max_score)))
+        try:
+            raw_score = float(evaluation['score'])
+            if not math.isfinite(raw_score):
+                raise ValueError()
+        except (ValueError, TypeError, KeyError) as exc:
+            raise ValidationError({'detail': 'Evaluator returned an invalid score; no result was saved.'}) from exc
+        score = max(0.0, min(raw_score, float(assessment.max_score)))
         feedback = evaluation.get('feedback') or cls._default_feedback(assessment, score)
 
         submission.score = round(score, 2)
         submission.feedback = feedback
         submission.status = Submission.Status.COMPLETED
-        submission.save(update_fields=['score', 'feedback', 'status'])
+        provider = evaluation.get('provider') or ('rules' if assessment.evaluation_mode == 'rules' else os.getenv('AI_PROVIDER', 'mock').lower())
+        track = assessment.skill.competency.career_track
+        submission.evaluation = {
+            'provider': provider,
+            'review_status': assessment.grading_config.get('review_status', 'unreviewed'),
+            'curriculum_version': track.curriculum_version,
+            'curriculum_schema_version': track.curriculum_schema_version,
+            'passing_score': assessment.passing_score, 'max_score': assessment.max_score,
+            'skill_id': assessment.skill_id, 'objective': assessment.objective,
+            'mastery_criteria': assessment.mastery_criteria,
+            'expected_evidence': assessment.expected_evidence,
+            'rubric': assessment.grading_config.get('rubric', []),
+        }
+        submission.save(update_fields=['score', 'feedback', 'status', 'evaluation'])
 
         if submission.is_passed:
             ProgressService.record_assessment_passed(
                 user=user,
                 skill=assessment.skill,
-                score=submission.score,
+                score=submission.score / assessment.max_score * 100,
             )
 
         return submission
@@ -81,7 +125,10 @@ class AssessmentEvaluationService:
     def _evaluate_with_ai(assessment, content):
         from apps.ai.services import AIService
 
-        evaluation = AIService.get_adapter().evaluate_submission(assessment, content)
+        try:
+            evaluation = AIService.get_adapter().evaluate_submission(assessment, content)
+        except Exception as exc:
+            raise ValidationError({'detail': 'Evaluation service unavailable; no result was saved. Retry with the same request ID.'}) from exc
         if not isinstance(evaluation, dict) or evaluation.get('score') is None:
             raise ValidationError({'detail': 'AI provider returned an invalid evaluation result.'})
         return evaluation

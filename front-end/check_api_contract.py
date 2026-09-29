@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'back-end'))
@@ -75,9 +76,16 @@ def main():
     assert 'questions' in detail and 'grading_config' not in detail
     request('post', f'assessments/{assessment.pk}/submit', status=400,
             data={'score': 100, 'content': {}})
-    submission = request('post', f'assessments/{assessment.pk}/submit', status=201,
-                         data={'content': {'answers': assessment.grading_config['answer_key']}})
+    payload = {'request_id': str(uuid.uuid4()), 'content': {'answers': assessment.grading_config['answer_key']}}
+    submission = request('post', f'assessments/{assessment.pk}/submit', status=201, data=payload)
     assert submission['status'] == 'completed' and submission['is_passed']
+    repeated = request('post', f'assessments/{assessment.pk}/submit', status=201, data=payload)
+    assert repeated['id'] == submission['id']
+    assert request('get', f'assessments/submissions/{submission["id"]}')['id'] == submission['id']
+    assert request('get', f'assessments/submissions/?request_id={payload["request_id"]}')['count'] == 1
+    eligibility = request('get', f'credentials/eligibility/{skill.competency_id}')
+    assert not eligibility['eligible'] and not eligibility['demo_ready']
+    request('post', 'credentials/issue', status=400, data={'competency_id': skill.competency_id})
     answers = {str(q.pk): q.correct_answer for q in
                DiagnosticQuestion.objects.filter(career_track=track, is_active=True)}
     request('get', f'diagnostics/latest?career_track={track.pk}', status=404)

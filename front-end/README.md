@@ -134,7 +134,71 @@ sesi, gangguan koneksi tetap dapat dicoba ulang. Logout menghapus sesi client,
 bukan mencabut JWT di server. Sesi persisten memerlukan dukungan cookie HttpOnly
 di backend/BFF; jangan memasukkan token ke penyimpanan browser untuk mengakalinya.
 
-## Menjalankan web
+## Status fase 6 — assessment sampai verifikasi publik
+
+`/assessment` dibuka dari materi dengan konteks target/skill yang sama. UI memuat
+tujuan, evidence yang diminta, kriteria, rubrik publik tanpa answer key, dan soal
+quiz. Semua pilihan quiz wajib; project/challenge mengirim isi evidence teks/kode
+dan tautan HTTP(S) opsional. Tidak ada upload, crawler repository, atau eksekusi kode.
+Penilai mock kini membaca evidence `text` maupun `code`. AI hanya menilai isi yang
+dikirim, bukan membuktikan repository yang belum diambil.
+
+Hasil dan riwayat milik akun dibaca dari GET submission, termasuk setelah reload
+dan login ulang. URL `submission` menunjuk hasil tertentu, bukan latest. Snapshot
+menyimpan threshold, versi, kriteria, dan provenance evaluator (`rules`, `mock`,
+`openai`, atau `mock-fallback`). Submission lama tetap dapat dibaca tetapi tanpa
+provenance tidak memenuhi syarat credential baru.
+
+Form memakai request UUID dan lock submit. Recovery GET memakai request ID;
+retry eksplisit memakai payload/ID yang sama, sehingga submission dan XP tidak
+ganda. ID yang dipakai untuk payload berbeda ditolak. Kegagalan provider/score
+invalid rollback hasil dan reward; pesan tidak membocorkan detail provider.
+Tidak ada retry otomatis untuk network/5xx. Isian tetap ada dan dikunci ketika
+status belum pasti; reload/navigasi meninggalkan form menghapus isian lokal.
+Client lama tanpa request ID masih didukung, tetapi tidak mendapat jaminan replay.
+Penilaian tetap sinkron; row lock per-user bukan uji beban/konkurensi PostgreSQL.
+
+`/credentials?claim={competency_id}` membaca eligibility tanpa mutasi. Semua skill
+competency diwajibkan punya assessment lulus pada versi kurikulum aktif; skor
+credential berasal dari rata-rata skor assessment yang dinormalisasi, bukan
+mastery diagnostic/lesson. Evidence reviewed/non-mock diprioritaskan. Missing skill
+memberi tautan assessment. Target skill tetap menghasilkan credential competency,
+bukan credential skill tunggal.
+
+Final memerlukan track aktif dengan versi/schema dan metadata status `reviewed`,
+evidence grading `reviewed`, evaluator rules/OpenAI tanpa fallback mock, serta
+provider proof `http` yang mengonfirmasi proof. Kurikulum repo masih draft: hasil
+lulus hanya memungkinkan **draft demo** lewat pilihan eksplisit `demo: true`.
+Draft tidak di-anchor, `issued_at` null dan `is_valid` false. Repeat issuance untuk
+versi/evidence/mode sama mengembalikan record yang sama; versi/evidence baru bisa
+membuat credential lain. Evidence tiap skill dan standar disnapshot; hash baru
+meliputi standar/provenance. Tidak ada promosi otomatis draft menjadi final.
+
+`/credentials?id={uuid}` menampilkan detail privat, daftar memakai paging server.
+`/verify/{uuid}` publik tanpa login, menampilkan standar saat dibuat, evidence,
+status valid/revoked/proof missing, dan label demo/legacy dengan jujur. Snapshot
+publik tidak mengekspos email atau isi mentah submission. Proof tidak membuktikan
+bahwa situs/repository eksternal masih sama atau bahwa audit manusia dilakukan.
+
+Migrasi baru `assessments/0006_submission_recovery` diperlukan. Dari root:
+
+```powershell
+$env:DB_ENGINE = 'sqlite' # atau konfigurasi database deployment milikmu
+uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py migrate
+uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py import_curriculum
+```
+
+Import memperbarui review metadata grading dari paket; jangan mengubah draft
+menjadi reviewed hanya untuk melewati gate. Migrasi/import database proyek belum
+dijalankan oleh agent; pengujian memakai database sementara.
+
+Fase frontend 0–6 tersambung untuk MVP/demo. Kesiapan produksi masih membutuhkan
+review kurikulum/lisensi, uji provider nyata, cookie HttpOnly untuk sesi persisten,
+dan operational/security/load testing. Anchoring eksternal belum memiliki outbox:
+timeout setelah provider menerima proof dapat meninggalkan proof orphan saat DB
+rollback; produksi memerlukan recovery/reconciliation provider, bukan retry buta.
+
+## Menjalankan web (development)
 
 Gunakan Node 20.19+ (baseline proyek). Jalankan backend pada port 8000 sesuai
 [petunjuk backend](../back-end/README.md), lalu di terminal lain:
@@ -307,10 +371,33 @@ jangan menormalisasi semua endpoint Django ke satu bentuk URL.
 - `next.config.mjs`: rewrite API ke Django.
 - `tests/`: tes client dan backend sementara untuk smoke test.
 
-Fase 5 menyambungkan materi/study plan, checkpoint latihan dan completion
-persisten. Langkah berikutnya adalah assessment/evidence dan hasil persisten
-(G2/G9); credential tetap memerlukan G4/G5/G7/G8, bukan hanya mastery/selesai membaca.
+Fase 0–6 menyambungkan target, diagnostic, roadmap, materi, assessment/evidence,
+hasil persisten, draft demo, dan verifikasi publik. Langkah berikutnya adalah
+review standar dan kesiapan produksi, bukan menambah fase frontend baru.
 Kontrak backend dan gap integrasi tetap tersedia di [API_CONTRACT.md](API_CONTRACT.md).
+
+### Verifikasi fase 6
+
+29 tes Node, seluruh aplikasi Django (129 tes), dan probe 31 request API menguji
+replay/recovery, owner isolation, score/provenance snapshot, invalid evidence,
+rollback evaluator/proof failure, demo gate, issuance replay dan tamper criteria.
+`makemigrations --check --dry-run` tidak menemukan perubahan model yang belum
+dimigrasikan. Build Next.js berhasil untuk route baru, termasuk verifikasi dinamis.
+
+Browser dev dan produksi dengan Django in-memory (29 September 2026): materi ->
+quiz, blank submit memfokuskan summary dengan 6 inline error, quiz lulus 100,
+evidence mock pertama 20.6 lalu attempt baru 100, missing skill memblokir demo,
+tautan assessment skill hilang, draft dengan evidence kedua skill dan snapshot,
+serta public verification tanpa login menampilkan draft invalid/proof missing.
+Backend dihentikan saat submit: evidence/request ID tetap; GET recovery setelah
+restart DB uji baru menunjukkan belum ada, retry eksplisit menyimpan satu hasil.
+Ini bukan simulasi provider nyata yang timeout setelah menyimpan hasil; lost-response
+recovery/replay diuji otomatis. Login ulang pada build produksi memulihkan URL
+credential dan data server. Public verification diperiksa pada 375 px/landscape
+tanpa overflow; snapshot mobile diinspeksi visual. Tidak ada runtime error aplikasi
+pada sesi produksi bersih; satu error evaluasi CLI karena quoting bukan error app.
+Tidak ada klaim reachability/lisensi sumber, provider nyata, audit manusia, load
+testing atau deployment produksi. Semua server/database uji bersifat disposable.
 
 ## Probe fase 0
 
