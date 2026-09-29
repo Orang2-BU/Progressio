@@ -8,6 +8,9 @@ Dokumen ini membedakan perilaku saat ini dan perubahan yang masih dibutuhkan.
 ## Konvensi integrasi
 
 - Base path: `/api/v1/`; origin backend dikonfigurasi saat implementasi frontend.
+- Web memakai Next.js App Router; rewrite `/api` di `next.config.mjs` meneruskan
+  request ke Django dan mempertahankan slash akhir. Variabel origin backend:
+  `API_PROXY_TARGET`; akses langsung browser opsional: `NEXT_PUBLIC_API_BASE_URL`.
 - JSON untuk request/response. Gunakan path persis di tabel, termasuk slash akhir.
   Jangan mengandalkan redirect untuk POST.
 - ID katalog, lesson, assessment, submission, diagnostic: integer. Credential: UUID.

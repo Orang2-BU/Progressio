@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { getSession, subscribe, login, register, logout, reloadProfile } from './api.js';
+'use client';
 
-const routeSubscribe = (listener) => { window.addEventListener('hashchange', listener); return () => window.removeEventListener('hashchange', listener); };
-const currentRoute = () => window.location.hash.slice(1) || '/';
-const navigate = (path) => { window.location.hash = path; };
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { getSession, getServerSession, subscribe, login, register, logout, reloadProfile } from './api.js';
+
+const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
 
 function Brand() {
-  return <a className="brand" href="#/" aria-label="Progressio, beranda"><span className="brand-mark" aria-hidden="true">p.</span>progressio<span className="brand-dot">.</span></a>;
+  return <Link className="brand" href="/" aria-label="Progressio, beranda"><span className="brand-mark" aria-hidden="true">p.</span>progressio<span className="brand-dot">.</span></Link>;
 }
 
 function AuthForm({ mode, notice, onRegistered }) {
+  const router = useRouter();
   const isRegister = mode === 'register';
   const [values, setValues] = useState({ username: '', email: '', password: '', password_confirm: '', role: 'student' });
   const [errors, setErrors] = useState({});
@@ -36,7 +39,7 @@ function AuthForm({ mode, notice, onRegistered }) {
         if (alive.current) onRegistered(values.username);
       } else {
         await login({ username: values.username, password: values.password });
-        if (alive.current) navigate('/');
+        if (alive.current) router.replace('/');
       }
     } catch (error) {
       if (alive.current) { setMessage(error.message); setErrors(error.fields || {}); }
@@ -102,7 +105,7 @@ function AuthForm({ mode, notice, onRegistered }) {
         </fieldset>
       </form>
       <p className="auth-switch">{isRegister ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
-        <a href={isRegister ? '#/login' : '#/register'}>{isRegister ? 'Masuk' : 'Daftar sekarang'}</a></p>
+        <Link href={isRegister ? '/login' : '/register'}>{isRegister ? 'Masuk' : 'Daftar sekarang'}</Link></p>
       <p className="session-note">Sesi hanya tersimpan selama halaman ini terbuka. Muat ulang halaman untuk memulai sesi baru.</p>
     </section>
   </div>;
@@ -118,8 +121,8 @@ function Workspace({ user, profile }) {
   }
   return <div className="workspace">
     <aside className="sidebar"><p className="eyebrow">WORKSPACE</p>
-      <nav aria-label="Navigasi workspace"><a href="#/" aria-current={!profile ? 'page' : undefined}>Ringkasan <span aria-hidden="true">↗</span></a>
-        <a href="#/profile" aria-current={profile ? 'page' : undefined}>Profil akun <span aria-hidden="true">↗</span></a></nav>
+      <nav aria-label="Navigasi workspace"><Link href="/" aria-current={!profile ? 'page' : undefined}>Ringkasan <span aria-hidden="true">↗</span></Link>
+        <Link href="/profile" aria-current={profile ? 'page' : undefined}>Profil akun <span aria-hidden="true">↗</span></Link></nav>
       <div className="sidebar-note"><span className="eyebrow">LANGKAH BERIKUTNYA</span><p>Pilih target, ukur titik awal, lalu ikuti roadmap pribadimu.</p><small>Alur ini hadir pada fase berikutnya.</small></div>
     </aside>
     <section className="workspace-content">
@@ -128,7 +131,7 @@ function Workspace({ user, profile }) {
       <p className="intro">{profile ? 'Informasi akunmu diambil langsung dari server.' : 'Akunmu siap. Perjalanan berikutnya dimulai dari tujuan yang kamu pilih.'}</p>
       {!profile && <div className="welcome-card"><div><span className="eyebrow">FONDASI PERJALANANMU</span>
         <h2>Kenali dirimu.<br />Tentukan arahmu.</h2><p>Progressio menghubungkan target keahlian, hasil penilaian, dan bukti kemampuan dalam satu perjalanan.</p>
-        <a className="button primary" href="#/profile">Lihat profil akun <span aria-hidden="true">↗</span></a></div>
+        <Link className="button primary" href="/profile">Lihat profil akun <span aria-hidden="true">↗</span></Link></div>
         <div className="path-graphic" aria-hidden="true"><span>Target</span><i /><span>Assessment</span><i /><span>Proof</span></div>
       </div>}
       <div className="profile-card"><div className="section-heading"><h2>Identitas akun</h2><span className="status">Terhubung</span></div>
@@ -143,28 +146,39 @@ function Workspace({ user, profile }) {
   </div>;
 }
 
-export default function App() {
-  const { user, reason } = useSyncExternalStore(subscribe, getSession);
-  const route = useSyncExternalStore(routeSubscribe, currentRoute);
-  const [notice, setNotice] = useState('');
+export function AuthPage({ mode }) {
+  const { reason } = useSession();
+  const router = useRouter();
+  return <AuthForm mode={mode} notice={mode === 'login' ? reason : ''}
+    onRegistered={(username) => {
+      logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
+      router.replace('/login');
+    }} />;
+}
+
+export function WorkspacePage({ profile = false }) {
+  const { user } = useSession();
+  return user ? <Workspace user={user} profile={profile} /> : null;
+}
+
+export default function App({ children }) {
+  const { user } = useSession();
+  const route = usePathname()?.replace(/\/$/, '') || '/';
+  const router = useRouter();
   const main = useRef(null);
   const publicRoute = ['/login', '/register'].includes(route);
   useEffect(() => {
-    if (!user && !publicRoute && ['/', '/profile'].includes(route)) navigate('/login');
-    if (user && publicRoute) navigate('/');
-    document.title = `${route === '/register' ? 'Daftar' : route === '/profile' ? 'Profil' : !user ? 'Masuk' : 'Workspace'} — Progressio`;
+    if (!user && !publicRoute && ['/', '/profile'].includes(route)) router.replace('/login');
+    if (user && publicRoute) router.replace('/');
     main.current?.focus();
-  }, [route, user, publicRoute]);
-  const knownRoute = ['/', '/login', '/register', '/profile'].includes(route);
+  }, [route, user, publicRoute, router]);
+  const redirecting = (!user && ['/', '/profile'].includes(route)) || (user && publicRoute);
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     <header className="topbar"><Brand /><div className="header-right">
-      {user ? <><span className="account-label">{roleNames[user.role] || user.role}</span><button className="button secondary compact" onClick={() => { logout(); setNotice('Kamu sudah keluar dari akun.'); navigate('/login'); }}>Keluar</button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
+      {user ? <><span className="account-label">{roleNames[user.role] || user.role}</span><button className="button secondary compact" onClick={() => { logout('Kamu sudah keluar dari akun.'); router.replace('/login'); }}>Keluar</button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></header>
     <main id="main" ref={main} tabIndex="-1">
-      {!knownRoute ? <section className="not-found"><p className="eyebrow">404</p><h1>Halaman belum tersedia.</h1><p>Kembali ke workspace untuk melanjutkan.</p><a className="button primary" href="#/">Kembali</a></section>
-        : user ? <Workspace user={user} profile={route === '/profile'} />
-        : <AuthForm key={route} mode={route === '/register' ? 'register' : 'login'} notice={route !== '/register' ? reason || notice : ''}
-          onRegistered={(username) => { setNotice(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`); navigate('/login'); }} />}
+      {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
     </main><footer className="footer"><span>progressio.</span><span>Setiap kemajuan punya arah.</span></footer>
   </>;
 }

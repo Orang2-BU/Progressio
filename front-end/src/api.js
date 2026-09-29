@@ -1,6 +1,7 @@
-const base = (import.meta.env?.VITE_API_BASE_URL || '/api/v1/').replace(/\/?$/, '/');
+const base = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1/').replace(/\/?$/, '/');
 let tokens = null;
-let session = { user: null, reason: '' };
+const serverSession = { user: null, reason: '' };
+let session = serverSession;
 let version = 0;
 let refreshing = null;
 const listeners = new Set();
@@ -15,6 +16,8 @@ export class ApiError extends Error {
 
 export const subscribe = (listener) => { listeners.add(listener); return () => listeners.delete(listener); };
 export const getSession = () => session;
+// SSR never reads a browser session or shares authenticated user data between requests.
+export const getServerSession = () => serverSession;
 function publish(user, reason = '') {
   session = { user, reason };
   listeners.forEach((listener) => listener());

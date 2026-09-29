@@ -1,6 +1,6 @@
 # Progressio frontend
 
-Frontend web React + Vite. Aplikasi Flutter tetap berada di `../Mobile/`.
+Frontend web Next.js App Router + React. Aplikasi Flutter tetap berada di `../Mobile/`.
 
 ## Status fase 1
 
@@ -20,7 +20,7 @@ di backend/BFF; jangan memasukkan token ke penyimpanan browser untuk mengakaliny
 
 ## Menjalankan web
 
-Gunakan Node 20.19+ yang didukung Vite. Jalankan backend pada port 8000 sesuai
+Gunakan Node 20.19+ (baseline proyek). Jalankan backend pada port 8000 sesuai
 [petunjuk backend](../back-end/README.md), lalu di terminal lain:
 
 ```powershell
@@ -29,15 +29,27 @@ npm ci
 npm run dev
 ```
 
-Buka http://127.0.0.1:5173. Vite meneruskan `/api` ke Django tanpa mengubah
+Buka http://127.0.0.1:3000. Next.js meneruskan `/api` ke Django tanpa mengubah
 konfigurasi CORS backend. Untuk origin backend lain, salin `.env.example` ke
-`.env.local` dan atur `API_PROXY_TARGET`, lalu restart Vite.
+`.env.local` dan atur `API_PROXY_TARGET`, lalu restart Next.js.
 
-`VITE_API_BASE_URL` dapat diatur saat build jika API produksi berada di origin
-berbeda (backend harus mengizinkan CORS). Default `/api/v1/` memerlukan reverse
-proxy `/api` di hosting produksi. `npm run preview` hanya menyajikan hasil build,
-bukan proxy Django yang dikonfigurasi untuk development. Jangan menaruh secret
-di variabel `VITE_*` karena nilainya masuk bundle publik.
+Default `/api/v1/` menggunakan [rewrite Next.js](https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites)
+ke `API_PROXY_TARGET` pada development maupun server produksi. Tetapkan target
+sebelum `npm run build`; perubahan target produksi memerlukan build ulang.
+Jalankan hasil produksi dengan `npm run start`. Hosting membutuhkan runtime
+Next.js/Node, bukan penyajian folder statis atau `output: 'export'`.
+
+`NEXT_PUBLIC_API_BASE_URL` opsional untuk akses langsung ke origin backend berbeda
+(backend harus mengizinkan CORS). Nilainya masuk bundle saat build sesuai
+[aturan environment Next.js](https://nextjs.org/docs/app/guides/environment-variables).
+Jangan menaruh secret di variabel `NEXT_PUBLIC_*`. Variabel `VITE_*` tidak lagi dipakai.
+
+Routing sekarang menggunakan `/`, `/login`, `/register`, dan `/profile`, bukan
+`#/...`. Gunakan Link Next.js untuk navigasi internal agar sesi di memori tetap
+bertahan. Shared layout menjaga shell, sementara pages menyediakan metadata dan
+konten masing-masing route. Form/sesi tetap Client Components; snapshot SSR selalu
+anonim dan tidak merender profil privat. Proteksi UI dilakukan di client karena
+token hanya di memori; otorisasi data tetap wajib ditegakkan Django.
 
 ## Uji fase 1
 
@@ -47,7 +59,8 @@ npm test
 npm run build
 ```
 
-Enam pengujian Node mencakup payload register, login/profil, login gagal,
+Delapan pengujian Node mencakup payload register, login/profil, snapshot SSR anonim,
+konfigurasi proxy dengan/tanpa slash akhir, login gagal,
 refresh bersamaan, refresh ditolak, logout saat refresh, serta error field,
 non-JSON dan jaringan. Tidak memerlukan framework test tambahan.
 
@@ -66,18 +79,31 @@ npm run dev
 
 Server uji memakai SQLite in-memory: berhenti berarti seluruh akun uji hilang,
 database proyek tidak disentuh. Jangan gunakan server ini untuk deployment.
-Smoke test browser pada 29 September 2026 memverifikasi daftar -> masuk -> profil,
+Smoke test browser fase 1 pada 29 September 2026 memverifikasi daftar -> masuk -> profil,
 muat ulang profil, logout/proteksi route, password salah, konfirmasi berbeda,
 username duplikat, kegagalan backend dengan isian tetap tersimpan, dan lebar
 mobile 375 px tanpa overflow horizontal.
 Refresh token diuji otomatis dengan respons terkontrol, bukan menunggu expiry
 30 menit di browser. Ini belum merupakan uji seluruh perjalanan Progressio.
 
+Migrasi Next.js juga diuji pada tanggal yang sama: dev server berhasil menjalankan
+register/login/profil/logout, login gagal dengan fokus error dan isian tetap ada,
+proteksi `/profile/`, serta layout mobile 375 px. Server hasil `npm run build` +
+`npm run start` berhasil menjalankan login dan navigasi profil tanpa kehilangan
+sesi atau error hidrasi. Reload `/profile` kembali ke login. Halaman tak dikenal
+menghasilkan HTTP 404; HTML server tidak berisi identitas akun yang login.
+Proxy diuji dengan `career-tracks/?page=1` (200 JSON tanpa redirect) dan `auth/me`
+tanpa token (401). Database sementara tidak berisi katalog, sehingga hasil list
+kosong bukan uji alur pemilihan target. Slash akhir dipertahankan oleh rewrite;
+jangan menormalisasi semua endpoint Django ke satu bentuk URL.
+
 ## Struktur dan fase berikutnya
 
-- `src/App.jsx`: halaman dan navigasi hash sederhana.
+- `src/app/`: layout, pages, metadata dan halaman 404 App Router.
+- `src/App.jsx`: shell dan komponen interaktif auth/workspace.
 - `src/api.js`: API client, sesi dan refresh terkoordinasi.
 - `src/styles.css`: identitas visual dan responsivitas.
+- `next.config.mjs`: rewrite API ke Django.
 - `tests/`: tes client dan backend sementara untuk smoke test.
 
 Fase 2 menyambungkan katalog/target dan alur pengukuran sesuai plan; roadmap,

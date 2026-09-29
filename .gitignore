@@ -52,3 +52,4 @@ Thumbs.db
 node_modules/
 playwright-report/
 test-results/
+.next/

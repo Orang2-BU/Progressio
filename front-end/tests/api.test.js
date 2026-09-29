@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
-import { ApiError, getSession, login, logout, register, request } from '../src/api.js';
+import nextConfig from '../next.config.mjs';
+import { ApiError, getSession, getServerSession, login, logout, register, request } from '../src/api.js';
 
 const originalFetch = globalThis.fetch;
 const profile = { id: 1, username: 'student', email: 'student@example.test', role: 'student', date_joined: '2026-09-29T00:00:00Z' };
@@ -29,6 +30,24 @@ test('register sends exact payload without authorization; login loads real profi
   assert.equal(getSession().user, null);
   await login({ username: 'student', password: 'abc' });
   assert.deepEqual(getSession().user, profile);
+});
+
+test('Next proxy preserves Django endpoints with and without a trailing slash', async () => {
+  assert.equal(nextConfig.skipTrailingSlashRedirect, true);
+  const rules = await nextConfig.rewrites();
+  assert.equal(rules[0].source, '/api/:path*/');
+  assert.ok(rules[0].destination.endsWith('/api/:path*/'));
+  assert.equal(rules[1].source, '/api/:path*');
+  assert.ok(rules[1].destination.endsWith('/api/:path*'));
+});
+
+test('SSR snapshot stays anonymous even when the client is authenticated', async () => {
+  const initial = getServerSession();
+  authenticatedFetch(() => response({}));
+  await login({ username: 'student', password: 'abc' });
+  assert.equal(getSession().user.username, 'student');
+  assert.equal(getServerSession(), initial);
+  assert.deepEqual(initial, { user: null, reason: '' });
 });
 
 test('wrong credentials preserve error and never refresh', async () => {
