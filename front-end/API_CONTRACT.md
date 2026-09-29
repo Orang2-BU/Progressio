@@ -31,12 +31,13 @@ Dokumen ini membedakan perilaku saat ini dan perubahan yang masih dibutuhkan.
 Login memakai username, bukan email. Registrasi publik menolak role admin;
 student/recruiter diperbolehkan. Access berlaku 30 menit, refresh 7 hari;
 refresh tidak dirotasi. Belum ada endpoint logout/revoke token, reset password,
-atau edit profil. Logout frontend nanti menghapus sesi lokal, bukan mencabut JWT.
+atau edit profil. Logout frontend menghapus sesi lokal, bukan mencabut JWT.
 
-Rencana client: satu refresh bersama untuk request bersamaan yang mendapat 401,
-coba ulang satu kali setelah refresh sukses; refresh gagal mengakhiri sesi.
-Jangan refresh berulang untuk login gagal. Penyimpanan token belum diimplementasikan:
-gunakan access di memori; sesi persisten dengan cookie HttpOnly memerlukan dukungan
+Client Fase 1: satu refresh bersama untuk request bersamaan yang mendapat 401,
+coba ulang satu kali setelah refresh sukses; refresh ditolak mengakhiri sesi.
+Gangguan jaringan saat refresh dilaporkan tanpa menghapus sesi agar dapat dicoba ulang.
+Jangan refresh berulang untuk login gagal. Access dan refresh disimpan di memori;
+reload/tab baru meminta login ulang. Sesi persisten dengan cookie HttpOnly memerlukan dukungan
 backend/BFF dan konfigurasi CSRF/cookie tersendiri. CORS saat ini dikonfigurasi melalui
 `CORS_ALLOWED_ORIGINS`; tetapkan origin web yang digunakan saat integrasi.
 
@@ -190,7 +191,8 @@ penolakan client score, kuis sinkron, serta latest diagnostic sebelum/sesudah
 dua attempt. Data dibuat di SQLite in-memory. OpenAPI dihasilkan ulang dari kode,
 tanpa snapshot besar yang mudah basi.
 
-Fase 1 auth dan fondasi UI dapat dimulai memakai kontrak ini. G1/G2/G3/G4 perlu
+Fase 1 auth dan fondasi UI sudah diimplementasikan; lihat README untuk uji client
+dan smoke test browser dengan database sementara. G1/G2/G3/G4 perlu
 diselesaikan sebelum alur hasil dan progress dinyatakan lengkap; G5/G7/G8 sebelum
 credential final ditampilkan. Tidak ada klaim bahwa frontend penuh atau deployment
-sudah diuji. Provider nyata dan browser belum diuji dalam audit ini.
+sudah diuji. Provider nyata dan alur browser di luar auth belum diuji.

@@ -47,3 +47,8 @@ Thumbs.db
 
 # Docker
 *.override.yml
+
+# Web frontend
+node_modules/
+playwright-report/
+test-results/
