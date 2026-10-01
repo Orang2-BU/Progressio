@@ -4,7 +4,7 @@ Planned against commit `2277b83` on 2026-10-01. These five tasks turn the existi
 
 ## Ringkasan tugas untuk eksekusi
 
-- [ ] 001 — Hidupkan Django seeded dan Next.js pada localhost; pastikan API lewat proxy mengembalikan 200.
+- [x] 001 — Runtime Django seeded dan Next.js teruji di localhost; API lewat proxy mengembalikan 200. Dokumentasi selesai di commit `c0597fe` pada branch `codex/plan-001-runtime`.
 - [ ] 002 — Jalankan tes kurikulum, backend, frontend, API probe, dan satu perjalanan browser beserta kasus gagal.
 - [ ] 003 — Perjelas label kelulusan simulasi pada hasil assessment mock/draft.
 - [ ] 004 — Perbaiki salah klasifikasi tautan HEAD 403/405, cek 13 sumber, dan catat bukti lisensi tanpa mengubah klaim yang belum pasti.
@@ -14,7 +14,7 @@ Planned against commit `2277b83` on 2026-10-01. These five tasks turn the existi
 
 | Plan | Outcome | Priority | Effort | Depends on | Status |
 | --- | --- | --- | --- | --- | --- |
-| [001](001-local-runtime.md) | Frontend and seeded backend run together locally | P0 | S | — | TODO |
+| [001](001-local-runtime.md) | Frontend and seeded backend run together locally | P0 | S | — | DONE (branch `codex/plan-001-runtime`, commit `c0597fe`) |
 | [002](002-end-to-end-gates.md) | Tests and a repeatable end-to-end checklist pass | P0 | M | 001 | TODO |
 | [003](003-honest-assessment-labels.md) | Mock/draft results are unmistakable in the UI | P0 | S | 002 | TODO |
 | [004](004-source-links-and-licenses.md) | Demo source links are checked and license claims recorded accurately | P1 | M | 001 | TODO |
