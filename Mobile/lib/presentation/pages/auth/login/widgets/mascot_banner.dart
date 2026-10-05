@@ -32,7 +32,7 @@ class MascotBanner extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.limePrimary.withOpacity(0.35),
+                    color: AppColors.limePrimary.withValues(alpha: 0.35),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -55,7 +55,7 @@ class MascotBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6B9B11).withOpacity(0.4),
+                        color: const Color(0xFF6B9B11).withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 6),
                       ),
@@ -143,7 +143,7 @@ class MascotBanner extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

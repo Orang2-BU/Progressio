@@ -403,7 +403,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               borderRadius: BorderRadius.circular(AppRadius.pill),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFB5F942).withOpacity(0.55),
+                  color: const Color(0xFFB5F942).withValues(alpha: 0.55),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -498,7 +498,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),

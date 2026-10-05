@@ -37,14 +37,15 @@ services:
 
   backend:
     build:
-      context: ./back-end
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: back-end/Dockerfile
     container_name: progressio_backend
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
       - ./back-end:/app
+      - ./curriculum:/repo/curriculum:ro
     environment:
       - DEBUG=True
       - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
@@ -78,13 +79,14 @@ services:
 
   celery_worker:
     build:
-      context: ./back-end
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: back-end/Dockerfile
     container_name: progressio_celery_worker
     restart: unless-stopped
     command: celery -A config worker -l info
     volumes:
       - ./back-end:/app
+      - ./curriculum:/repo/curriculum:ro
     environment:
       - DEBUG=True
       - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
