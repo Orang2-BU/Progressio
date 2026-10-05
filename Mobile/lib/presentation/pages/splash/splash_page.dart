@@ -31,7 +31,7 @@ class SplashPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.xxl),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.limePrimary.withOpacity(0.45),
+                    color: AppColors.limePrimary.withValues(alpha: 0.45),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),

@@ -242,7 +242,7 @@ class _RegisterFormContentState extends State<RegisterFormContent> {
               borderRadius: BorderRadius.circular(AppRadius.pill),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF8CE323).withOpacity(0.42),
+                  color: const Color(0xFF8CE323).withValues(alpha: 0.42),
                   blurRadius: 18,
                   offset: const Offset(0, 7),
                 ),
@@ -338,7 +338,7 @@ class _RegisterFormContentState extends State<RegisterFormContent> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),

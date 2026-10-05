@@ -120,8 +120,8 @@ class _FluidDopamineCheckboxState extends State<FluidDopamineCheckbox>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: widget.activeColor.withOpacity(
-                              (1.0 - _fluidRipple.value) * 0.6,
+                            color: widget.activeColor.withValues(
+                              alpha: (1.0 - _fluidRipple.value) * 0.6,
                             ),
                             width: 2.5,
                           ),
@@ -155,8 +155,8 @@ class _FluidDopamineCheckboxState extends State<FluidDopamineCheckbox>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.activeColor.withOpacity(
-                              _controller.value * 0.40,
+                            color: widget.activeColor.withValues(
+                              alpha: _controller.value * 0.40,
                             ),
                             blurRadius: 8 * _controller.value,
                             offset: Offset(0, 2 * _controller.value),
