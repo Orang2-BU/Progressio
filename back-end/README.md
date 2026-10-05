@@ -38,18 +38,34 @@ Create a fresh Python 3.12 virtual environment in `back-end/.venv` and install
 all backend-dependent checks; no existing machine virtualenv is required:
 
 ```powershell
-$python = "back-end/.venv/Scripts/python.exe" # Windows; use .venv/bin/python on POSIX
+$python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path # POSIX: back-end/.venv/bin/python
 $env:DB_ENGINE = "sqlite"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
-& $python back-end/manage.py test
-& $python back-end/manage.py makemigrations --check --dry-run
-$openapi = [System.IO.Path]::GetTempFileName()
-& $python back-end/manage.py spectacular --fail-on-warn --file $openapi
-if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed" }
-Remove-Item $openapi
+
+# Django discovers its complete test suite from back-end/.
+Push-Location back-end
+try {
+    & $python manage.py test
+    if ($LASTEXITCODE -ne 0) { throw "Django tests failed ($LASTEXITCODE)" }
+    & $python manage.py makemigrations --check --dry-run
+    if ($LASTEXITCODE -ne 0) { throw "Migration check failed ($LASTEXITCODE)" }
+    $openapi = [System.IO.Path]::GetTempFileName()
+    try {
+        & $python manage.py spectacular --fail-on-warn --file $openapi
+        if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed ($LASTEXITCODE)" }
+    } finally {
+        Remove-Item $openapi -ErrorAction SilentlyContinue
+    }
+} finally {
+    Pop-Location
+}
+
+# Probe API contract and run curriculum checks from the repository root.
 & $python front-end/check_api_contract.py
+if ($LASTEXITCODE -ne 0) { throw "API contract probe failed ($LASTEXITCODE)" }
 python -m unittest discover -s curriculum -t .
+if ($LASTEXITCODE -ne 0) { throw "Curriculum tests failed ($LASTEXITCODE)" }
 ```
 
 On POSIX, use `back-end/.venv/bin/python` instead of the Windows interpreter

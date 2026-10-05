@@ -64,22 +64,34 @@ terisolasi dari Python sistem (PowerShell dari root repo):
 # Bootstrap sekali; .venv berada di back-end/ dan tidak perlu di-commit
 python -m venv back-end/.venv
 back-end/.venv/Scripts/python.exe -m pip install -r back-end/requirements.txt
-$python = "back-end/.venv/Scripts/python.exe"
+$python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path
 $env:DB_ENGINE = "sqlite"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
 
-# Kurikulum (tanpa dependency tambahan)
-python -m unittest discover -s curriculum -t .
-
 # Backend dan pemeriksaan model/schema
-& $python back-end/manage.py test
-& $python back-end/manage.py makemigrations --check --dry-run
-$openapi = [System.IO.Path]::GetTempFileName()
-& $python back-end/manage.py spectacular --fail-on-warn --file $openapi
-if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed" }
-Remove-Item $openapi
+Push-Location back-end
+try {
+    & $python manage.py test
+    if ($LASTEXITCODE -ne 0) { throw "Django tests failed ($LASTEXITCODE)" }
+    & $python manage.py makemigrations --check --dry-run
+    if ($LASTEXITCODE -ne 0) { throw "Migration check failed ($LASTEXITCODE)" }
+    $openapi = [System.IO.Path]::GetTempFileName()
+    try {
+        & $python manage.py spectacular --fail-on-warn --file $openapi
+        if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed ($LASTEXITCODE)" }
+    } finally {
+        Remove-Item $openapi -ErrorAction SilentlyContinue
+    }
+} finally {
+    Pop-Location
+}
+
+# API probe and curriculum checks run from the repository root.
 & $python front-end/check_api_contract.py
+if ($LASTEXITCODE -ne 0) { throw "API contract probe failed ($LASTEXITCODE)" }
+python -m unittest discover -s curriculum -t .
+if ($LASTEXITCODE -ne 0) { throw "Curriculum tests failed ($LASTEXITCODE)" }
 
 # Web (Node minimal 20.19 sesuai package.json)
 cd front-end
