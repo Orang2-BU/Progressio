@@ -1,0 +1,50 @@
+name: Web tests
+
+on:
+  push:
+    paths:
+      - "front-end/**"
+      - "back-end/**"
+      - "curriculum/**"
+      - ".github/workflows/web-tests.yml"
+  pull_request:
+    paths:
+      - "front-end/**"
+      - "back-end/**"
+      - "curriculum/**"
+      - ".github/workflows/web-tests.yml"
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: front-end/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: back-end/requirements.txt
+      - name: Install web dependencies
+        working-directory: front-end
+        run: npm ci
+      - name: Test web
+        working-directory: front-end
+        run: npm test
+      - name: Build web
+        working-directory: front-end
+        run: npm run build
+      - name: Create isolated backend environment
+        run: python -m venv .venv
+      - name: Install backend dependencies
+        run: .venv/bin/python -m pip install -r back-end/requirements.txt
+      - name: Probe API contract
+        env:
+          DB_ENGINE: sqlite
+          AI_PROVIDER: mock
+          BLOCKCHAIN_PROVIDER: mock
+        run: .venv/bin/python front-end/check_api_contract.py

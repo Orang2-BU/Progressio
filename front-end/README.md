@@ -239,6 +239,11 @@ npm test
 npm run build
 ```
 
+`npm ci` memasang versi yang terkunci di `package-lock.json` dan membutuhkan
+Node `>=20.19.0`. Workflow web CI menjalankan instalasi bersih, tes, build, lalu
+probe kontrak dengan Python 3.12 dalam virtualenv job dan dependency dari
+`back-end/requirements.txt`.
+
 Delapan pengujian Node mencakup payload register, login/profil, snapshot SSR anonim,
 konfigurasi proxy dengan/tanpa slash akhir, login gagal,
 refresh bersamaan, refresh ditolak, logout saat refresh, serta error field,
@@ -404,7 +409,8 @@ testing atau deployment produksi. Semua server/database uji bersifat disposable.
 Jalankan probe dari root repo dengan environment backend yang sehat:
 
 ```powershell
-python front-end/check_api_contract.py
+$python = "back-end/.venv/Scripts/python.exe" # venv baru dari back-end/README.md
+& $python front-end/check_api_contract.py
 ```
 
 Alternatif dengan uv dan Python 3.12:

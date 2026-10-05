@@ -18,16 +18,40 @@ The mock providers are intentionally labeled development behavior and must not b
 ## Demo setup
 
 ```powershell
-# Native Python (from back-end/)
+# Native Python 3.12 (from back-end/); .venv stays local and is git-ignored.
 python -m venv .venv
 .\.venv\Scripts\activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 $env:DB_ENGINE = "sqlite"
+$env:AI_PROVIDER = "mock"
+$env:BLOCKCHAIN_PROVIDER = "mock"
 python manage.py migrate
 python manage.py seed_demo
 python manage.py test
 python manage.py runserver
 ```
+
+## Reproducible verification
+
+Create a fresh Python 3.12 virtual environment in `back-end/.venv` and install
+`requirements.txt` as above. From the repository root, use its interpreter for
+all backend-dependent checks; no existing machine virtualenv is required:
+
+```powershell
+$python = "back-end/.venv/Scripts/python.exe" # Windows; use .venv/bin/python on POSIX
+$env:DB_ENGINE = "sqlite"
+$env:AI_PROVIDER = "mock"
+$env:BLOCKCHAIN_PROVIDER = "mock"
+& $python back-end/manage.py test
+& $python back-end/manage.py makemigrations --check --dry-run
+& $python back-end/manage.py spectacular --fail-on-warn --file openapi-check.yml
+& $python front-end/check_api_contract.py
+python -m unittest discover -s curriculum -t .
+```
+
+Remove `openapi-check.yml` after inspection. The API probe sets SQLite in-memory
+and mock providers itself; it does not use the project database or external
+services. The Django test command also uses Django's isolated test database.
 
 `seed_demo` is idempotent and creates one Backend Engineering track, four skills, eight diagnostic questions, lessons, prerequisites, and one JWT/RBAC coding challenge.
 

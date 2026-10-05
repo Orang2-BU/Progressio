@@ -57,14 +57,37 @@ back-end/
 
 ## 🧪 Menjalankan Test
 
+Gunakan Python 3.12 dan virtualenv baru agar dependency backend terpasang
+terisolasi dari Python sistem (PowerShell dari root repo):
+
 ```powershell
-# Kurikulum (tanpa dependency, dari root repo)
+# Bootstrap sekali; .venv berada di back-end/ dan tidak perlu di-commit
+python -m venv back-end/.venv
+back-end/.venv/Scripts/python.exe -m pip install -r back-end/requirements.txt
+$python = "back-end/.venv/Scripts/python.exe"
+$env:DB_ENGINE = "sqlite"
+$env:AI_PROVIDER = "mock"
+$env:BLOCKCHAIN_PROVIDER = "mock"
+
+# Kurikulum (tanpa dependency tambahan)
 python -m unittest discover -s curriculum -t .
 
-# Backend
-cd back-end
-python manage.py test
+# Backend dan pemeriksaan model/schema
+& $python back-end/manage.py test
+& $python back-end/manage.py makemigrations --check --dry-run
+& $python back-end/manage.py spectacular --fail-on-warn --file openapi-check.yml
+& $python front-end/check_api_contract.py
+
+# Web (Node minimal 20.19 sesuai package.json)
+cd front-end
+npm ci
+npm test
+npm run build
 ```
+
+Di POSIX, interpreter venv adalah `back-end/.venv/bin/python`. Tetapkan
+`AI_PROVIDER=mock` dan `BLOCKCHAIN_PROVIDER=mock` untuk menjalankan pemeriksaan
+lokal tanpa provider eksternal. Hapus `openapi-check.yml` setelah pemeriksaan.
 
 ---
 
