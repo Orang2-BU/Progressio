@@ -36,6 +36,11 @@ reported on — never an assumed shared in-memory SQLite.
   and GET): `HEAD OK 200`, `GET OK 200`, final URL unchanged. A browser-UA
   fetch of the same URL also rendered the full "Client-server overview" page.
 - Run 2, 2026-10-05: `ok=17 moved=0 broken=0` — "All curriculum links reachable."
+- Run 3 (re-verification), 2026-10-05: fresh disposable file DB (`back-end/db.sqlite3`
+  recreated via `migrate --run-syncdb` + `import_curriculum --track backend-engineering`
+  with `$env:DB_ENGINE = "sqlite"`), then `check_links` in the same-DB process:
+  `ok=17 moved=0 broken=0` — "All curriculum links reachable." Demo URLs additionally
+  re-probed header-only (HEAD 200, final URL unchanged) the same day.
 
 Conclusion on access: all 13 resource URLs (17 managed lessons — some
 resources back more than one skill) are reachable as of 2026-10-05. The single
