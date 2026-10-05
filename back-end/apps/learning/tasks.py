@@ -20,23 +20,48 @@ USER_AGENT = 'ProgressioLinkCheck/1.0 (+https://github.com/Orang2-BU/Progressio)
 TIMEOUT_SECONDS = 15
 
 
+def _status_for_final_url(url, final_url):
+    """Map a resolved final URL to 'ok' or 'moved' without reading any body."""
+    if final_url.rstrip('/') != url.rstrip('/'):
+        return 'moved'
+    return 'ok'
+
+
+def _open_without_body(request):
+    """
+    Open a URL and classify it by its final URL only.
+
+    The response is closed immediately by the caller via the context
+    manager; the body is never read, stored, or derived from.
+    """
+    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        return _status_for_final_url(request.full_url, response.url)
+
+
 def check_url(url):
     """Return one of 'ok', 'moved', or 'broken' for a single URL."""
     if not url:
         return 'broken'
 
-    request = urllib.request.Request(url, method='HEAD', headers={'User-Agent': USER_AGENT})
+    head_request = urllib.request.Request(url, method='HEAD', headers={'User-Agent': USER_AGENT})
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            if response.url.rstrip('/') != url.rstrip('/'):
-                return 'moved'
-            return 'ok'
+        return _open_without_body(head_request)
     except urllib.error.HTTPError as error:
-        # Some publishers reject HEAD but serve GET perfectly well.
-        if error.code in (403, 405):
-            return 'ok'
-        return 'broken'
+        # Some publishers reject HEAD but serve GET perfectly well, so a
+        # 403/405 to HEAD alone proves nothing about reachability. Fall back
+        # to a bounded GET that is closed promptly without reading the body.
+        # Any other HEAD status (404, 5xx, ...) is a real signal: broken.
+        if error.code not in (403, 405):
+            return 'broken'
     except (urllib.error.URLError, ValueError, OSError):
+        return 'broken'
+
+    get_request = urllib.request.Request(url, method='GET', headers={'User-Agent': USER_AGENT})
+    try:
+        return _open_without_body(get_request)
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
+        # GET denial, redirect loop, timeout, DNS failure, or bot-block:
+        # none of these prove the learner can open the link.
         return 'broken'
 
 

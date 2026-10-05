@@ -1,3 +1,5 @@
+import urllib.error
+from email.message import Message
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -122,6 +124,58 @@ class LinkCheckTests(TestCase):
         with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
             urlopen.return_value.__enter__.return_value.url = 'https://example.com/b'
             self.assertEqual(check_url('https://example.com/a'), 'moved')
+
+    def _head_error(self, url, code):
+        return urllib.error.HTTPError(url, code, 'denied', Message(), None)
+
+    def test_head_rejected_then_get_succeeds_is_ok_without_reading_body(self):
+        with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
+            get_response = mock.MagicMock()
+            get_response.url = 'https://example.com/a'
+            urlopen.side_effect = [
+                self._head_error('https://example.com/a', 403),
+                mock.MagicMock(__enter__=mock.MagicMock(return_value=get_response),
+                               __exit__=mock.MagicMock(return_value=False)),
+            ]
+            self.assertEqual(check_url('https://example.com/a'), 'ok')
+            get_response.read.assert_not_called()
+            self.assertEqual(urlopen.call_count, 2)
+            # The fallback must be a bounded GET, not another HEAD.
+            self.assertEqual(urlopen.call_args_list[1].args[0].get_method(), 'GET')
+
+    def test_head_rejected_then_get_redirects_is_moved(self):
+        with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
+            get_response = mock.MagicMock()
+            get_response.url = 'https://example.com/b'
+            urlopen.side_effect = [
+                self._head_error('https://example.com/a', 405),
+                mock.MagicMock(__enter__=mock.MagicMock(return_value=get_response),
+                               __exit__=mock.MagicMock(return_value=False)),
+            ]
+            self.assertEqual(check_url('https://example.com/a'), 'moved')
+            get_response.read.assert_not_called()
+
+    def test_head_rejected_then_get_denied_is_broken(self):
+        with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
+            urlopen.side_effect = [
+                self._head_error('https://example.com/a', 403),
+                self._head_error('https://example.com/a', 403),
+            ]
+            self.assertEqual(check_url('https://example.com/a'), 'broken')
+
+    def test_head_rejected_then_get_times_out_is_broken(self):
+        with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
+            urlopen.side_effect = [
+                self._head_error('https://example.com/a', 405),
+                urllib.error.URLError('timed out'),
+            ]
+            self.assertEqual(check_url('https://example.com/a'), 'broken')
+
+    def test_head_not_found_does_not_fall_back_to_get(self):
+        with mock.patch('apps.learning.tasks.urllib.request.urlopen') as urlopen:
+            urlopen.side_effect = self._head_error('https://example.com/a', 404)
+            self.assertEqual(check_url('https://example.com/a'), 'broken')
+            self.assertEqual(urlopen.call_count, 1)
 
     def test_link_check_records_status_on_every_managed_lesson(self):
         with mock.patch('apps.learning.tasks.check_url', return_value='ok'):
