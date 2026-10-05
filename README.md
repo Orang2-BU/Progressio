@@ -75,7 +75,10 @@ python -m unittest discover -s curriculum -t .
 # Backend dan pemeriksaan model/schema
 & $python back-end/manage.py test
 & $python back-end/manage.py makemigrations --check --dry-run
-& $python back-end/manage.py spectacular --fail-on-warn --file openapi-check.yml
+$openapi = [System.IO.Path]::GetTempFileName()
+& $python back-end/manage.py spectacular --fail-on-warn --file $openapi
+if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed" }
+Remove-Item $openapi
 & $python front-end/check_api_contract.py
 
 # Web (Node minimal 20.19 sesuai package.json)
@@ -87,7 +90,9 @@ npm run build
 
 Di POSIX, interpreter venv adalah `back-end/.venv/bin/python`. Tetapkan
 `AI_PROVIDER=mock` dan `BLOCKCHAIN_PROVIDER=mock` untuk menjalankan pemeriksaan
-lokal tanpa provider eksternal. Hapus `openapi-check.yml` setelah pemeriksaan.
+lokal tanpa provider eksternal. Probe kontrak memakai database SQLite in-memory
+dan identitas sementara; tidak memerlukan token atau layanan eksternal. Workflow
+web berjalan saat frontend, backend, kurikulum, atau workflow-nya berubah.
 
 ---
 

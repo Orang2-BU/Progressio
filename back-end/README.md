@@ -44,13 +44,18 @@ $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
 & $python back-end/manage.py test
 & $python back-end/manage.py makemigrations --check --dry-run
-& $python back-end/manage.py spectacular --fail-on-warn --file openapi-check.yml
+$openapi = [System.IO.Path]::GetTempFileName()
+& $python back-end/manage.py spectacular --fail-on-warn --file $openapi
+if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed" }
+Remove-Item $openapi
 & $python front-end/check_api_contract.py
 python -m unittest discover -s curriculum -t .
 ```
 
-Remove `openapi-check.yml` after inspection. The API probe sets SQLite in-memory
-and mock providers itself; it does not use the project database or external
+On POSIX, use `back-end/.venv/bin/python` instead of the Windows interpreter
+path. The temporary OpenAPI file is deleted after a successful generation. The
+API probe sets SQLite in-memory and mock providers itself; it uses a temporary
+test identity and does not use the project database, credentials, or external
 services. The Django test command also uses Django's isolated test database.
 
 `seed_demo` is idempotent and creates one Backend Engineering track, four skills, eight diagnostic questions, lessons, prerequisites, and one JWT/RBAC coding challenge.
