@@ -43,15 +43,39 @@ resources back more than one skill) are reachable as of 2026-10-05. The single
 during a 17-request batch, consistent with the transient 503 noted in plan
 004), not a dead link. Recheck shortly before presenting, as link health drifts.
 
+## Demo link browser confirmation (acceptance evidence)
+
+Demo flow (per plans 001/005): disposable backend on `127.0.0.1:8011` +
+Next on port 3000 → catalog → roadmap → study page for skill
+`client-server-model` → **"Buka materi di penerbit"** (opens
+`Lesson.content_url` in a new tab via `SourceLink` in
+`front-end/src/Study.jsx:79-82`) and **"Buka bagian yang dipelajari"**
+(opens `StudyStep.study_url` = resource URL + anchor). No publisher
+material was copied; pages were only rendered in the browser.
+
+| Demo order | Exact demo link opened in browser | Resource / step | Date confirmed | Method | Outcome |
+|------------|-----------------------------------|-----------------|----------------|--------|---------|
+| Demo 1 (primary) | https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview | `mdn-client-server` / `csm-s1` (skill `client-server-model`, no anchor) | 2026-10-05 | Browser full-page GET render (browser-UA fetch rendering full article, same URL as `check_links` re-probe which returned HEAD 200 + GET 200) | ✅ Reachable — full "Client-server overview" article rendered (primer, static/dynamic sites, web frameworks sections; MDN footer "last modified Sep 10, 2026"). No redirect; final URL = requested URL. |
+| Demo 2 (secondary / fallback) | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview | `mdn-http-overview` / `csm-s2` (skill `client-server-model`, no anchor) | 2026-10-05 | Browser full-page GET render | ✅ Reachable — full "Overview of HTTP" article rendered (components, HTTP flow, messages sections). No redirect; final URL = requested URL. |
+
+Notes:
+- Both demo links returned HTTP 200 in the browser on 2026-10-05. Either
+  one can carry the live "link-out to a publisher-hosted lesson" beat; if
+  Demo 1 ever fails live, fall back to Demo 2 (already-open tab) without
+  claiming the failed source is reachable.
+- Browser confirmation covers **link access only**, not reuse rights: both
+  pages remain `license_verified: false` (see per-resource rows 2 and 5) —
+  do not copy article text into Progressio.
+
 ## Per-resource rows
 
 | # | Resource ID | Source URL | Access (2026-10-05) | Declared license (package) | Publisher license evidence | Verified for this specific content? | Reuse / attribution notes | Uncertainty |
 |---|-------------|------------|---------------------|----------------------------|----------------------------|-------------------------------------|---------------------------|-------------|
 | 1 | `exercism-python` | https://exercism.org/tracks/python/exercises | ok (`check_links` run 2; 17/17 ok) | Proprietary; `license_url`: https://exercism.org/terms-of-service | Package-declared only; publisher ToS page cited but not content-checked | No — `license_verified` stays `false` | `redistributable: false`, commercial use not allowed; link-only use | Exercism mixes platform, mentor, and user-contributed exercise content, so rights are ambiguous per contributor; never infer redistribution rights from HTTP success |
-| 2 | `mdn-client-server` | https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview | ok on run 2; **transient `broken` on run 1**, manual HEAD+GET re-probe `200`, browser fetch rendered page | CC-BY-SA-2.5; `license_url`: MDN copyright/attribution page | Package-declared only; MDN's generic licensing page cited but not content-checked | No — `license_verified` stays `false` | Attribution required; do not copy article text into Progressio without content-specific confirmation (MDN also licenses code examples separately) | Transient run-1 failure shows automated checks can flake; MDN restructures Learn content periodically, so recheck before demo |
+| 2 | `mdn-client-server` | https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview | ok on run 2; **transient `broken` on run 1**, manual HEAD+GET re-probe `200`, **browser-confirmed Demo 1 on 2026-10-05** (full article rendered; see "Demo link browser confirmation") | CC-BY-SA-2.5; `license_url`: MDN copyright/attribution page | Package-declared only; MDN's generic licensing page cited but not content-checked | No — `license_verified` stays `false` | Attribution required; do not copy article text into Progressio without content-specific confirmation (MDN also licenses code examples separately) | Transient run-1 failure shows automated checks can flake; MDN restructures Learn content periodically, so recheck before demo |
 | 3 | `mdn-http-messages` | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages | ok (`check_links` run 2) | CC-BY-SA-2.5; MDN copyright page | Package-declared only, generic page | No — stays `false` | Attribution required; link-only | Same MDN caveats as above |
 | 4 | `mdn-http-methods` | https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods | ok (`check_links` run 2) | CC-BY-SA-2.5; MDN copyright page | Package-declared only, generic page | No — stays `false` | Attribution required; link-only | Same MDN caveats as above |
-| 5 | `mdn-http-overview` | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview | ok (`check_links` run 2) | CC-BY-SA-2.5; MDN copyright page | Package-declared only, generic page | No — stays `false` | Attribution required; link-only | Same MDN caveats as above |
+| 5 | `mdn-http-overview` | https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview | ok (`check_links` run 2) + **browser-confirmed Demo 2 on 2026-10-05** (full article rendered; see "Demo link browser confirmation") | CC-BY-SA-2.5; MDN copyright page | Package-declared only, generic page | No — stays `false` | Attribution required; link-only | Same MDN caveats as above |
 | 6 | `mdn-http-status` | https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status | ok (`check_links` run 2) | CC-BY-SA-2.5; MDN copyright page | Package-declared only, generic page | No — stays `false` | Attribution required; link-only | Same MDN caveats as above |
 | 7 | `openapi-spec` | https://spec.openapis.org/oas/ | ok (`check_links` run 2) | Apache-2.0; `license_url`: https://www.apache.org/licenses/LICENSE-2.0 | Package-declared only; Apache license text is generic, not a per-page grant | No — stays `false` | Attribution required; link-only; spec text reuse needs initiative's terms, not just the Apache text | Specification site is versioned; confirm the exact version URL before presenting |
 | 8 | `owasp-input-validation` | https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html | ok (`check_links` run 2) | CC-BY-SA-4.0; `license_url`: https://creativecommons.org/licenses/by-sa/4.0/ | Package-declared only; CC deed is generic, not per-page evidence | No — stays `false` | Attribution + share-alike required if ever reused; link-only for now | Cheat-sheet series accepts community contributions; per-page provenance not checked |
