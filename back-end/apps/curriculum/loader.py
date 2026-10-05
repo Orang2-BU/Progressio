@@ -13,11 +13,21 @@ import io
 import json
 from pathlib import Path
 
+import os
+from pathlib import Path
+
 from django.conf import settings
 
 # back-end/ -> repository root -> curriculum/
 REPO_ROOT = Path(settings.BASE_DIR).parent
-CURRICULUM_ROOT = REPO_ROOT / 'curriculum'
+env_curriculum = os.getenv('CURRICULUM_ROOT')
+if env_curriculum and Path(env_curriculum).exists():
+    CURRICULUM_ROOT = Path(env_curriculum)
+elif (Path('/repo/curriculum')).exists():
+    CURRICULUM_ROOT = Path('/repo/curriculum')
+else:
+    CURRICULUM_ROOT = REPO_ROOT / 'curriculum'
+
 TRACKS_ROOT = CURRICULUM_ROOT / 'tracks'
 SCHEMAS_ROOT = CURRICULUM_ROOT / 'schemas'
 VALIDATOR_PATH = CURRICULUM_ROOT / 'validator.py'

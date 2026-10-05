@@ -14,12 +14,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt /app/
+COPY back-end/requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy backend project files
-COPY . /app/
+COPY back-end/ /app/
+
+# Copy curriculum from repo root (read-only, for import_curriculum command)
+COPY curriculum/ /repo/curriculum/
 
 # Expose Django port
 EXPOSE 8000
