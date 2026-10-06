@@ -57,6 +57,20 @@ export function validateSubmission(s, exam) {
       (s.status === 'completed' && (!Number.isFinite(s.score) || s.score < 0 || (s.evaluation.max_score !== undefined && (!Number.isFinite(s.evaluation.max_score) || s.score > s.evaluation.max_score))))) throw new ApiError('Hasil server belum dapat dipastikan. Muat ulang riwayat; jangan membuat attempt baru.');
   return s;
 }
+export function resultLabel(s) {
+  const { provider, review_status: review } = s.evaluation || {};
+  const simulated = ['mock', 'mock-fallback'].includes(provider);
+  const draft = review === 'draft' || review === 'unreviewed';
+  const reviewLabel = review === 'draft' ? 'standar draft' : 'standar belum direview';
+  const qualifier = simulated ? 'simulasi' : draft ? reviewLabel : review !== 'reviewed' || !['rules', 'openai'].includes(provider) ? 'provenance belum lengkap' : '';
+  const heading = s.status !== 'completed' ? 'Belum selesai dinilai' : s.is_passed
+    ? qualifier === 'simulasi' ? 'Lulus simulasi assessment' : qualifier ? `Lulus assessment (${qualifier})` : 'Lulus assessment'
+    : qualifier === 'simulasi' ? 'Belum lulus simulasi' : qualifier ? `Belum lulus (${qualifier})` : 'Belum lulus';
+  const label = simulated ? `Simulasi ${provider}${draft ? ` · ${reviewLabel}` : ''} — bukan bukti kompetensi final.`
+    : draft ? `${reviewLabel === 'standar draft' ? 'Standar draft' : 'Standar belum direview'} — bukan bukti kompetensi final.`
+    : qualifier ? 'Provenance penilai/review belum lengkap — status evidence final belum dapat dipastikan.' : '';
+  return { heading, label };
+}
 export async function submitAssessment(a, body) {
   const result = validateSubmission(await request(`assessments/${a.id}/submit`, { method: 'POST', body }), a.id);
   if (result.request_id !== body.request_id) throw new ApiError('Request hasil tidak cocok. Periksa riwayat sebelum mencoba lagi.');
