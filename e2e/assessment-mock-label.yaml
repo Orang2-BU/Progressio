@@ -1,0 +1,28 @@
+# Run with front-end/tests/backend_server.py --catalog (port 8011) and
+# API_PROXY_TARGET=http://127.0.0.1:8011 npm run dev (port 3000).
+# The assessment IDs come from the disposable seed_demo database.
+name: Assessment mock draft result
+url: http://127.0.0.1:3000/login?next=%2Fassessment%3Ftrack%3D1%26competency%3D3%26skill%3D4%26target%3Dskill%26learn%3D4%26exam%3D4
+---
+- launchApp
+- tapOn: "Username"
+- inputText: "student"
+- tapOn: "Kata sandi"
+- inputText: "progressio-demo-2026"
+- tapOn: "Masuk"
+- assertVisible: "Functions and Modules Exercise"
+- scrollUntilVisible:
+    element: "Isi evidence / kode (wajib)"
+    direction: DOWN
+- tapOn: "Isi evidence / kode (wajib)"
+- inputText: "A function with one responsibility and a meaningful name. Parameters and return values avoid hidden global state. Related behaviour is grouped into cohesive modules with clear dependencies. The entry point stays thin and delegates to extracted units."
+- scrollUntilVisible:
+    element: "Kirim untuk dinilai"
+    direction: DOWN
+- tapOn: "Kirim untuk dinilai"
+- scrollUntilVisible:
+    element: "Lulus simulasi assessment"
+    direction: DOWN
+- assertVisible: "Lulus simulasi assessment"
+- assertVisible: "Simulasi mock · standar draft — bukan bukti kompetensi final."
+- assertVisible: "Skor: 100 / 100"

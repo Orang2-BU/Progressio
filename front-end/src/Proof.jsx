@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { request } from './api.js';
-import { loadAssessments, assessmentPayload, submitAssessment, recoverSubmission, loadCredentials, loadVerification, proofHref } from './proof.js';
+import { loadAssessments, assessmentPayload, submitAssessment, recoverSubmission, loadCredentials, loadVerification, proofHref, resultLabel } from './proof.js';
 import { sourceHref } from './study.js';
 
 export default function Proof({ mode = 'assessment', credentialId }) {
@@ -134,8 +134,9 @@ function AssessmentForm({ assessment: a, query }) {
 }
 
 function Result({ result: s }) {
-  return <section className="profile-card"><h2>Attempt #{s.id}: {s.status === 'completed' ? s.is_passed ? 'Lulus assessment' : 'Belum lulus' : 'Belum selesai dinilai'}</h2>
-    <p>Skor: {s.score ?? 'belum tersedia'} / {s.evaluation.max_score ?? 'tidak dicatat'}</p><p>{s.feedback}</p>
+  const { heading, label } = resultLabel(s);
+  return <section className="profile-card"><h2>Attempt #{s.id}: {heading}</h2>
+    <p>Skor: {s.score ?? 'belum tersedia'} / {s.evaluation.max_score ?? 'tidak dicatat'}</p>{label && <p className="notice" role="status">{label}</p>}<p>{s.feedback}</p>
     <p>Penilai: {s.evaluation.provider || 'provenance lama tidak dicatat'} · Review: {s.evaluation.review_status || 'tidak dicatat'} · Versi: {s.evaluation.curriculum_version || 'tidak dicatat'}</p>
     <p className="hint">Skor dan kelulusan berasal dari server. Lulus mock/draft bukan evidence final. XP hanya untuk submission lulus; recovery request yang sama tidak memberikan reward baru.</p>
   </section>;

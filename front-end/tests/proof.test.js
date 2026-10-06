@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assessmentPayload, validateAssessment, validateSubmission, submitAssessment, recoverSubmission, proofHref, loadVerification } from '../src/proof.js';
+import { assessmentPayload, validateAssessment, validateSubmission, submitAssessment, recoverSubmission, proofHref, loadVerification, resultLabel } from '../src/proof.js';
 import { login, logout } from '../src/api.js';
 
 const key = 'f1cf4884-8f43-4cb9-ae87-b4d7049874ec';
@@ -23,6 +23,27 @@ test('server results are validated, not inferred; legacy provenance never fabric
   assert.equal(validateSubmission({ ...submission, evaluation: {} }, 4).evaluation.provider, undefined);
   assert.throws(() => validateSubmission({ ...submission, score: 101 }, 4));
   assert.throws(() => validateSubmission(submission, 8));
+});
+
+test('result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes', () => {
+  const result = (provider, review, passed) => resultLabel({ ...submission, is_passed: passed, evaluation: { provider, review_status: review } });
+  for (const provider of ['mock', 'mock-fallback']) {
+    for (const passed of [true, false]) {
+      const { heading, label } = result(provider, 'reviewed', passed);
+      assert.equal(heading, passed ? 'Lulus simulasi assessment' : 'Belum lulus simulasi');
+      assert.match(label, new RegExp(`Simulasi ${provider}.*bukan bukti kompetensi final`));
+    }
+  }
+  assert.deepEqual(result('rules', 'draft', true), { heading: 'Lulus assessment (standar draft)', label: 'Standar draft — bukan bukti kompetensi final.' });
+  assert.equal(result('rules', 'unreviewed', false).heading, 'Belum lulus (standar belum direview)');
+  for (const provider of ['rules', 'openai']) {
+    assert.deepEqual(result(provider, 'reviewed', true), { heading: 'Lulus assessment', label: '' });
+    assert.equal(result(provider, 'reviewed', false).heading, 'Belum lulus');
+  }
+  assert.equal(result(undefined, undefined, true).heading, 'Lulus assessment (provenance belum lengkap)');
+  assert.match(result(undefined, undefined, true).label, /belum lengkap/);
+  assert.equal(result('other', 'reviewed', true).heading, 'Lulus assessment (provenance belum lengkap)');
+  assert.equal(resultLabel({ ...submission, status: 'evaluating' }).heading, 'Belum selesai dinilai');
 });
 
 test('lost POST is not automatically replayed and request-specific GET recovers without sending evidence again', async () => {
