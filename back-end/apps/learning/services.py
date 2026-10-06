@@ -61,12 +61,17 @@ class ProgressService:
         return completion, created, xp_earned
 
     @classmethod
+    @transaction.atomic
     def record_assessment_passed(cls, user, skill, score):
         """
         Event: AssessmentPassed
         1. Updates SkillProgress mastery, XP (+100 XP), confidence, and last_assessed_at.
         2. Recalculates CompetencyProgress.
         """
+        # Same per-user lock as complete_lesson/submit_and_evaluate, so the
+        # Celery evaluation path serializes with HTTP writers. Nested calls
+        # from submit_and_evaluate rejoin the outer transaction/row lock.
+        get_user_model().objects.select_for_update().get(pk=user.pk)
         skill_progress, _ = SkillProgress.objects.get_or_create(
             user=user,
             skill=skill

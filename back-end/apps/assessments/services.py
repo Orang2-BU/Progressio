@@ -151,6 +151,11 @@ class DiagnosticService:
     @classmethod
     @transaction.atomic
     def submit(cls, user, career_track, answers):
+        # Same per-user serialization as lesson/assessment writers: hold the
+        # user row lock before reading SkillProgress so concurrent diagnostics
+        # (or a diagnostic racing an assessment/lesson) cannot interleave a
+        # read-modify-write and regress mastery with a stale lower score.
+        get_user_model().objects.select_for_update().get(pk=user.pk)
         questions = list(
             DiagnosticQuestion.objects.filter(
                 career_track=career_track,
