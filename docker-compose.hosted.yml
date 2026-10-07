@@ -1,0 +1,126 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Set DB_NAME}
+      POSTGRES_USER: ${DB_USER:?Set DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+    volumes:
+      - hosted_db_data:/var/lib/postgresql/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - hosted_redis_data:/data
+    networks:
+      - progressio_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    restart: unless-stopped
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    expose:
+      - "8000"
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY}
+      DEBUG: "False"
+      AI_PROVIDER: ${AI_PROVIDER:?Set AI_PROVIDER explicitly}
+      BLOCKCHAIN_PROVIDER: ${BLOCKCHAIN_PROVIDER:?Set BLOCKCHAIN_PROVIDER explicitly}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_ALLOW_MOCK_FALLBACK: "False"
+      BLOCKCHAIN_SERVICE_URL: ${BLOCKCHAIN_SERVICE_URL:-}
+      BLOCKCHAIN_SERVICE_TOKEN: ${BLOCKCHAIN_SERVICE_TOKEN:-}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS}
+      DB_NAME: ${DB_NAME:?Set DB_NAME}
+      DB_USER: ${DB_USER:?Set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      TRUST_X_FORWARDED_PROTO: ${TRUST_X_FORWARDED_PROTO:-False}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:?Set PUBLIC_WEB_URL}
+      ENABLE_EMAIL: ${ENABLE_EMAIL:-False}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-Progressio <noreply@example.invalid>}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - progressio_network
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    restart: unless-stopped
+    command: celery -A config worker -l INFO
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY}
+      DEBUG: "False"
+      AI_PROVIDER: ${AI_PROVIDER:?Set AI_PROVIDER explicitly}
+      BLOCKCHAIN_PROVIDER: ${BLOCKCHAIN_PROVIDER:?Set BLOCKCHAIN_PROVIDER explicitly}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_ALLOW_MOCK_FALLBACK: "False"
+      BLOCKCHAIN_SERVICE_URL: ${BLOCKCHAIN_SERVICE_URL:-}
+      BLOCKCHAIN_SERVICE_TOKEN: ${BLOCKCHAIN_SERVICE_TOKEN:-}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:?Set CSRF_TRUSTED_ORIGINS}
+      DB_NAME: ${DB_NAME:?Set DB_NAME}
+      DB_USER: ${DB_USER:?Set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      ENABLE_EMAIL: ${ENABLE_EMAIL:-False}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-Progressio <noreply@example.invalid>}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - progressio_network
+
+volumes:
+  hosted_db_data:
+  hosted_redis_data:
+
+networks:
+  progressio_network:
+    driver: bridge

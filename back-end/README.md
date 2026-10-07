@@ -23,6 +23,7 @@ python -m venv .venv
 .\.venv\Scripts\activate
 python -m pip install -r requirements.txt
 $env:DB_ENGINE = "sqlite"
+$env:APP_ENV = "local"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
 python manage.py migrate
@@ -30,6 +31,37 @@ python manage.py seed_demo
 python manage.py test
 python manage.py runserver
 ```
+
+## Hosted configuration gate
+
+Set `APP_ENV` explicitly to `local` or `production`; startup fails if it is absent
+or unrecognized. Local Compose and `.env.example` select `local`. Set `APP_ENV=production`
+to fail startup unless `SECRET_KEY`, explicit `ALLOWED_HOSTS`, HTTPS
+`CORS_ALLOWED_ORIGINS`, and HTTPS `CSRF_TRUSTED_ORIGINS` are supplied. Production
+also requires `DEBUG=False`, uses secure session/CSRF cookies and HTTPS redirects,
+and enables HSTS. `check --deploy` asks for HSTS subdomain coverage and preload;
+set `SECURE_HSTS_INCLUDE_SUBDOMAINS=True` and `SECURE_HSTS_PRELOAD=True` only after
+confirming every affected subdomain is HTTPS-only and eligible for preload. Run
+with a reverse proxy that terminates TLS. Set
+`TRUST_X_FORWARDED_PROTO=True` only when that trusted proxy removes client-provided
+`X-Forwarded-Proto` and writes its own value; otherwise leave it off.
+
+`docker-compose.hosted.yml` is the deployment-oriented stack: it runs Gunicorn and
+keeps PostgreSQL and Redis off published host ports. Attach the TLS proxy to its
+`progressio_network`; only the backend's container port is exposed on that private
+network. Populate deployment environment variables from a secret manager, using
+[`.env.production.example`](.env.production.example) as a key list, then start with
+`docker compose -f docker-compose.hosted.yml up --build -d`.
+Production also requires explicit `AI_PROVIDER` (`openai` or an intentionally
+chosen `mock`) and `BLOCKCHAIN_PROVIDER` (`http` or an intentionally chosen
+`mock`). `openai` requires `OPENAI_API_KEY`; `http` requires
+`BLOCKCHAIN_SERVICE_URL`. Mock providers simulate these integrations and must not
+be represented as live AI evaluations or anchored credential proofs.
+
+Email is disabled by default in production. When a feature begins sending email,
+set `ENABLE_EMAIL=True` and configure SMTP host, username, password, and sender;
+the startup check rejects incomplete SMTP configuration. Local mode continues to
+use the console email backend.
 
 ## Reproducible verification
 
@@ -39,6 +71,7 @@ all backend-dependent checks; no existing machine virtualenv is required:
 
 ```powershell
 $python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path # POSIX: back-end/.venv/bin/python
+$env:APP_ENV = "local"
 $env:DB_ENGINE = "sqlite"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
