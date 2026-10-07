@@ -2,6 +2,8 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from apps.common.schema import THROTTLED_RESPONSE
+from apps.common.throttling import PublicVerifyBudget
 from apps.credentials.models import Credential
 from .serializers import PublicCredentialVerificationSerializer
 
@@ -17,6 +19,7 @@ class PublicCredentialVerificationView(generics.RetrieveAPIView):
     ).prefetch_related('evidences').all()
     serializer_class = PublicCredentialVerificationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [PublicVerifyBudget]
     lookup_field = 'pk'
 
     @extend_schema(
@@ -26,7 +29,8 @@ class PublicCredentialVerificationView(generics.RetrieveAPIView):
             200: OpenApiResponse(
                 response=PublicCredentialVerificationSerializer,
                 description="Credential proof verified successfully."
-            )
+            ),
+            **THROTTLED_RESPONSE,
         }
     )
     def get(self, request, *args, **kwargs):

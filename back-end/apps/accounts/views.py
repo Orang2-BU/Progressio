@@ -4,6 +4,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from apps.common.schema import THROTTLED_RESPONSE
+from apps.common.throttling import AuthRegisterThrottle
+
 from .serializers import UserRegistrationSerializer, UserProfileSerializer
 
 
@@ -11,6 +14,7 @@ class RegisterView(generics.CreateAPIView):
     """Register a new user account."""
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRegisterThrottle]
 
     @extend_schema(
         summary="Register",
@@ -20,7 +24,8 @@ class RegisterView(generics.CreateAPIView):
             201: OpenApiResponse(
                 response=UserProfileSerializer,
                 description="User registered successfully."
-            )
+            ),
+            **THROTTLED_RESPONSE,
         }
     )
     def post(self, request, *args, **kwargs):

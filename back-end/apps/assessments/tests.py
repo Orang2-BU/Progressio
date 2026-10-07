@@ -1,7 +1,10 @@
-from django.test import TestCase
+from django.conf import settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from typing import Any, cast
 from rest_framework.test import APIClient
+from rest_framework.response import Response as APIResponse
 from rest_framework import status
 
 from apps.careers.models import CareerTrack
@@ -37,6 +40,10 @@ class AssessmentModelAndAPITests(TestCase):
             max_score=100,
             grading_config={'answer_key': {'q1': 'A', 'q2': 'B', 'q3': 'C', 'q4': 'D'}},
         )
+
+    def post_api(self, url, data):
+        """Keep the DRF response type explicit for Django's broad test-client stubs."""
+        return cast(APIResponse, self.client.post(url, data, format='json'))
 
     def test_assessment_list(self):
         url = reverse('assessment-list')
@@ -136,6 +143,45 @@ class AssessmentModelAndAPITests(TestCase):
         self.assertEqual(self.client.get(reverse('submission-list')).data['count'], 0)
         self.client.force_authenticate(user=None)
         self.assertEqual(self.client.get(reverse('submission-list')).status_code, 401)
+
+    @override_settings(THROTTLE_RATES={**settings.THROTTLE_RATES, 'expensive_assessment': '1/hour'})
+    def test_assessment_budget_is_per_user_and_allows_idempotent_retries(self):
+        import uuid
+
+        url = reverse('assessment-submit', args=[self.assessment.pk])
+        request_id = str(uuid.uuid4())
+        body = {
+            'request_id': request_id,
+            'content': {'answers': {'q1': 'A', 'q2': 'B', 'q3': 'C', 'q4': 'D'}},
+        }
+
+        self.client.force_authenticate(user=self.user)
+        first = self.post_api(url, body)
+        replay = self.post_api(url, body)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(replay.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first.data['id'], replay.data['id'])
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(replay.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(cast(Any, Submission).objects.filter(user=self.user).count(), 1)
+        self.assertEqual(
+            cast(Any, SkillProgress).objects.get(user=self.user, skill=self.skill).xp,
+            100,
+        )
+
+        new_work = self.post_api(
+            url, {'request_id': str(uuid.uuid4()), 'content': body['content']}
+        )
+        self.assertEqual(new_work.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        retry_seconds = new_work.data['retry_after_seconds']
+        self.assertEqual(new_work['Retry-After'], str(retry_seconds))
+
+        other_user = User.objects.create_user(username='other-budget-user')
+        self.client.force_authenticate(user=other_user)
+        isolated = self.post_api(
+            url, {'request_id': str(uuid.uuid4()), 'content': body['content']}
+        )
+        self.assertEqual(isolated.status_code, status.HTTP_201_CREATED)
 
     def test_provider_failure_rolls_back_and_retry_uses_same_id(self):
         import uuid

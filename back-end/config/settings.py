@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,6 +17,18 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '*').split(',') if host.strip()]
 PUBLIC_WEB_URL = os.getenv('PUBLIC_WEB_URL', '').rstrip('/')
+
+# How many reverse proxies sit in front of this application. Zero means the
+# client address is REMOTE_ADDR and X-Forwarded-For is ignored entirely, which
+# is the safe default: a client that may send the header could otherwise mint a
+# fresh request budget per request. Set it only together with an edge proxy that
+# REPLACES the inbound header. See back-end/THROTTLING.md.
+try:
+    TRUSTED_PROXY_COUNT = int(os.getenv('TRUSTED_PROXY_COUNT', '0') or 0)
+except ValueError as exc:
+    raise ImproperlyConfigured('TRUSTED_PROXY_COUNT must be a whole number.') from exc
+if TRUSTED_PROXY_COUNT < 0:
+    raise ImproperlyConfigured('TRUSTED_PROXY_COUNT cannot be negative.')
 
 
 # Application definition
@@ -139,6 +152,79 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Request budgets (throttling)
+#
+# Two families, deliberately kept apart so guessing credentials cannot spend the
+# budget reserved for graded work, and a student hammering an AI endpoint cannot
+# lock themselves out of logging in. Every value is "<requests>/<period>" and
+# every value is overridable per deployment; the reasoning behind each starting
+# value lives in back-end/THROTTLING.md next to this list.
+THROTTLE_PERIODS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
+
+
+def throttle_rate(env_name, default):
+    """Read one budget from the environment, failing loudly when malformed."""
+    raw = (os.getenv(env_name) or '').strip() or default
+    count, _, period = raw.partition('/')
+    period = period.strip().lower()
+    if not count.strip().isdigit() or int(count) < 1 or period[:1] not in THROTTLE_PERIODS:
+        raise ImproperlyConfigured(
+            f'{env_name} must look like "<requests>/<s|m|h|d>", for example 10/min; got {raw!r}.'
+        )
+    return f'{int(count)}/{period}'
+
+
+THROTTLE_RATES = {
+    # Credential attempts.
+    'auth_register': throttle_rate('THROTTLE_RATE_AUTH_REGISTER', '60/hour'),
+    'auth_login': throttle_rate('THROTTLE_RATE_AUTH_LOGIN', '10/min'),
+    'auth_login_ip': throttle_rate('THROTTLE_RATE_AUTH_LOGIN_IP', '60/min'),
+    'auth_refresh': throttle_rate('THROTTLE_RATE_AUTH_REFRESH', '30/min'),
+    # Work that can reach a provider or run a full grading pass.
+    'expensive_assessment': throttle_rate('THROTTLE_RATE_ASSESSMENT_SUBMIT', '30/hour'),
+    'expensive_ai': throttle_rate('THROTTLE_RATE_AI', '20/hour'),
+    'expensive_credential': throttle_rate('THROTTLE_RATE_CREDENTIAL_ISSUE', '10/hour'),
+    # Unauthenticated credential verification, which may call the proof provider.
+    'public_verify': throttle_rate('THROTTLE_RATE_PUBLIC_VERIFY', '60/min'),
+}
+
+
+# Request budget counters.
+#
+# THROTTLE_CACHE_URL wins. Failing that, the Celery broker is reused, because
+# the deployed profile already runs Redis and a budget only one of two web
+# processes can see is not a budget. With neither set the counters are local to
+# each process, which back-end/THROTTLING.md states as a limit of the design.
+THROTTLE_CACHE_LOCATION = (
+    os.getenv('THROTTLE_CACHE_URL', '').strip()
+    or (os.getenv('CELERY_BROKER_URL', '').strip()
+        if os.getenv('CELERY_BROKER_URL', '').strip().startswith('redis://') else '')
+)
+THROTTLE_CACHE_ALIAS = os.getenv('THROTTLE_CACHE_ALIAS', '').strip() or (
+    'throttle' if THROTTLE_CACHE_LOCATION else 'default'
+)
+if not DEBUG and (not THROTTLE_CACHE_LOCATION or THROTTLE_CACHE_ALIAS == 'default'):
+    raise ImproperlyConfigured(
+        'DEBUG=False requires a shared Redis throttle cache; set THROTTLE_CACHE_URL '
+        'or a Redis CELERY_BROKER_URL and do not set THROTTLE_CACHE_ALIAS=default.'
+    )
+
+CACHES: dict[str, dict[str, object]] = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'progressio-default',
+    },
+}
+if THROTTLE_CACHE_ALIAS not in CACHES:
+    CACHES[THROTTLE_CACHE_ALIAS] = {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': THROTTLE_CACHE_LOCATION,
+        'KEY_PREFIX': os.getenv('THROTTLE_CACHE_KEY_PREFIX', 'progressio'),
+        # Only a fallback: every counter is written with its own window.
+        'TIMEOUT': int(os.getenv('THROTTLE_CACHE_TIMEOUT', '300')),
+    }
+
+
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -154,7 +240,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    # Published for DRF-adjacent tooling; the throttles in apps.common read the
+    # top-level THROTTLE_RATES setting so one place owns every scope.
+    'DEFAULT_THROTTLE_RATES': THROTTLE_RATES,
+    # DRF's own NUM_PROXIES stays unset: apps.common.throttling decides which
+    # forwarded addresses to trust, using TRUSTED_PROXY_COUNT.
+    'EXCEPTION_HANDLER': 'apps.common.exception_handlers.api_exception_handler',
 }
+
+TEST_RUNNER = 'config.test_runner.ProgressioTestRunner'
 
 
 # Simple JWT Settings

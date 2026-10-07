@@ -6,6 +6,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from apps.common.schema import THROTTLED_RESPONSE
+
 from .models import Assessment, Submission
 from .serializers import (
     AssessmentListSerializer,
@@ -14,6 +16,7 @@ from .serializers import (
     SubmissionResponseSerializer,
 )
 from .services import AssessmentEvaluationService
+from .throttling import AssessmentSubmitBudget
 
 
 @extend_schema(tags=["Assessments"])
@@ -50,6 +53,7 @@ class AssessmentSubmitView(APIView):
     Updates skill mastery and XP upon passing.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AssessmentSubmitBudget]
 
     @extend_schema(
         summary="Submit Assessment",
@@ -59,7 +63,8 @@ class AssessmentSubmitView(APIView):
             201: OpenApiResponse(
                 response=SubmissionResponseSerializer,
                 description="Assessment evaluated successfully."
-            )
+            ),
+            **THROTTLED_RESPONSE,
         }
     )
     def post(self, request, pk, *args, **kwargs):

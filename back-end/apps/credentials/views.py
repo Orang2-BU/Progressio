@@ -6,6 +6,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
+from apps.common.schema import THROTTLED_RESPONSE
+from apps.common.throttling import CredentialIssueBudget
+
 from .models import Credential
 from .serializers import (
     CredentialListSerializer,
@@ -66,6 +69,7 @@ class CredentialIssueView(APIView):
     Requires minimum competency achievement score >= 70%.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [CredentialIssueBudget]
 
     @extend_schema(
         summary="Issue Credential",
@@ -75,7 +79,8 @@ class CredentialIssueView(APIView):
             201: OpenApiResponse(
                 response=CredentialDetailSerializer,
                 description="Credential issued successfully."
-            )
+            ),
+            **THROTTLED_RESPONSE,
         }
     )
     def post(self, request, *args, **kwargs):
