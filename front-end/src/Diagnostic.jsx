@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { WorkspaceLayout } from './App.jsx';
+import { FocusLayout, WorkspaceLayout } from './App.jsx';
 import { request } from './api.js';
 import { loadTarget } from './catalog.js';
 import { validateQuestions, diagnosticPayload, validateAttempt } from './diagnostic.js';
@@ -72,7 +72,9 @@ function DiagnosticFlow({ query, result }) {
   const target = state.target;
   const data = state.data;
   const missing = issue?.fields || {};
-  return <WorkspaceLayout><section className="workspace-content diagnostic-content">
+  const Shell = result ? WorkspaceLayout : FocusLayout;
+  const shellProps = result ? {} : { exitHref: `/catalog${suffix}`, completed: Object.keys(answers).length, total: data?.length || 0 };
+  return <Shell {...shellProps}><section className="workspace-content diagnostic-content">
     <p className="eyebrow">02 / UKUR TITIK AWAL</p><h1>{result ? 'Hasil diagnostic terbaru' : 'Kenali kemampuanmu hari ini.'}</h1>
     <p className="intro">Diagnostic adalah pengukuran awal, bukan credential atau bukti lulus assessment. Penilaian dilakukan oleh server dan tidak memberikan XP.</p>
     <div className="profile-actions"><Link href={`/catalog${suffix}`}>Kembali ke target</Link>
@@ -99,7 +101,7 @@ function DiagnosticFlow({ query, result }) {
       {uncertain && <div className="notice" role="status"><p>Pengiriman mungkin sudah tersimpan. Periksa hasil terbaru sebelum membuat attempt lain; jawabanmu tetap ada di halaman ini.</p>
         <Link className="button secondary" href={`/diagnostic/result${suffix}`}>Periksa hasil terbaru</Link>
         <button type="button" className="button secondary" onClick={() => { setUncertain(false); setIssue(null); }}>Saya memilih mengirim attempt baru</button></div>}
-      <button type="submit" className="button primary" disabled={busy || uncertain}>{busy ? 'Menilai di server…' : 'Kirim jawaban'}</button>
+      <div className="focus-actions"><button type="submit" className="button primary" disabled={busy || uncertain}>{busy ? 'Menilai di server…' : 'Kirim jawaban'}</button></div>
     </form>}
     {result && data && <div className="profile-card diagnostic-result">
       <p className="eyebrow">HASIL SERVER / ATTEMPT #{data.id}</p><h2>{data.overall_score} / 100</h2>
@@ -111,5 +113,5 @@ function DiagnosticFlow({ query, result }) {
       <Link className="button primary" href={`/roadmap${suffix}`}>Lihat roadmap target</Link>
       <button className="button secondary" onClick={() => setRevision(revision + 1)}>Muat ulang hasil terbaru</button>
     </div>}
-  </section></WorkspaceLayout>;
+  </section></Shell>;
 }

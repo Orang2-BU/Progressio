@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { getSession, getServerSession, subscribe, login, register, logout, reloadProfile } from './api.js';
 import { loginDestination } from './navigation.js';
+import { Button, Icon, Notice, ProgressBar, StatusBadge } from './ui.jsx';
 
 const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
@@ -83,7 +84,7 @@ function AuthForm({ mode, notice, onRegistered }) {
       <p className="eyebrow">{isRegister ? 'MULAI PERJALANANMU' : 'SELAMAT DATANG KEMBALI'}</p>
       <h2 id="form-title">{isRegister ? 'Buat akun Progressio' : 'Masuk ke workspace'}</h2>
       <p className="intro">{isRegister ? 'Satu akun untuk mengukur dan membuktikan kemampuan.' : 'Gunakan username yang kamu pilih saat mendaftar.'}</p>
-      {notice && <p className="notice" role="status">{notice}</p>}
+      {notice && <Notice tone="success">{notice}</Notice>}
       <form onSubmit={submit} aria-busy={busy}>
         {message && <div ref={summary} className="error-summary" role="alert" tabIndex="-1">
           <strong>{message}</strong>
@@ -103,7 +104,7 @@ function AuthForm({ mode, notice, onRegistered }) {
               <option value="recruiter">Recruiter — menilai bukti kemampuan</option>
             </select>{errors.role && <p className="field-error" id="role-error">{errors.role}</p>}
           </div>}
-          <button className="button primary full" type="submit">{busy ? 'Memproses…' : isRegister ? 'Buat akun' : 'Masuk'}<span aria-hidden="true">↗</span></button>
+          <Button className="full" type="submit" disabled={busy}>{busy ? 'Memproses…' : isRegister ? 'Buat akun' : 'Masuk'}<Icon name="arrow" size={18}/></Button>
         </fieldset>
       </form>
       <p className="auth-switch">{isRegister ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
@@ -115,12 +116,24 @@ function AuthForm({ mode, notice, onRegistered }) {
 
 export function WorkspaceLayout({ children }) {
   const path = usePathname()?.replace(/\/$/, '') || '/';
+  const items = [['/', 'Ringkasan', 'home'], ['/catalog', 'Pilih target', 'target'], ['/credentials', 'Credential', 'award'], ['/profile', 'Profil akun', 'user']];
   return <div className="workspace">
     <aside className="sidebar"><p className="eyebrow">WORKSPACE</p>
-      <nav aria-label="Navigasi workspace">{[['/', 'Ringkasan'], ['/catalog', 'Pilih target'], ['/credentials', 'Credential'], ['/profile', 'Profil akun']].map(([href, label]) =>
-        <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>{label}<span aria-hidden="true">↗</span></Link>)}</nav>
+      <nav aria-label="Navigasi workspace">{items.map(([href, label, icon]) =>
+        <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}><Icon name={icon}/><span>{label}</span></Link>)}</nav>
       <div className="sidebar-note"><span className="eyebrow">TARGET → BUKTI</span><p>Kurikulum adalah standar penilaian kemampuan, bukan daftar materi yang wajib dibaca.</p><small>Pilih target, ukur titik awal, ikuti roadmap, lalu kirim evidence assessment. Draft demo bukan credential final.</small></div>
     </aside>{children}
+  </div>;
+}
+
+export function FocusLayout({ children, exitHref, completed = 0, total = 0 }) {
+  return <div className="focus-layout">
+    <header className="focus-header">
+      <Link className="icon-button" href={exitHref} aria-label="Tutup diagnostic dan kembali ke target"><Icon name="x"/></Link>
+      <ProgressBar value={completed} max={total} label="Soal diagnostic dijawab"/>
+      <span className="focus-count">{total ? `${completed} / ${total} dijawab` : 'Memuat soal'}</span>
+    </header>
+    {children}
   </div>;
 }
 
@@ -139,10 +152,10 @@ function Workspace({ user, profile }) {
       <p className="intro">{profile ? 'Informasi akunmu diambil langsung dari server.' : 'Akunmu siap. Perjalanan berikutnya dimulai dari tujuan yang kamu pilih.'}</p>
       {!profile && <div className="welcome-card"><div><span className="eyebrow">FONDASI PERJALANANMU</span>
         <h2>Kenali dirimu.<br />Tentukan arahmu.</h2><p>Progressio menghubungkan target keahlian, hasil penilaian, dan bukti kemampuan dalam satu perjalanan.</p>
-        <Link className="button primary" href="/catalog">Pilih target keahlian <span aria-hidden="true">↗</span></Link></div>
+        <Button href="/catalog">Pilih target keahlian <Icon name="arrow" size={18}/></Button></div>
         <div className="path-graphic" aria-hidden="true"><span>Target</span><i /><span>Assessment</span><i /><span>Proof</span></div>
       </div>}
-      <div className="profile-card"><div className="section-heading"><h2>Identitas akun</h2><span className="status">Terhubung</span></div>
+      <div className="profile-card"><div className="section-heading"><h2>Identitas akun</h2><StatusBadge tone="success">Terhubung</StatusBadge></div>
         <dl><div><dt>Username</dt><dd>{user.username}</dd></div><div><dt>Email</dt><dd>{user.email || 'Belum diisi'}</dd></div>
           <div><dt>Peran</dt><dd>{roleNames[user.role] || user.role}</dd></div>
           <div><dt>Bergabung</dt><dd>{new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(user.date_joined))}</dd></div></dl>
@@ -176,6 +189,7 @@ export default function App({ children }) {
   const main = useRef(null);
   const publicRoute = ['/login', '/register'].includes(route);
   const privateRoute = ['/', '/profile', '/catalog', '/diagnostic', '/diagnostic/result', '/roadmap', '/study', '/assessment', '/credentials'].includes(route);
+  const focusRoute = route === '/diagnostic';
   useEffect(() => {
     if (!user && privateRoute) router.replace('/login?next=' + encodeURIComponent(window.location.pathname + window.location.search));
     if (user && publicRoute) router.replace(loginDestination(new URLSearchParams(window.location.search).get('next')));
@@ -183,11 +197,11 @@ export default function App({ children }) {
   }, [route, user, publicRoute, privateRoute, router]);
   const redirecting = (!user && privateRoute) || (user && publicRoute);
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
-    <header className="topbar"><Brand /><div className="header-right">
-      {user ? <><span className="account-label">{roleNames[user.role] || user.role}</span><button className="button secondary compact" onClick={() => { logout('Kamu sudah keluar dari akun.'); router.replace('/login'); }}>Keluar</button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
-    </div></header>
+    {!focusRoute && <header className="topbar"><div className="topbar-inner"><Brand /><div className="header-right">
+      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" onClick={() => { logout('Kamu sudah keluar dari akun.'); router.replace('/login'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
+    </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
-    </main><footer className="footer"><span>progressio.</span><span>Setiap kemajuan punya arah.</span></footer>
+    </main>{!focusRoute && <footer className="footer"><span>progressio<span className="brand-dot">.</span> — Setiap kemajuan punya arah.</span><span>TURNING PROGRESS INTO PROOF</span></footer>}
   </>;
 }
