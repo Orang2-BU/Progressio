@@ -1,7 +1,9 @@
 from django.utils import timezone
-from django.db import transaction
+from django.db import connection, transaction
 from django.contrib.auth import get_user_model
 import os
+import hashlib
+import json
 from rest_framework.exceptions import ValidationError
 from .models import Credential, Evidence
 from apps.assessments.models import Submission
@@ -53,8 +55,20 @@ class CredentialService:
         return result['eligible'], result['score'], result['reason']
 
     @classmethod
-    @transaction.atomic
     def issue_credential(cls, user, competency, evidence_data=None, demo=False):
+        """Commit the credential and outbox before any provider call."""
+        if not demo and connection.in_atomic_block:
+            raise RuntimeError('Final issuance cannot run inside an outer database transaction.')
+        with transaction.atomic():
+            credential = cls._prepare_credential(user, competency, evidence_data, demo)
+        if not demo and credential.status not in (Credential.Status.ISSUED, Credential.Status.REVOKED):
+            from apps.blockchain.services import BlockchainService
+            BlockchainService.record_credential_on_chain(credential)
+            credential.refresh_from_db()
+        return credential
+
+    @classmethod
+    def _prepare_credential(cls, user, competency, evidence_data=None, demo=False):
         """
         Issues a new verified credential for the user:
         1. Checks eligibility.
@@ -67,19 +81,8 @@ class CredentialService:
             raise ValidationError({'detail': eligibility['reason']})
         score = eligibility['score']
 
-        # Check if already issued
-        existing = Credential.objects.filter(
-            user=user,
-            competency=competency,
-            status=Credential.Status.DRAFT if demo else Credential.Status.ISSUED,
-            metadata__curriculum_version=competency.career_track.curriculum_version,
-            metadata__submission_ids=eligibility['submission_ids'],
-        ).first()
-        if existing:
-            return existing
-
         evidence_data = evidence_data or {}
-        passed_submissions = Submission.objects.filter(id__in=eligibility['submission_ids']).select_related('assessment')
+        passed_submissions = Submission.objects.filter(id__in=eligibility['submission_ids']).select_related('assessment__skill').order_by('assessment__skill_id', 'id')
         submission_id = evidence_data.get('submission_id')
         if submission_id:
             if not passed_submissions.filter(id=submission_id).exists():
@@ -113,44 +116,45 @@ class CredentialService:
                 'evaluation': s.evaluation, 'score': s.score} for s in passed_submissions],
         }
 
+        evidence = [{'submission_id': item.pk,
+            'github_url': evidence_data.get('github_url') or item.content.get('github_url', ''),
+            'demo_url': evidence_data.get('demo_url') or item.content.get('demo_url', ''),
+            'file_url': evidence_data.get('file_url', ''), 'notes': item.feedback}
+            for item in passed_submissions]
+        identity = {'user': user.pk, 'competency': competency.pk,
+            'standard': {k: v for k, v in metadata_snapshot.items() if k not in ('student_name', 'student_email', 'issued_at')},
+            'evidence': evidence}
+        issuance_key = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        existing = Credential.objects.filter(issuance_key=issuance_key).first()
+        if existing:
+            return existing
+
         credential = Credential.objects.create(
             user=user,
             competency=competency,
-            status=Credential.Status.DRAFT,
+            status=Credential.Status.DRAFT if demo else Credential.Status.PENDING,
             score=score,
-            issued_at=None if demo else now,
-            metadata=metadata_snapshot
+            issued_at=None,
+            metadata=metadata_snapshot,
+            issuance_key=issuance_key,
         )
 
-        for item in passed_submissions:
-            Evidence.objects.create(credential=credential, submission=item,
-                github_url=evidence_data.get('github_url') or item.content.get('github_url', ''),
-                demo_url=evidence_data.get('demo_url') or item.content.get('demo_url', ''),
-                file_url=evidence_data.get('file_url', ''),
-                notes=item.feedback)
+        for item in evidence:
+            Evidence.objects.create(credential=credential, **item)
         if demo:
             return credential
 
-        # A credential is only issued after a confirmed cryptographic proof exists.
-        try:
-            from apps.blockchain.services import BlockchainService
-            BlockchainService.record_credential_on_chain(credential)
-        except Exception as exc:
-            raise ValidationError({
-                'detail': 'Credential proof could not be confirmed; no credential was issued.'
-            }) from exc
-
-        credential.status = Credential.Status.ISSUED
-        credential.save(update_fields=['status', 'updated_at'])
-
+        from apps.blockchain.services import BlockchainService
+        BlockchainService.prepare_delivery(credential)
         return credential
 
     @classmethod
+    @transaction.atomic
     def revoke_credential(cls, credential_id, reason="Revoked by administrator"):
         """
         Revokes a previously issued credential.
         """
-        credential = Credential.objects.get(id=credential_id)
+        credential = Credential.objects.select_for_update().get(id=credential_id)
         credential.status = Credential.Status.REVOKED
         credential.metadata['revocation_reason'] = reason
         credential.metadata['revoked_at'] = timezone.now().isoformat()
