@@ -10,6 +10,11 @@ import { Button, Icon, Notice, ProgressBar, StatusBadge } from './ui.jsx';
 const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
 
+function authNoticeProps(text) {
+  if (text.startsWith('Sesi berakhir')) return { tone: 'warning', title: 'Sesi berakhir' };
+  return { tone: 'success' };
+}
+
 function Brand() {
   return <Link className="brand" href="/" aria-label="Progressio, beranda"><span className="brand-mark" aria-hidden="true">p.</span>progressio<span className="brand-dot">.</span></Link>;
 }
@@ -84,7 +89,7 @@ function AuthForm({ mode, notice, onRegistered }) {
       <p className="eyebrow">{isRegister ? 'MULAI PERJALANANMU' : 'SELAMAT DATANG KEMBALI'}</p>
       <h2 id="form-title">{isRegister ? 'Buat akun Progressio' : 'Masuk ke workspace'}</h2>
       <p className="intro">{isRegister ? 'Satu akun untuk mengukur dan membuktikan kemampuan.' : 'Gunakan username yang kamu pilih saat mendaftar.'}</p>
-      {notice && <Notice tone="success">{notice}</Notice>}
+      {notice && <Notice {...authNoticeProps(notice)}>{notice}</Notice>}
       <form onSubmit={submit} aria-busy={busy}>
         {message && <div ref={summary} className="error-summary" role="alert" tabIndex="-1">
           <strong>{message}</strong>
