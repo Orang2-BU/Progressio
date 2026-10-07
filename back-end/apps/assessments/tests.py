@@ -183,6 +183,23 @@ class AssessmentModelAndAPITests(TestCase):
         )
         self.assertEqual(isolated.status_code, status.HTTP_201_CREATED)
 
+    @override_settings(THROTTLE_RATES={**settings.THROTTLE_RATES, 'expensive_assessment': '2/hour'})
+    def test_invalid_request_ids_return_400_and_spend_assessment_budget(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse('assessment-submit', args=[self.assessment.pk])
+        content = {'answers': {'q1': 'A'}}
+
+        # Invalid values are charged before serializer validation, so malformed
+        # request ids cannot be used to bypass the grading budget.
+        for request_id in ('not-a-uuid', [123]):
+            response = self.post_api(url, {'request_id': request_id, 'content': content})
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        over_budget = self.post_api(
+            url, {'request_id': 'not-yet-used', 'content': content}
+        )
+        self.assertEqual(over_budget.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
     def test_provider_failure_rolls_back_and_retry_uses_same_id(self):
         import uuid
         from unittest.mock import patch

@@ -1,4 +1,6 @@
 """Request budget for the assessment submit endpoint."""
+import uuid
+
 from apps.common.throttling import AccountBudget
 
 from .models import Submission
@@ -20,6 +22,10 @@ class AssessmentSubmitBudget(AccountBudget):
     def is_replay(self, request):
         request_id = self.submitted_value(request, 'request_id')
         if not request_id:
+            return False
+        try:
+            request_id = uuid.UUID(request_id)
+        except (ValueError, AttributeError, TypeError):
             return False
         user = getattr(request, 'user', None)
         if user is None or not user.is_authenticated:
