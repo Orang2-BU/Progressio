@@ -2,6 +2,8 @@ name: Progressio disposable demo journey
 url: http://127.0.0.1:3000/login
 tags:
   - demo
+env:
+  DEMO_PASSWORD: ""
 clearState: true
 ---
 - launchApp
@@ -10,7 +12,7 @@ clearState: true
     index: 1
 - inputText: "student"
 - tapOn: "Kata sandi"
-- inputText: "progressio-demo-2026"
+- inputText: "${DEMO_PASSWORD}"
 - tapOn: "Masuk"
 - assertVisible: "Titik awal yang baik"
 - tapOn: "Pilih target keahlian"
