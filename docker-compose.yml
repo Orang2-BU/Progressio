@@ -47,6 +47,7 @@ services:
       - ./back-end:/app
       - ./curriculum:/repo/curriculum:ro
     environment:
+      - APP_ENV=local
       - DEBUG=True
       - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,backend
@@ -88,6 +89,7 @@ services:
       - ./back-end:/app
       - ./curriculum:/repo/curriculum:ro
     environment:
+      - APP_ENV=local
       - DEBUG=True
       - SECRET_KEY=django-insecure-progressio-development-secret-key-change-in-production-2026
       - DB_NAME=progressio_db

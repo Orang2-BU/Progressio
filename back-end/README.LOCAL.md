@@ -7,7 +7,8 @@
 cd back-end
 
 # Copy local env (uses SQLite instead of PostgreSQL)
-copy .env.local .env
+copy .env.example .env
+$env:APP_ENV = "local"
 
 # Activate virtual environment
 .\.venv\Scripts\activate
@@ -42,17 +43,19 @@ API Docs: http://localhost:8000/api/docs/
 python manage.py test
 
 # Or with explicit SQLite
-DB_ENGINE=sqlite python manage.py test
+$env:DB_ENGINE = "sqlite"
+python manage.py test
 ```
 
 ## Demo Accounts (after seed_demo)
 - Student: `demo-student` / `DemoPass-2026!`
 - Recruiter: `demo-recruiter` / `DemoPass-2026!`
 
-## Environment Variables (.env.local)
+## Environment Variables (.env)
+- `APP_ENV=local` â†’ Required explicit local profile; Django startup fails if `APP_ENV` is missing or invalid.
 - `DB_ENGINE=sqlite` → Uses db.sqlite3 (no PostgreSQL needed)
 - `AI_PROVIDER=mock` → No OpenAI API key required
 - `BLOCKCHAIN_NETWORK=mock` → No blockchain connection
 
 ## Production Mode (Docker + PostgreSQL)
-See main README.md for `docker compose up --build`
+See the root README for `docker-compose.hosted.yml` and `.env.production.example`.

@@ -1,6 +1,10 @@
 import os
+import ipaddress
+import re
 from datetime import timedelta
+from email.utils import parseaddr
 from pathlib import Path
+from urllib.parse import urlsplit
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -9,12 +13,63 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-progressio-development-secret-key-change-in-production-2026')
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+def is_explicit_host(host):
+    if not host or host != host.strip() or '*' in host or host.startswith('.') or '/' in host or '@' in host:
+        return False
+    try:
+        ipaddress.ip_address(host.strip('[]'))
+        return True
+    except ValueError:
+        labels = host.rstrip('.').split('.')
+        return len(host) <= 253 and all(
+            label and len(label) <= 63 and re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?', label)
+            for label in labels
+        )
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '*').split(',') if host.strip()]
+
+APP_ENV = os.getenv('APP_ENV', '').strip().lower()
+if APP_ENV not in {'local', 'production'}:
+    raise ValueError("Set APP_ENV explicitly to either 'local' or 'production'.")
+
+if APP_ENV == 'production':
+    if os.getenv('DB_ENGINE', 'postgresql').strip().lower() != 'postgresql':
+        raise ValueError("DB_ENGINE must be 'postgresql' when APP_ENV=production.")
+    required = (
+        'SECRET_KEY', 'ALLOWED_HOSTS', 'CORS_ALLOWED_ORIGINS',
+        'CSRF_TRUSTED_ORIGINS', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST',
+    )
+    missing = [name for name in required if not os.getenv(name, '').strip()]
+    if missing:
+        raise ValueError(f"APP_ENV=production requires: {', '.join(missing)}")
+    SECRET_KEY = os.environ['SECRET_KEY']
+    if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5 or SECRET_KEY.startswith('django-insecure-'):
+        raise ValueError('Production SECRET_KEY must be a unique secret of at least 50 characters.')
+    DEBUG = os.getenv('DEBUG', 'False').lower() in {'1', 'true', 'yes', 'on'}
+    if DEBUG:
+        raise ValueError('DEBUG must be False when APP_ENV=production.')
+    ALLOWED_HOSTS = [host.strip() for host in os.environ['ALLOWED_HOSTS'].split(',') if host.strip()]
+    if not ALLOWED_HOSTS or any(not is_explicit_host(host) for host in ALLOWED_HOSTS):
+        raise ValueError('Production ALLOWED_HOSTS must list explicit hosts and cannot contain wildcards.')
+else:
+    SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-local-only-development-key')
+    DEBUG = os.getenv('DEBUG', 'True').lower() in {'1', 'true', 'yes', 'on'}
+    ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,backend').split(',') if host.strip()]
+
+if APP_ENV == 'production':
+    AI_PROVIDER = os.getenv('AI_PROVIDER', '').strip().lower()
+    BLOCKCHAIN_PROVIDER = os.getenv('BLOCKCHAIN_PROVIDER', '').strip().lower()
+    if AI_PROVIDER not in {'mock', 'openai'}:
+        raise ValueError("Production requires AI_PROVIDER to be explicitly set to 'mock' or 'openai'.")
+    if BLOCKCHAIN_PROVIDER not in {'mock', 'http'}:
+        raise ValueError("Production requires BLOCKCHAIN_PROVIDER to be explicitly set to 'mock' or 'http'.")
+    if AI_PROVIDER == 'openai' and not os.getenv('OPENAI_API_KEY', '').strip():
+        raise ValueError('OPENAI_API_KEY is required when production AI_PROVIDER=openai.')
+    if BLOCKCHAIN_PROVIDER == 'http' and not os.getenv('BLOCKCHAIN_SERVICE_URL', '').strip():
+        raise ValueError('BLOCKCHAIN_SERVICE_URL is required when production BLOCKCHAIN_PROVIDER=http.')
+    if os.getenv('AI_ALLOW_MOCK_FALLBACK', 'False').lower() in {'1', 'true', 'yes', 'on'}:
+        raise ValueError('AI_ALLOW_MOCK_FALLBACK must be False in production.')
+
 PUBLIC_WEB_URL = os.getenv('PUBLIC_WEB_URL', '').rstrip('/')
 
 
@@ -188,19 +243,86 @@ SPECTACULAR_SETTINGS = {
 
 
 # CORS Configuration
+def is_https_origin(origin):
+    parsed = urlsplit(origin)
+    try:
+        port_is_valid = parsed.port is None or 1 <= parsed.port <= 65535
+    except ValueError:
+        return False
+    return (
+        parsed.scheme == 'https'
+        and is_explicit_host(parsed.hostname or '')
+        and port_is_valid
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path in ('', '/')
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
 cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '')
 if cors_origins:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+    if APP_ENV == 'production' and (not CORS_ALLOWED_ORIGINS or any(not is_https_origin(origin) for origin in CORS_ALLOWED_ORIGINS)):
+        raise ValueError('Production CORS_ALLOWED_ORIGINS must contain explicit HTTPS origins without paths or wildcards.')
 else:
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = APP_ENV == 'local'
+
+if APP_ENV == 'production':
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ['CSRF_TRUSTED_ORIGINS'].split(',') if origin.strip()]
+    if not CSRF_TRUSTED_ORIGINS or any(not is_https_origin(origin) for origin in CSRF_TRUSTED_ORIGINS):
+        raise ValueError('Production CSRF_TRUSTED_ORIGINS must contain explicit HTTPS origins without paths or wildcards.')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    if SECURE_HSTS_SECONDS <= 0:
+        raise ValueError('Production SECURE_HSTS_SECONDS must be greater than zero.')
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False').lower() in {'1', 'true', 'yes', 'on'}
+    SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'False').lower() in {'1', 'true', 'yes', 'on'}
+    # Only enable this behind a proxy that strips client-supplied X-Forwarded-Proto.
+    if os.getenv('TRUST_X_FORWARDED_PROTO', '').lower() in {'1', 'true', 'yes', 'on'}:
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    ENABLE_EMAIL = os.getenv('ENABLE_EMAIL', 'False').lower() in {'1', 'true', 'yes', 'on'}
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', '').strip() or (
+        'django.core.mail.backends.smtp.EmailBackend' if ENABLE_EMAIL
+        else 'django.core.mail.backends.dummy.EmailBackend'
+    )
+    if ENABLE_EMAIL and EMAIL_BACKEND != 'django.core.mail.backends.smtp.EmailBackend':
+        raise ValueError('ENABLE_EMAIL=True requires the SMTP email backend in production.')
+    if ENABLE_EMAIL and EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+        smtp_missing = [name for name in ('EMAIL_HOST', 'EMAIL_HOST_USER', 'EMAIL_HOST_PASSWORD') if not os.getenv(name, '').strip()]
+        if smtp_missing:
+            raise ValueError(f"ENABLE_EMAIL=True with SMTP requires: {', '.join(smtp_missing)}")
+        sender = os.getenv('DEFAULT_FROM_EMAIL', '').strip()
+        if not sender or '.invalid' in sender.lower():
+            raise ValueError('ENABLE_EMAIL=True with SMTP requires a real DEFAULT_FROM_EMAIL sender address.')
+        sender_address = parseaddr(sender)[1]
+        sender_local, separator, sender_domain = sender_address.rpartition('@')
+        if not separator or not sender_local or not is_explicit_host(sender_domain):
+            raise ValueError('DEFAULT_FROM_EMAIL must contain a valid sender address when production email is enabled.')
 
 
 # Email Backend Configuration
 # For development: console backend. In production: configure SMTP.
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.console.EmailBackend'
-)
+if APP_ENV == 'local':
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in {'1', 'true', 'yes', 'on'}
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Progressio <noreply@example.invalid>')
+
+if APP_ENV == 'production':
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {'console': {'class': 'logging.StreamHandler'}},
+        'root': {'handlers': ['console'], 'level': os.getenv('LOG_LEVEL', 'INFO').upper()},
+    }
 
 
 # Celery Configuration

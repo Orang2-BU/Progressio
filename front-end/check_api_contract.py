@@ -13,11 +13,13 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'back-end'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+os.environ['APP_ENV'] = 'local'
 os.environ['DB_ENGINE'] = 'sqlite'
 os.environ['AI_PROVIDER'] = 'mock'
 os.environ['BLOCKCHAIN_PROVIDER'] = 'mock'
 
 import django
+from django.apps import apps
 from django.conf import settings
 
 settings.DATABASES['default']['NAME'] = ':memory:'
@@ -27,9 +29,10 @@ django.setup()
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from rest_framework.test import APIClient
-from apps.assessments.models import Assessment, DiagnosticQuestion
-from apps.careers.models import CareerTrack
-from apps.skills.models import Skill
+Assessment = apps.get_model('assessments', 'Assessment')
+DiagnosticQuestion = apps.get_model('assessments', 'DiagnosticQuestion')
+CareerTrack = apps.get_model('careers', 'CareerTrack')
+Skill = apps.get_model('skills', 'Skill')
 
 
 def main():
