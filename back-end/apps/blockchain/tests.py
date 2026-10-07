@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -14,7 +14,7 @@ from .tasks import publish_credential_to_blockchain_task
 User = get_user_model()
 
 
-class BlockchainServiceAndAPITests(TestCase):
+class BlockchainServiceAndAPITests(TransactionTestCase):
 
     def setUp(self):
         self.client = APIClient()

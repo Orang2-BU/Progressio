@@ -6,7 +6,7 @@ from .services import BlockchainService
 @shared_task(name="apps.blockchain.tasks.publish_credential_to_blockchain_task")
 def publish_credential_to_blockchain_task(credential_id):
     """
-    Celery background worker task to anchor a newly issued credential on the blockchain.
+    Deliver or reconcile the same durable proof record; duplicate tasks are safe.
     """
     try:
         credential = Credential.objects.select_related(
@@ -14,8 +14,10 @@ def publish_credential_to_blockchain_task(credential_id):
         ).get(id=credential_id)
 
         proof = BlockchainService.record_credential_on_chain(credential)
+        if proof is None:
+            return f"Credential {credential_id} proof remains unconfirmed; inspect its durable delivery record."
         return f"Credential {credential_id} successfully anchored on Blockchain [{proof.network}]. Tx: {proof.transaction_hash}"
     except Credential.DoesNotExist:
         return f"Credential {credential_id} not found"
-    except Exception as e:
-        return f"Failed to anchor credential {credential_id}: {str(e)}"
+    except Exception:
+        return f"Credential {credential_id} proof outcome is unknown; reconcile the existing delivery."

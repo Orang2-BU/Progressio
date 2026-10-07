@@ -1,6 +1,6 @@
 """The credential's integrity check must actually detect edits to the record."""
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TransactionTestCase
 
 from apps.assessments.models import Assessment
 from apps.assessments.services import AssessmentEvaluationService
@@ -15,12 +15,9 @@ from apps.skills.models import Skill
 User = get_user_model()
 
 
-class CredentialIntegrityTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        import_track('backend-engineering')
-
+class CredentialIntegrityTests(TransactionTestCase):
     def setUp(self):
+        import_track('backend-engineering')
         self.user = User.objects.create_user(
             username='student', email='student@example.com', password='pw'
         )
@@ -39,8 +36,9 @@ class CredentialIntegrityTests(TestCase):
 
         # Synthetic issued fixture tests hashing, not production eligibility.
         self.credential = CredentialService.issue_credential(self.user, self.competency, demo=True)
+        self.credential.metadata['mode'] = 'test_fixture'
         self.credential.status = 'issued'
-        self.credential.save(update_fields=['status'])
+        self.credential.save(update_fields=['status', 'metadata'])
         BlockchainService.record_credential_on_chain(self.credential)
 
     def test_credential_is_issued_and_intact(self):
