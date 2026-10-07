@@ -1,4 +1,8 @@
-from django.test import TestCase
+import os
+from unittest.mock import patch
+
+from django.core.exceptions import ImproperlyConfigured
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.core.management import call_command
 from rest_framework.test import APIClient
@@ -9,6 +13,21 @@ from apps.skills.models import Skill
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+class ThrottleRateConfigurationTests(SimpleTestCase):
+    def test_valid_aliases_are_accepted(self):
+        from config.settings import throttle_rate
+
+        with patch.dict(os.environ, {'THROTTLE_RATE_TEST': '10/min'}):
+            self.assertEqual(throttle_rate('THROTTLE_RATE_TEST', '1/hour'), '10/min')
+
+    def test_unknown_period_suffix_is_rejected(self):
+        from config.settings import throttle_rate
+
+        with patch.dict(os.environ, {'THROTTLE_RATE_TEST': '10/month'}):
+            with self.assertRaises(ImproperlyConfigured):
+                throttle_rate('THROTTLE_RATE_TEST', '1/hour')
 
 
 class HealthCheckTests(TestCase):

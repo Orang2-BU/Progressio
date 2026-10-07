@@ -159,7 +159,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # lock themselves out of logging in. Every value is "<requests>/<period>" and
 # every value is overridable per deployment; the reasoning behind each starting
 # value lives in back-end/THROTTLING.md next to this list.
-THROTTLE_PERIODS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
+# DRF parses these periods by their first letter, so validate the whole token
+# before passing it on; otherwise values like ``10/month`` silently mean 10/min.
+THROTTLE_PERIODS = {
+    's', 'sec', 'second', 'seconds',
+    'm', 'min', 'minute', 'minutes',
+    'h', 'hour', 'hours',
+    'd', 'day', 'days',
+}
 
 
 def throttle_rate(env_name, default):
@@ -167,9 +174,11 @@ def throttle_rate(env_name, default):
     raw = (os.getenv(env_name) or '').strip() or default
     count, _, period = raw.partition('/')
     period = period.strip().lower()
-    if not count.strip().isdigit() or int(count) < 1 or period[:1] not in THROTTLE_PERIODS:
+    if not count.strip().isdigit() or int(count) < 1 or period not in THROTTLE_PERIODS:
         raise ImproperlyConfigured(
-            f'{env_name} must look like "<requests>/<s|m|h|d>", for example 10/min; got {raw!r}.'
+            f'{env_name} must use a positive count and a supported period '
+            '(s/sec/second, m/min/minute, h/hour, or d/day), '
+            f'for example 10/min; got {raw!r}.'
         )
     return f'{int(count)}/{period}'
 
