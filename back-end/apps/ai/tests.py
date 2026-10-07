@@ -4,12 +4,14 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
 from apps.careers.models import CareerTrack
 from apps.competencies.models import Competency
 from apps.skills.models import Skill
 from apps.learning.models import SkillProgress
 from apps.assessments.models import Assessment, Submission
+from apps.assessments.services import AssessmentEvaluationService
 from .tasks import evaluate_submission_ai_task
 from .services import AIService
 from .adapters.openai_adapter import OpenAIAdapter
@@ -97,6 +99,93 @@ class AIServicesTests(TestCase):
         self.assertTrue(submission.is_passed)
         progress = SkillProgress.objects.get(user=self.user, skill=self.skill1)
         self.assertEqual(progress.xp, 100)
+
+    def test_celery_result_normalizes_mastery_and_snapshots_provenance(self):
+        assessment = Assessment.objects.create(
+            skill=self.skill1, title='Scoped AI Assessment',
+            evaluation_mode=Assessment.EvaluationMode.AI, passing_score=35, max_score=50,
+            objective='Demonstrate the skill', mastery_criteria='Apply the standard',
+            expected_evidence=['code'], grading_config={
+                'review_status': 'reviewed', 'rubric': [{'criterion': 'correctness'}],
+            },
+        )
+        submission = Submission.objects.create(
+            user=self.user, assessment=assessment, content={'code': 'example'},
+            status=Submission.Status.SUBMITTED,
+        )
+        adapter = MagicMock()
+        adapter.evaluate_submission.return_value = {
+            'score': 40, 'feedback': 'Passed', 'provider': 'test-provider',
+        }
+        with patch('apps.ai.tasks.AIService.get_adapter', return_value=adapter):
+            evaluate_submission_ai_task(submission.id)
+
+        submission.refresh_from_db()
+        self.assertEqual(submission.status, Submission.Status.COMPLETED)
+        self.assertEqual(submission.score, 40)
+        self.assertEqual(submission.evaluation['provider'], 'test-provider')
+        self.assertEqual(submission.evaluation['review_status'], 'reviewed')
+        self.assertEqual(submission.evaluation['curriculum_version'], self.track.curriculum_version)
+        self.assertEqual(submission.evaluation['curriculum_schema_version'], self.track.curriculum_schema_version)
+        self.assertEqual(submission.evaluation['rubric'], [{'criterion': 'correctness'}])
+        self.assertEqual(SkillProgress.objects.get(user=self.user, skill=self.skill1).mastery, 80)
+
+        with patch('apps.ai.tasks.AIService.get_adapter', return_value=adapter):
+            result = evaluate_submission_ai_task(submission.id)
+        self.assertIn('already evaluated', result)
+        self.assertEqual(SkillProgress.objects.get(user=self.user, skill=self.skill1).xp, 100)
+
+    def test_http_and_celery_use_the_same_result_structure(self):
+        assessment = Assessment.objects.create(
+            skill=self.skill1, title='Shared Evaluation',
+            evaluation_mode=Assessment.EvaluationMode.AI, max_score=50, passing_score=35,
+        )
+        content = {'text': 'Evidence'}
+        evaluation = {'score': 40, 'feedback': 'Passed', 'provider': 'test-provider'}
+        with patch.object(
+            AssessmentEvaluationService, '_evaluate_with_ai', return_value=evaluation
+        ):
+            http_submission = AssessmentEvaluationService.submit_and_evaluate(
+                self.user, assessment, content
+            )
+
+        task_submission = Submission.objects.create(
+            user=self.user, assessment=assessment, content=content,
+            status=Submission.Status.SUBMITTED,
+        )
+        adapter = MagicMock()
+        adapter.evaluate_submission.return_value = evaluation
+        with patch('apps.ai.tasks.AIService.get_adapter', return_value=adapter):
+            evaluate_submission_ai_task(task_submission.id)
+        task_submission.refresh_from_db()
+
+        self.assertEqual(task_submission.status, http_submission.status)
+        self.assertEqual(task_submission.score, http_submission.score)
+        self.assertEqual(task_submission.feedback, http_submission.feedback)
+        self.assertEqual(task_submission.evaluation, http_submission.evaluation)
+
+    def test_celery_rejects_nonfinite_score_without_completing_submission(self):
+        for score in (float('nan'), float('inf'), float('-inf')):
+            with self.subTest(score=score):
+                submission = Submission.objects.create(
+                    user=self.user,
+                    assessment=Assessment.objects.create(
+                        skill=self.skill1, title=f'Invalid {score}',
+                        evaluation_mode=Assessment.EvaluationMode.AI,
+                    ),
+                    content={'code': 'example'}, status=Submission.Status.SUBMITTED,
+                )
+                adapter = MagicMock()
+                adapter.evaluate_submission.return_value = {'score': score}
+                with patch('apps.ai.tasks.AIService.get_adapter', return_value=adapter):
+                    with self.assertRaises(ValidationError):
+                        evaluate_submission_ai_task(submission.id)
+
+                submission.refresh_from_db()
+                self.assertEqual(submission.status, Submission.Status.EVALUATING)
+                self.assertIsNone(submission.score)
+                self.assertEqual(submission.evaluation, {})
+        self.assertFalse(SkillProgress.objects.filter(user=self.user, skill=self.skill1).exists())
 
     def test_openai_provider_requires_api_key(self):
         with patch.dict(os.environ, {'AI_PROVIDER': 'openai'}, clear=False):

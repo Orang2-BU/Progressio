@@ -256,6 +256,25 @@ class DiagnosticProgressConcurrencyTests(TransactionTestCase):
         self.assertEqual(self._progress(self.user).xp, 0)
         self.assertEqual(self._progress(self.other).xp, 0)
 
+    def test_concurrent_completion_of_same_submission_awards_xp_once(self):
+        submission = Submission.objects.create(
+            user=self.user,
+            assessment=self.assessment,
+            content={'answers': {'q1': 'A', 'q2': 'B'}},
+            status=Submission.Status.EVALUATING,
+        )
+        evaluation = {'score': 80, 'feedback': 'Passed', 'provider': 'rules'}
+
+        run_concurrently(
+            lambda: AssessmentEvaluationService.complete_evaluation(submission.pk, evaluation),
+            lambda: AssessmentEvaluationService.complete_evaluation(submission.pk, evaluation),
+        )
+
+        submission.refresh_from_db()
+        self.assertEqual(submission.status, Submission.Status.COMPLETED)
+        self.assertEqual(submission.score, 80)
+        self.assertEqual(self._progress().xp, ProgressService.XP_PER_ASSESSMENT)
+
 
 class DiagnosticProgressRegressionTests(TestCase):
     """Backend-agnostic invariants: run on SQLite and PostgreSQL."""

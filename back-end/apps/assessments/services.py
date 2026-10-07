@@ -57,40 +57,63 @@ class AssessmentEvaluationService:
         else:
             evaluation = cls._evaluate_with_rules(assessment, content)
 
+        return cls.complete_evaluation(submission.pk, evaluation)
+
+    @classmethod
+    @transaction.atomic
+    def complete_evaluation(cls, submission_id, evaluation):
+        """Atomically persist a validated result and its one-time reward."""
+        submission_ref = Submission.objects.only('user_id').get(pk=submission_id)
+        user = get_user_model().objects.select_for_update().get(pk=submission_ref.user_id)
+        submission = Submission.objects.select_for_update().select_related(
+            'assessment__skill__competency__career_track'
+        ).get(pk=submission_id)
+        if submission.status == Submission.Status.COMPLETED:
+            return submission
+
         try:
+            if not isinstance(evaluation, dict):
+                raise ValueError()
             raw_score = float(evaluation['score'])
             if not math.isfinite(raw_score):
                 raise ValueError()
         except (ValueError, TypeError, KeyError) as exc:
             raise ValidationError({'detail': 'Evaluator returned an invalid score; no result was saved.'}) from exc
-        score = max(0.0, min(raw_score, float(assessment.max_score)))
-        feedback = evaluation.get('feedback') or cls._default_feedback(assessment, score)
 
-        submission.score = round(score, 2)
-        submission.feedback = feedback
-        submission.status = Submission.Status.COMPLETED
-        provider = evaluation.get('provider') or ('rules' if assessment.evaluation_mode == 'rules' else os.getenv('AI_PROVIDER', 'mock').lower())
+        assessment = submission.assessment
+        if assessment.max_score <= 0 or assessment.passing_score > assessment.max_score:
+            raise ValidationError({'detail': 'Assessment scoring configuration is invalid.'})
+        score = round(max(0.0, min(raw_score, float(assessment.max_score))), 2)
+        feedback = evaluation.get('feedback') or cls._default_feedback(assessment, score)
         track = assessment.skill.competency.career_track
+        provider = evaluation.get('provider') or (
+            'rules' if assessment.evaluation_mode == 'rules'
+            else os.getenv('AI_PROVIDER', 'mock').lower()
+        )
+        submission.score = score
+        submission.feedback = feedback
         submission.evaluation = {
             'provider': provider,
             'review_status': assessment.grading_config.get('review_status', 'unreviewed'),
             'curriculum_version': track.curriculum_version,
             'curriculum_schema_version': track.curriculum_schema_version,
-            'passing_score': assessment.passing_score, 'max_score': assessment.max_score,
-            'skill_id': assessment.skill_id, 'objective': assessment.objective,
+            'passing_score': assessment.passing_score,
+            'max_score': assessment.max_score,
+            'skill_id': assessment.skill_id,
+            'objective': assessment.objective,
             'mastery_criteria': assessment.mastery_criteria,
             'expected_evidence': assessment.expected_evidence,
             'rubric': assessment.grading_config.get('rubric', []),
         }
+        submission.status = Submission.Status.COMPLETED
         submission.save(update_fields=['score', 'feedback', 'status', 'evaluation'])
 
         if submission.is_passed:
             ProgressService.record_assessment_passed(
                 user=user,
                 skill=assessment.skill,
-                score=submission.score / assessment.max_score * 100,
+                score=score / assessment.max_score * 100,
             )
-
         return submission
 
     @staticmethod
