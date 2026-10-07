@@ -65,6 +65,7 @@ terisolasi dari Python sistem (PowerShell dari root repo):
 python -m venv back-end/.venv
 back-end/.venv/Scripts/python.exe -m pip install -r back-end/requirements.txt
 $python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path
+$env:APP_ENV = "local"
 $env:DB_ENGINE = "sqlite"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
@@ -100,7 +101,10 @@ npm test
 npm run build
 ```
 
-Di POSIX, interpreter venv adalah `back-end/.venv/bin/python`. Tetapkan
+`APP_ENV` wajib dipilih eksplisit (`local` atau `production`) agar Django tidak
+menjalankan konfigurasi development secara diam-diam. Di POSIX, interpreter venv
+adalah `back-end/.venv/bin/python`; set `APP_ENV=local` sebelum menjalankan
+command di atas. Tetapkan
 `AI_PROVIDER=mock` dan `BLOCKCHAIN_PROVIDER=mock` untuk menjalankan pemeriksaan
 lokal tanpa provider eksternal. Probe kontrak memakai database SQLite in-memory
 dan identitas sementara; tidak memerlukan token atau layanan eksternal. Workflow
@@ -142,6 +146,9 @@ cd back-end
 # Aktifkan virtual environment
 .\.venv\Scripts\activate
 
+# Profil wajib untuk command Django lokal (atau salin .env.example ke .env)
+$env:APP_ENV = "local"
+
 # Jalankan migrations
 python manage.py migrate
 
@@ -150,6 +157,17 @@ python manage.py test
 
 # Jalankan dev server
 python manage.py runserver
+```
+
+`APP_ENV` wajib bernilai `local` atau `production`; profil local ditujukan untuk
+development. Untuk deployment, lihat
+[`docker-compose.hosted.yml`](docker-compose.hosted.yml) dan
+[`back-end/.env.production.example`](back-end/.env.production.example). Isi
+variabel dari contoh melalui secret manager sebelum menjalankan hosted stack.
+Jalankan migrasi setelah stack aktif:
+
+```sh
+docker compose -f docker-compose.hosted.yml exec backend python manage.py migrate
 ```
 
 ---
@@ -185,7 +203,7 @@ Semua endpoint domain berada di bawah `/api/v1/`:
 
 > [!IMPORTANT]
 > **Email Backend:**
-> Saat ini backend menggunakan `django.core.mail.backends.console.EmailBackend` untuk keperluan development (isi email akan dicetak ke console/log server). **Wajib diganti ke SMTP Provider production (seperti SendGrid, AWS SES, Mailgun) sebelum deployment live.**
+> Profil lokal menggunakan `django.core.mail.backends.console.EmailBackend` (isi email dicetak ke console). Email nonaktif secara default pada profil production. Jika fitur mulai mengirim email, aktifkan `ENABLE_EMAIL=True` dan konfigurasi SMTP host, username, password, serta alamat pengirim sebelum memakai fitur tersebut.
 
 > [!NOTE]
 > **Celery & Background Tasks:**
