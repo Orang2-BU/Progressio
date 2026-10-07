@@ -1,5 +1,5 @@
 import uuid
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -14,7 +14,7 @@ from apps.blockchain.services import BlockchainService
 User = get_user_model()
 
 
-class PublicVerificationAPITests(TestCase):
+class PublicVerificationAPITests(TransactionTestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -93,3 +93,11 @@ class PublicVerificationAPITests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_unissued_credentials_fail_closed_even_with_a_confirmed_proof(self):
+        for state in ('draft', 'pending', 'failed'):
+            with self.subTest(state=state):
+                Credential.objects.filter(pk=self.credential.pk).update(status=state)
+                response = self.client.get(reverse('verify-credential', args=[self.credential.pk]))
+                self.assertFalse(response.data['is_valid'])
+                self.assertFalse(response.data['integrity_verified'])

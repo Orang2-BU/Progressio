@@ -183,6 +183,7 @@ bahwa situs/repository eksternal masih sama atau bahwa audit manusia dilakukan.
 Migrasi baru `assessments/0006_submission_recovery` diperlukan. Dari root:
 
 ```powershell
+$env:APP_ENV = 'local'
 $env:DB_ENGINE = 'sqlite' # atau konfigurasi database deployment milikmu
 uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py migrate
 uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py import_curriculum
@@ -270,6 +271,7 @@ serta schema checkpoint; schema filter learning-path tetap backlog G10.
 Jalankan tes backend terkait dari root repo tanpa memakai database proyek:
 
 ```powershell
+$env:APP_ENV = 'local'
 $env:DB_ENGINE = 'sqlite'
 uv run --python 3.12 --with-requirements back-end/requirements.txt python back-end/manage.py test apps.learning apps.assessments apps.credentials
 ```

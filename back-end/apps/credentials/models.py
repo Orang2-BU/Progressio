@@ -14,6 +14,8 @@ class Credential(TimestampMixin):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
+        PENDING = 'pending', 'Awaiting proof confirmation'
+        FAILED = 'failed', 'Proof blocked or rejected'
         ISSUED = 'issued', 'Issued'
         REVOKED = 'revoked', 'Revoked'
 
@@ -51,6 +53,7 @@ class Credential(TimestampMixin):
         blank=True,
         help_text="Snapshot metadata (student name, competency, track, metrics)."
     )
+    issuance_key = models.CharField(max_length=64, unique=True, null=True, editable=False)
 
     class Meta:
         db_table = 'credentials'

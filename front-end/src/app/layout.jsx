@@ -1,5 +1,6 @@
 import App from '../App.jsx';
 import '../styles.css';
+import '../foundation.css';
 
 export const metadata = {
   title: { default: 'Progressio — Turning Progress Into Proof', template: '%s — Progressio' },

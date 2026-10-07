@@ -44,6 +44,7 @@ jobs:
         run: .venv/bin/python -m pip install -r back-end/requirements.txt
       - name: Probe API contract
         env:
+          APP_ENV: local
           DB_ENGINE: sqlite
           AI_PROVIDER: mock
           BLOCKCHAIN_PROVIDER: mock

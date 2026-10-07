@@ -73,14 +73,15 @@ class CredentialIssueView(APIView):
 
     @extend_schema(
         summary="Issue Credential",
-        description="Issues a verified credential for a competency if passing criteria (>=70%) are met.",
+        description="Prepares an eligible credential and returns its durable identity. Final issuance requires matching provider confirmation.",
         request=CredentialIssueRequestSerializer,
         responses={
             201: OpenApiResponse(
                 response=CredentialDetailSerializer,
-                description="Credential issued successfully."
+                description="Draft or confirmed credential."
             ),
-            **THROTTLED_RESPONSE,
+            202: OpenApiResponse(response=CredentialDetailSerializer,
+                description="Credential persisted; proof is pending or blocked. Inspect status before retrying."),
         }
     )
     def post(self, request, *args, **kwargs):
@@ -109,7 +110,8 @@ class CredentialIssueView(APIView):
             credential,
             context={'request': request},
         )
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        response_status = status.HTTP_202_ACCEPTED if credential.status in (Credential.Status.PENDING, Credential.Status.FAILED) else status.HTTP_201_CREATED
+        return Response(response_serializer.data, status=response_status)
 
 
 class CredentialEligibilityView(APIView):

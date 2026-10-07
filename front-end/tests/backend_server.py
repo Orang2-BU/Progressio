@@ -11,6 +11,7 @@ from wsgiref.simple_server import make_server
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'back-end'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+os.environ['APP_ENV'] = 'local'
 os.environ['DB_ENGINE'] = 'sqlite'
 
 import django

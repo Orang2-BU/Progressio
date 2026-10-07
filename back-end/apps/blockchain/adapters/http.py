@@ -22,7 +22,12 @@ class HTTPBlockchainAdapter(BaseBlockchainAdapter):
                 'BLOCKCHAIN_SERVICE_URL is required when BLOCKCHAIN_PROVIDER=http.'
             )
 
-    def publish_proof(self, credential_id, credential_hash, network='polygon-amoy'):
+    # No documented idempotency/lookup contract: issuance must stop before POST.
+    supports_recovery = False
+
+    def publish_proof(self, credential_id, credential_hash, network='polygon-amoy', idempotency_key=''):
+        if idempotency_key:
+            raise BlockchainProviderError('Recovery contract is required before publishing.')
         return self._post('/proofs', {
             'credential_id': credential_id,
             'credential_hash': credential_hash,
@@ -52,9 +57,8 @@ class HTTPBlockchainAdapter(BaseBlockchainAdapter):
             with urlopen(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode('utf-8'))
         except HTTPError as exc:
-            detail = exc.read().decode('utf-8', errors='replace')[:500]
             raise BlockchainProviderError(
-                f'Blockchain service returned HTTP {exc.code}: {detail}'
+                f'Blockchain service returned HTTP {exc.code}.'
             ) from exc
         except (URLError, TimeoutError, ValueError) as exc:
-            raise BlockchainProviderError(f'Blockchain service request failed: {exc}') from exc
+            raise BlockchainProviderError('Blockchain service request failed.') from exc

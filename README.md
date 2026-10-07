@@ -3,7 +3,7 @@
 > **Turning Progress Into Proof.**
 > Progressio is an AI-powered platform for turning progress into clear, measurable proof.
 
-The hackathon MVP backend now supports an end-to-end vertical slice: server-graded diagnostic assessment, personalized skill graph, secure assessment scoring, evidence-backed credential issuance, cryptographic integrity anchoring, and public recruiter verification. Run `python manage.py import_curriculum` from `back-end/` to project the curriculum package into the database, or `python manage.py seed_demo` to do that and add demo accounts.
+The repository contains a Next.js web client, a Django API, and a Flutter mobile client. Local demo credentials remain drafts; the mock runtime does not prove final credential validity or external blockchain anchoring. See [the demo runbook](docs/demo-runbook.md) for a disposable local rehearsal.
 
 ---
 
@@ -17,8 +17,8 @@ Progressio/
 │   ├── tests/       #   suite validasi + fixture valid & invalid
 │   └── tracks/      #   satu folder per career track
 ├── back-end/        # Django 5.1 + DRF — mesin yang mengukur
-├── front-end/       # (belum diisi)
-├── Mobile/          # (belum diisi)
+├── front-end/       # Next.js web client and browser-flow tests
+├── Mobile/          # Flutter mobile client
 └── docker-compose.yml
 ```
 
@@ -65,6 +65,7 @@ terisolasi dari Python sistem (PowerShell dari root repo):
 python -m venv back-end/.venv
 back-end/.venv/Scripts/python.exe -m pip install -r back-end/requirements.txt
 $python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path
+$env:APP_ENV = "local"
 $env:DB_ENGINE = "sqlite"
 $env:AI_PROVIDER = "mock"
 $env:BLOCKCHAIN_PROVIDER = "mock"
@@ -100,7 +101,10 @@ npm test
 npm run build
 ```
 
-Di POSIX, interpreter venv adalah `back-end/.venv/bin/python`. Tetapkan
+`APP_ENV` wajib dipilih eksplisit (`local` atau `production`) agar Django tidak
+menjalankan konfigurasi development secara diam-diam. Di POSIX, interpreter venv
+adalah `back-end/.venv/bin/python`; set `APP_ENV=local` sebelum menjalankan
+command di atas. Tetapkan
 `AI_PROVIDER=mock` dan `BLOCKCHAIN_PROVIDER=mock` untuk menjalankan pemeriksaan
 lokal tanpa provider eksternal. Probe kontrak memakai database SQLite in-memory
 dan identitas sementara; tidak memerlukan token atau layanan eksternal. Workflow
@@ -142,6 +146,9 @@ cd back-end
 # Aktifkan virtual environment
 .\.venv\Scripts\activate
 
+# Profil wajib untuk command Django lokal (atau salin .env.example ke .env)
+$env:APP_ENV = "local"
+
 # Jalankan migrations
 python manage.py migrate
 
@@ -152,6 +159,17 @@ python manage.py test
 python manage.py runserver
 ```
 
+`APP_ENV` wajib bernilai `local` atau `production`; profil local ditujukan untuk
+development. Untuk deployment, lihat
+[`docker-compose.hosted.yml`](docker-compose.hosted.yml) dan
+[`back-end/.env.production.example`](back-end/.env.production.example). Isi
+variabel dari contoh melalui secret manager sebelum menjalankan hosted stack.
+Jalankan migrasi setelah stack aktif:
+
+```sh
+docker compose -f docker-compose.hosted.yml exec backend python manage.py migrate
+```
+
 ---
 
 ## 📡 API Endpoints (Sprint 1)
@@ -160,7 +178,7 @@ Semua endpoint domain berada di bawah `/api/v1/`:
 
 | Method | Endpoint | Auth | Deskripsi |
 |---|---|---|---|
-| `POST` | `/api/v1/auth/register` | Public | Register user baru (`student`, `recruiter`, `admin`) |
+| `POST` | `/api/v1/auth/register` | Public | Register user baru (`student` atau `recruiter`; admin tidak dapat dipilih publik) |
 | `POST` | `/api/v1/auth/login` | Public | JWT Token obtain (`access` & `refresh`) |
 | `POST` | `/api/v1/auth/refresh` | Public | JWT Token refresh |
 | `GET` | `/api/v1/auth/me` | Bearer JWT | Profile user yang sedang login |
@@ -185,7 +203,7 @@ Semua endpoint domain berada di bawah `/api/v1/`:
 
 > [!IMPORTANT]
 > **Email Backend:**
-> Saat ini backend menggunakan `django.core.mail.backends.console.EmailBackend` untuk keperluan development (isi email akan dicetak ke console/log server). **Wajib diganti ke SMTP Provider production (seperti SendGrid, AWS SES, Mailgun) sebelum deployment live.**
+> Profil lokal menggunakan `django.core.mail.backends.console.EmailBackend` (isi email dicetak ke console). Email nonaktif secara default pada profil production. Jika fitur mulai mengirim email, aktifkan `ENABLE_EMAIL=True` dan konfigurasi SMTP host, username, password, serta alamat pengirim sebelum memakai fitur tersebut.
 
 > [!NOTE]
 > **Celery & Background Tasks:**

@@ -19,6 +19,7 @@ jobs:
       run:
         working-directory: back-end
     env:
+      APP_ENV: local
       # SQLite keeps CI free of a database service; PostgreSQL is used at runtime.
       DB_ENGINE: sqlite
       AI_PROVIDER: mock
@@ -62,6 +63,7 @@ jobs:
       run:
         working-directory: back-end
     env:
+      APP_ENV: local
       DB_ENGINE: postgresql
       DB_NAME: progressio_ci
       DB_USER: progressio

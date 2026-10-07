@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -17,7 +17,7 @@ from .models import Credential, Evidence
 User = get_user_model()
 
 
-class CredentialAPITests(TestCase):
+class CredentialAPITests(TransactionTestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -168,11 +168,15 @@ class CredentialAPITests(TestCase):
         self.assertEqual(self.client.get(reverse('credential-detail', args=[credential.pk])).status_code, 404)
 
     @patch.dict('os.environ', {'BLOCKCHAIN_PROVIDER': 'http'})
-    def test_final_proof_failure_rolls_back_without_provider_details(self):
+    def test_final_proof_failure_persists_identity_without_provider_details(self):
         self.client.force_authenticate(user=self.user)
         self.create_passed_submission()
-        with patch('apps.blockchain.services.BlockchainService.record_credential_on_chain', side_effect=RuntimeError('secret token')):
+        adapter = MockBlockchainAdapter()
+        with patch('apps.blockchain.services.BlockchainService.get_adapter', return_value=adapter), patch.object(adapter, 'publish_proof', side_effect=TimeoutError('secret token')):
             result = self.client.post(reverse('credential-issue'), {'competency_id': self.comp.pk}, format='json')
-        self.assertEqual(result.status_code, 400)
+        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.data['status'], 'pending')
+        self.assertFalse(result.data['is_valid'])
+        self.assertIsNone(result.data['issued_at'])
         self.assertNotIn('secret', str(result.data))
-        self.assertEqual(Credential.objects.count(), 0)
+        self.assertEqual(Credential.objects.count(), 1)

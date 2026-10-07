@@ -65,6 +65,12 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.CharField())
     def get_integrity_reason(self, obj) -> str:
         is_intact, _, proof = self._integrity(obj)
+        if obj.status == Credential.Status.REVOKED:
+            return 'revoked'
+        if obj.status == Credential.Status.PENDING:
+            return 'proof_pending'
+        if obj.status == Credential.Status.FAILED:
+            return 'proof_failed'
         if proof is None:
             return 'proof_missing'
         if proof.revoked or obj.status == Credential.Status.REVOKED:
