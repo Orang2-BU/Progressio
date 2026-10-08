@@ -14,7 +14,7 @@ from apps.assessments.models import Assessment, Submission
 from apps.assessments.services import AssessmentEvaluationService
 from .tasks import evaluate_submission_ai_task
 from .services import AIService
-from .adapters.openai_adapter import OpenAIAdapter
+from .adapters.http_adapter import HttpAIAdapter
 from unittest.mock import MagicMock, patch
 import json
 import os
@@ -187,23 +187,21 @@ class AIServicesTests(TestCase):
                 self.assertEqual(submission.evaluation, {})
         self.assertFalse(SkillProgress.objects.filter(user=self.user, skill=self.skill1).exists())
 
-    def test_openai_provider_requires_api_key(self):
-        with patch.dict(os.environ, {'AI_PROVIDER': 'openai'}, clear=False):
-            os.environ.pop('OPENAI_API_KEY', None)
+    def test_http_provider_requires_api_url(self):
+        with patch.dict(os.environ, {'AI_PROVIDER': 'http'}, clear=False):
+            os.environ.pop('AI_API_URL', None)
             with self.assertRaises(ImproperlyConfigured):
                 AIService.get_adapter()
 
-    def test_openai_adapter_parses_structured_response(self):
+    def test_http_adapter_parses_structured_response(self):
         expected = {'score': 82, 'feedback': 'Solid implementation'}
         fake_response = MagicMock()
         fake_response.__enter__.return_value.read.return_value = json.dumps({
-            'output': [{
-                'content': [{'type': 'output_text', 'text': json.dumps(expected)}]
-            }]
+            'result': expected,
         }).encode('utf-8')
 
-        adapter = OpenAIAdapter(api_key='test-key', model='test-model')
-        with patch('apps.ai.adapters.openai_adapter.urlopen', return_value=fake_response) as mocked:
+        adapter = HttpAIAdapter(api_url='https://ai-contoh/v1/chat', model='test-model')
+        with patch('apps.ai.adapters.http_adapter.urlopen', return_value=fake_response) as mocked:
             result = adapter._request_json(
                 'test_result',
                 'Return the result.',
@@ -223,4 +221,4 @@ class AIServicesTests(TestCase):
         request = mocked.call_args.args[0]
         sent_body = json.loads(request.data.decode('utf-8'))
         self.assertEqual(sent_body['model'], 'test-model')
-        self.assertEqual(sent_body['text']['format']['type'], 'json_schema')
+        self.assertEqual(sent_body['task'], 'test_result')

@@ -15,6 +15,12 @@ SETTING_ENV = (
     'SECURE_HSTS_SECONDS', 'SECURE_HSTS_INCLUDE_SUBDOMAINS', 'SECURE_HSTS_PRELOAD',
     'AI_PROVIDER', 'BLOCKCHAIN_PROVIDER', 'OPENAI_API_KEY', 'AI_ALLOW_MOCK_FALLBACK',
     'BLOCKCHAIN_SERVICE_URL',
+    'THROTTLE_CACHE_URL', 'THROTTLE_CACHE_ALIAS', 'THROTTLE_CACHE_KEY_PREFIX',
+    'THROTTLE_CACHE_TIMEOUT', 'CELERY_BROKER_URL',
+    'THROTTLE_RATE_AUTH_REGISTER', 'THROTTLE_RATE_AUTH_LOGIN',
+    'THROTTLE_RATE_AUTH_LOGIN_IP', 'THROTTLE_RATE_AUTH_REFRESH',
+    'THROTTLE_RATE_ASSESSMENT_SUBMIT', 'THROTTLE_RATE_AI',
+    'THROTTLE_RATE_CREDENTIAL_ISSUE', 'THROTTLE_RATE_PUBLIC_VERIFY',
 )
 
 
@@ -24,6 +30,7 @@ class SettingsProfileTests(TestCase):
         env['PYTHON_DOTENV_DISABLED'] = 'true'
         for name in SETTING_ENV:
             env.pop(name, None)
+        env['THROTTLE_CACHE_URL'] = 'redis://127.0.0.1:6379/1'
         env.update({name: str(value) for name, value in updates.items()})
         return subprocess.run(
             [sys.executable, 'manage.py', *args], cwd=BACKEND_DIR,
@@ -78,6 +85,7 @@ class SettingsProfileTests(TestCase):
             'DB_HOST': 'db.example.com',
             'AI_PROVIDER': 'mock',
             'BLOCKCHAIN_PROVIDER': 'mock',
+            'THROTTLE_CACHE_URL': 'redis://127.0.0.1:6379/1',
         }
         debug = self.run_manage('check', **base, DEBUG='True', ALLOWED_HOSTS='api.example.com')
         self.assertNotEqual(debug.returncode, 0)
@@ -121,8 +129,9 @@ class SettingsProfileTests(TestCase):
             DB_NAME='progressio_test', DB_USER='progressio_test',
             DB_PASSWORD='synthetic-test-only-password', DB_HOST='db.example.com',
             SECURE_HSTS_INCLUDE_SUBDOMAINS='True', SECURE_HSTS_PRELOAD='True',
-            AI_PROVIDER='openai', OPENAI_API_KEY='synthetic-test-only-openai-key',
+            AI_PROVIDER='http', AI_API_URL='https://ai.example.com/v1/chat',
             BLOCKCHAIN_PROVIDER='http', BLOCKCHAIN_SERVICE_URL='https://signer.example.com',
+            THROTTLE_CACHE_URL='redis://127.0.0.1:6379/1',
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn('WARNINGS', result.stdout + result.stderr)
@@ -141,6 +150,7 @@ class SettingsProfileTests(TestCase):
             'DB_HOST': 'db.example.com',
             'AI_PROVIDER': 'mock',
             'BLOCKCHAIN_PROVIDER': 'mock',
+            'THROTTLE_CACHE_URL': 'redis://127.0.0.1:6379/1',
             'ENABLE_EMAIL': 'True',
         }
         missing = self.run_manage('check', **required)
@@ -177,6 +187,7 @@ class SettingsProfileTests(TestCase):
             DB_NAME='progressio_test', DB_USER='progressio_test',
             DB_PASSWORD='synthetic-test-only-password', DB_HOST='db.example.com',
             DB_ENGINE='sqlite', AI_PROVIDER='mock', BLOCKCHAIN_PROVIDER='mock',
+            THROTTLE_CACHE_URL='redis://127.0.0.1:6379/1',
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('DB_ENGINE must be', result.stderr)

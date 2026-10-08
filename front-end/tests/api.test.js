@@ -116,3 +116,8 @@ test('field validation, non-JSON errors, and network errors remain readable', as
   globalThis.fetch = async () => { throw new TypeError('offline'); };
   await assert.rejects(register({}), /Tidak dapat terhubung/);
 });
+
+test('non-object JSON error bodies fall back to a readable API error', async () => {
+  globalThis.fetch = async () => new Response(JSON.stringify('unavailable'), { status: 503 });
+  await assert.rejects(register({}), (error) => error.status === 503 && /Permintaan belum berhasil/.test(error.message));
+});

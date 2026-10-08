@@ -1,7 +1,7 @@
 import os
 from django.core.exceptions import ImproperlyConfigured
 from .adapters.mock import MockAIAdapter
-from .adapters.openai_adapter import OpenAIAdapter
+from .adapters.http_adapter import HttpAIAdapter
 from apps.careers.models import CareerTrack
 from apps.skills.models import Skill
 from apps.learning.models import SkillProgress
@@ -16,16 +16,20 @@ class AIService:
     @classmethod
     def get_adapter(cls):
         provider = os.getenv('AI_PROVIDER', 'mock').lower()
-        if provider == 'openai':
-            if not os.getenv('OPENAI_API_KEY'):
+        if provider == 'http':
+            if not os.getenv('AI_API_URL', '').strip():
                 raise ImproperlyConfigured(
-                    'OPENAI_API_KEY must be set when AI_PROVIDER=openai. '
+                    'AI_API_URL must be set when AI_PROVIDER=http. '
                     'Use AI_PROVIDER=mock for deterministic offline development.'
                 )
+            return HttpAIAdapter()
+        if provider == 'openai':
+            # Deprecated alias: dipetakan ke adapter HTTP universal.
+            from .adapters.openai_adapter import OpenAIAdapter
             return OpenAIAdapter()
         if provider == 'mock':
             return MockAIAdapter()
-        raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'.")
+        raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'. Expected 'mock' or 'http'.")
 
     @classmethod
     def perform_skill_gap_analysis(cls, user, career_track, target_skill=None, target_competency=None):

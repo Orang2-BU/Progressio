@@ -48,11 +48,12 @@ async function send(path, { method = 'GET', body, access, signal } = {}) {
   try { data = await response.json(); } catch {
     throw new ApiError('Server mengirim respons yang tidak dapat dibaca. Coba lagi.', response.status);
   }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
   if (!response.ok) {
     const fields = Object.fromEntries(Object.entries(data || {})
       .filter(([key]) => key !== 'detail' && key !== 'code')
       .map(([key, value]) => [key, Array.isArray(value) ? value.join(' ') : String(value)]));
-    throw new ApiError(data?.detail || fields.non_field_errors || 'Permintaan belum berhasil. Periksa isianmu.', response.status, fields);
+    throw new ApiError((typeof data.detail === 'string' && data.detail) || fields.non_field_errors || 'Permintaan belum berhasil. Periksa isianmu.', response.status, fields);
   }
   return data;
 }
