@@ -78,6 +78,7 @@ class SettingsProfileTests(TestCase):
             'DB_HOST': 'db.example.com',
             'AI_PROVIDER': 'mock',
             'BLOCKCHAIN_PROVIDER': 'mock',
+            'THROTTLE_CACHE_URL': 'redis://localhost:6379/0',
         }
         debug = self.run_manage('check', **base, DEBUG='True', ALLOWED_HOSTS='api.example.com')
         self.assertNotEqual(debug.returncode, 0)
@@ -123,6 +124,7 @@ class SettingsProfileTests(TestCase):
             SECURE_HSTS_INCLUDE_SUBDOMAINS='True', SECURE_HSTS_PRELOAD='True',
             AI_PROVIDER='openai', OPENAI_API_KEY='synthetic-test-only-openai-key',
             BLOCKCHAIN_PROVIDER='http', BLOCKCHAIN_SERVICE_URL='https://signer.example.com',
+            THROTTLE_CACHE_URL='redis://localhost:6379/0',
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn('WARNINGS', result.stdout + result.stderr)
@@ -142,6 +144,7 @@ class SettingsProfileTests(TestCase):
             'AI_PROVIDER': 'mock',
             'BLOCKCHAIN_PROVIDER': 'mock',
             'ENABLE_EMAIL': 'True',
+            'THROTTLE_CACHE_URL': 'redis://localhost:6379/0',
         }
         missing = self.run_manage('check', **required)
         self.assertNotEqual(missing.returncode, 0)
