@@ -10,5 +10,5 @@
     "start": "next start --hostname 127.0.0.1",
     "test": "node --test tests/api.test.js tests/catalog.test.js tests/diagnostic.test.js tests/roadmap.test.js tests/study.test.js tests/proof.test.js"
   },
-  "dependencies": { "next": "16.3.7", "react": "19.3.0", "react-dom": "19.3.0" }
+  "dependencies": { "next": "16.3.8", "react": "19.3.0", "react-dom": "19.3.0" }
 }
