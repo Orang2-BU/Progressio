@@ -85,7 +85,14 @@ export async function loadCredentials(query, options) {
   const p = new URLSearchParams(query);
   const page = p.get('page') || '1';
   if (!/^[1-9]\d*$/.test(page) || p.getAll('page').length > 1) throw new ApiError('Halaman credential tidak valid.');
-  const list = await request(`credentials/?page=${page}`, options);
+  const status = p.get('status') || '';
+  if (p.getAll('status').length > 1 || (status && !['draft', 'issued', 'revoked'].includes(status))) throw new ApiError('Filter status credential tidak valid.');
+  const competency = p.get('competency') || '';
+  if (p.getAll('competency').length > 1 || (competency && !/^[1-9]\d*$/.test(competency))) throw new ApiError('Filter competency credential tidak valid.');
+  const filters = new URLSearchParams({ page });
+  if (status) filters.set('status', status);
+  if (competency) filters.set('competency', competency);
+  const list = await request(`credentials/?${filters}`, options);
   if (!list || !Array.isArray(list.results) || !list.results.every((c) => uuid(c.id) && typeof c.competency_title === 'string' && ['draft', 'issued', 'revoked'].includes(c.status))) throw new ApiError('Daftar credential tidak valid.');
   const comp = p.get('claim');
   if (p.getAll('claim').length > 1 || (comp && !id(Number(comp)))) throw new ApiError('Competency credential tidak valid.');
