@@ -1,0 +1,200 @@
+> progressio-web@0.1.0 test
+> node --test tests/api.test.js tests/catalog.test.js tests/diagnostic.test.js tests/roadmap.test.js tests/study.test.js tests/proof.test.js
+
+TAP version 13
+# Subtest: register sends exact payload without authorization; login loads real profile
+ok 1 - register sends exact payload without authorization; login loads real profile
+  ---
+  duration_ms: 44.923
+  ...
+# Subtest: Next proxy preserves Django endpoints with and without a trailing slash
+ok 2 - Next proxy preserves Django endpoints with and without a trailing slash
+  ---
+  duration_ms: 1.0225
+  ...
+# Subtest: SSR snapshot stays anonymous even when the client is authenticated
+ok 3 - SSR snapshot stays anonymous even when the client is authenticated
+  ---
+  duration_ms: 1.9603
+  ...
+# Subtest: wrong credentials preserve error and never refresh
+ok 4 - wrong credentials preserve error and never refresh
+  ---
+  duration_ms: 2.2771
+  ...
+# Subtest: concurrent 401 requests share one refresh and retry once
+ok 5 - concurrent 401 requests share one refresh and retry once
+  ---
+  duration_ms: 7.1937
+  ...
+# Subtest: invalid refresh ends session without an infinite retry
+ok 6 - invalid refresh ends session without an infinite retry
+  ---
+  duration_ms: 4.1605
+  ...
+# Subtest: logout during refresh cannot restore the old session
+ok 7 - logout during refresh cannot restore the old session
+  ---
+  duration_ms: 3.6601
+  ...
+# Subtest: field validation, non-JSON errors, and network errors remain readable
+ok 8 - field validation, non-JSON errors, and network errors remain readable
+  ---
+  duration_ms: 3.6009
+  ...
+# Subtest: frontend foundation rendering
+    # Subtest: expired session renders a warning; local logout and registration render success
+    ok 1 - expired session renders a warning; local logout and registration render success
+      ---
+      duration_ms: 6610.0007
+      ...
+    # Subtest: workspace marks exactly one of four destination links, and no flow link
+    ok 2 - workspace marks exactly one of four destination links, and no flow link
+      ---
+      duration_ms: 3695.5303
+      ...
+    # Subtest: diagnostic focus shell omits workspace chrome and announces actual progress
+    ok 3 - diagnostic focus shell omits workspace chrome and announces actual progress
+      ---
+      duration_ms: 362.6029
+      ...
+    # Subtest: public verification loading SSR markup omits sidebar and redirect placeholder
+    ok 4 - public verification loading SSR markup omits sidebar and redirect placeholder
+      ---
+      duration_ms: 1403.7998
+      ...
+    # Subtest: shared loading, empty and error states expose visible text and semantic roles
+    ok 5 - shared loading, empty and error states expose visible text and semantic roles
+      ---
+      duration_ms: 664.5152
+      ...
+    # Subtest: auth forms retain input labels, password toggle and supported registration roles
+    ok 6 - auth forms retain input labels, password toggle and supported registration roles
+      ---
+      duration_ms: 818.3209
+      ...
+    1..6
+ok 9 - frontend foundation rendering
+  ---
+  duration_ms: 13556.4578
+  type: 'suite'
+  ...
+# Subtest: catalog pagination preserves parent filters and never attaches a token or follows an external URL
+ok 10 - catalog pagination preserves parent filters and never attaches a token or follows an external URL
+  ---
+  duration_ms: 88.652
+  ...
+# Subtest: empty catalog, malformed payload and repeated pagination are handled
+ok 11 - empty catalog, malformed payload and repeated pagination are handled
+  ---
+  duration_ms: 12.8403
+  ...
+# Subtest: cancelled catalog requests cannot proceed to a new page
+ok 12 - cancelled catalog requests cannot proceed to a new page
+  ---
+  duration_ms: 3.072
+  ...
+# Subtest: selection URLs round-trip all target kinds without trusting client-supplied slugs
+ok 13 - selection URLs round-trip all target kinds without trusting client-supplied slugs
+  ---
+  duration_ms: 3.7183
+  ...
+# Subtest: invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+ok 14 - invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+  ---
+  duration_ms: 2.6907
+  ...
+# Subtest: login returns to the target URL and rejects external or unknown destinations
+ok 15 - login returns to the target URL and rejects external or unknown destinations
+  ---
+  duration_ms: 1.3074
+  ...
+# Subtest: questions, incomplete answers, explicit unknown and server result contracts
+ok 16 - questions, incomplete answers, explicit unknown and server result contracts
+  ---
+  duration_ms: 14.5284
+  ...
+# Subtest: diagnostic target validates the selected parent chain using public endpoints
+ok 17 - diagnostic target validates the selected parent chain using public endpoints
+  ---
+  duration_ms: 72.314
+  ...
+# Subtest: lost diagnostic POST response is never automatically submitted again
+ok 18 - lost diagnostic POST response is never automatically submitted again
+  ---
+  duration_ms: 3.5905
+  ...
+# Subtest: assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+ok 19 - assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+  ---
+  duration_ms: 10.6651
+  ...
+# Subtest: server results are validated, not inferred; legacy provenance never fabricated
+ok 20 - server results are validated, not inferred; legacy provenance never fabricated
+  ---
+  duration_ms: 0.8905
+  ...
+# Subtest: result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+ok 21 - result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+  ---
+  duration_ms: 1.866
+  ...
+# Subtest: lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+ok 22 - lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+  ---
+  duration_ms: 82.3348
+  ...
+# Subtest: public verification needs no token; invalid UUID rejected before network
+ok 23 - public verification needs no token; invalid UUID rejected before network
+  ---
+  duration_ms: 2.1445
+  ...
+# Subtest: roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+ok 24 - roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+  ---
+  duration_ms: 6.9696
+  ...
+# Subtest: roadmap validates server totals, target, order and empty satisfied route without client grading
+ok 25 - roadmap validates server totals, target, order and empty satisfied route without client grading
+  ---
+  duration_ms: 3.5593
+  ...
+# Subtest: roadmap requests are read-only, authenticated and preserve API failure/cancellation
+ok 26 - roadmap requests are read-only, authenticated and preserve API failure/cancellation
+  ---
+  duration_ms: 87.7346
+  ...
+# Subtest: study URL preserves target; source links reject unsafe protocols and credentials
+ok 27 - study URL preserves target; source links reject unsafe protocols and credentials
+  ---
+  duration_ms: 9.1445
+  ...
+# Subtest: completion is derived from server lesson IDs, never from mastery or total count alone
+ok 28 - completion is derived from server lesson IDs, never from mastery or total count alone
+  ---
+  duration_ms: 1.3303
+  ...
+# Subtest: study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+ok 29 - study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+  ---
+  duration_ms: 104.7236
+  ...
+# Subtest: checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+ok 30 - checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+  ---
+  duration_ms: 5.7221
+  ...
+# Subtest: lost completion response is not automatically replayed and malformed results cannot grant a badge
+ok 31 - lost completion response is not automatically replayed and malformed results cannot grant a badge
+  ---
+  duration_ms: 5.1211
+  ...
+1..31
+# tests 36
+# suites 1
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15350.3484

@@ -1,0 +1,257 @@
+{
+    "task":  "TASK-043",
+    "date":  "2026-10-12",
+    "source_sha":  "fa57bc6099b7d76936425be1ce0931934118933f",
+    "source_parent":  "59ebc369eff75dd063ca568322e0ca3cade23705",
+    "branch":  "task-043-safe-composition",
+    "frontend_blobs":  [
+                           {
+                               "path":  "front-end/next.config.mjs",
+                               "git_blob":  "8c7ac18545b4d2ddf5b818660269d7f5264e6691",
+                               "sha256":  "ecaadd8da1d24961534ccc5920b3ca4f1f378c518af306c8a6f71fadbab64ef3"
+                           },
+                           {
+                               "path":  "front-end/package-lock.json",
+                               "git_blob":  "eb93d4b5c4965d59676ef4b5c30cbe6ccbf4f50b",
+                               "sha256":  "bfc5f5345a73e9245d470d97de827e3043f8aa6b609f892aaa57cda8e31be3e2"
+                           },
+                           {
+                               "path":  "front-end/package.json",
+                               "git_blob":  "f9bf5d8de39bf5394b34f1e27d554a62277be5aa",
+                               "sha256":  "8b94766293cc147cf8bc9254add4a5595bd58f7f324a5f2f934cfeb150147f82"
+                           },
+                           {
+                               "path":  "front-end/src/App.jsx",
+                               "git_blob":  "f2da0e6dae0b980050f3aaadf9a6f132db706d14",
+                               "sha256":  "b4a20ab4277438f5ec0e2a196483eea9712206cda3e5f65ecdb4d85e59af7f93"
+                           },
+                           {
+                               "path":  "front-end/src/Catalog.jsx",
+                               "git_blob":  "303e057bb726dacc9435a56181c658ad5b2be695",
+                               "sha256":  "8d7ab0c95e6a3fdb96336455575189e474a349e976fc9019d9b91f9f5b24887d"
+                           },
+                           {
+                               "path":  "front-end/src/Diagnostic.jsx",
+                               "git_blob":  "dcc3538a9b2af033c61f4bd7583bd83ef0447f75",
+                               "sha256":  "d9d3fb72781353a4fa9f473e62ff07d304e636330bd6a0f572d45b1e8fc3e9d7"
+                           },
+                           {
+                               "path":  "front-end/src/Proof.jsx",
+                               "git_blob":  "311c59709e428e540506fed5e5c5bcdd5ec88c65",
+                               "sha256":  "6cc0e6d284c1881e4c43f3dcb25a3654d5c6a3e69caf3c415c794f1da9383dc9"
+                           },
+                           {
+                               "path":  "front-end/src/Roadmap.jsx",
+                               "git_blob":  "ac2f406a15a45d34f375e9ae39fff33d8a8a1d1d",
+                               "sha256":  "0e6435656eabe2b706c4081ebb2773a80b4b7314285aa2e5ba59c50c882f9d46"
+                           },
+                           {
+                               "path":  "front-end/src/Study.jsx",
+                               "git_blob":  "a68742e3dca8671dced25530df797af61d334a4a",
+                               "sha256":  "9266a62eafd7f0f8b188ab64a4ef668a5028db58d53f5ba02b5c8cacf01a3724"
+                           },
+                           {
+                               "path":  "front-end/src/api.js",
+                               "git_blob":  "35d1bbd1014841933edf3a32368ddf402ea7480c",
+                               "sha256":  "d49ad7c65de401a50775282b4616d1ea7d0ac6215e3c629069e2407bfd433996"
+                           },
+                           {
+                               "path":  "front-end/src/app/assessment/page.jsx",
+                               "git_blob":  "b99c6025055eb40185ee34ddc97d40bb956b4637",
+                               "sha256":  "9ffe26401cfe47c566202f875e02db5d2f43dcb5714198420cb2fa0422caeffb"
+                           },
+                           {
+                               "path":  "front-end/src/app/catalog/page.jsx",
+                               "git_blob":  "a3941329b231e71f1d9600a64941bd8a6c142a45",
+                               "sha256":  "0c451df7c01d580be2b6d68ae0563a443553d3f5db51c025ff8f3ca2b34f5d5e"
+                           },
+                           {
+                               "path":  "front-end/src/app/credentials/page.jsx",
+                               "git_blob":  "f38f76dec60b233447847466bdad957e54289e36",
+                               "sha256":  "1d0424d1f09b762cb23efa5d9a35b3ef8aef0325036d00278d646265c7c875fe"
+                           },
+                           {
+                               "path":  "front-end/src/app/diagnostic/page.jsx",
+                               "git_blob":  "fc9c421ff3795a5d838fc3a3f6bc3eb6aa4efd69",
+                               "sha256":  "ac2f573c3e926b9246a287cb443b68b7ad73b034b2a06a9bbbac7a032406852c"
+                           },
+                           {
+                               "path":  "front-end/src/app/diagnostic/result/page.jsx",
+                               "git_blob":  "06a68e5d3cf6341b7ba829f1b4a33245d3f3c31c",
+                               "sha256":  "50a453d4fca9fea58c76a413e4c3825f80f4a77e9b699d5ada435900a1726368"
+                           },
+                           {
+                               "path":  "front-end/src/app/layout.jsx",
+                               "git_blob":  "034a9d33301548450642f5fe7f5a5e6b90643d6a",
+                               "sha256":  "1e4dd9d81e8730de1b592e96ea09121f9ce8959427f5b505eb5ecf6cd33d2477"
+                           },
+                           {
+                               "path":  "front-end/src/app/login/page.jsx",
+                               "git_blob":  "79564d025b068a45741d93516f95a0e8909334bd",
+                               "sha256":  "e8117e52ff4908834f43baaaff5fb6d69f9018cc21bcd103daeba281dcdd81bc"
+                           },
+                           {
+                               "path":  "front-end/src/app/not-found.jsx",
+                               "git_blob":  "015b4e285d20c8ccffcdd4a3204bb6bb12f25421",
+                               "sha256":  "f543eb8f904e92dfdf09f357fdcafa1c4254bc2fd8bf5e975a5e5cdc1c9f8063"
+                           },
+                           {
+                               "path":  "front-end/src/app/page.jsx",
+                               "git_blob":  "8fb79c082d69a5986eae84621fe09710f531c9ad",
+                               "sha256":  "ebc7b623d2c4ee96cf9d8fe390d4ea2e2b6bdbd488b3b223e867b0667f88a997"
+                           },
+                           {
+                               "path":  "front-end/src/app/profile/page.jsx",
+                               "git_blob":  "58cbd0a3ce00cc22ae9215a51660d76a035c6026",
+                               "sha256":  "869b018118d8d8700dc1fb9a43eeb7a9c1c787341302a464265d54bc38eee784"
+                           },
+                           {
+                               "path":  "front-end/src/app/register/page.jsx",
+                               "git_blob":  "88d0e1df4b6752c5a43760f06e08e2351fb2c05f",
+                               "sha256":  "47ac4eaa97e8be30a2b5c2e6fc6d9ccdbe100694fd7f547605f43bae3bf5113b"
+                           },
+                           {
+                               "path":  "front-end/src/app/roadmap/page.jsx",
+                               "git_blob":  "6f11db4662c09705c31a1b3ffcd355f793f6b2cd",
+                               "sha256":  "7d41411042cd16ec793212f090cdd6f847622aff78a805da9d37baa1f88a35cd"
+                           },
+                           {
+                               "path":  "front-end/src/app/study/page.jsx",
+                               "git_blob":  "2a3766519d3d75491fdbb358a0778dd8194af619",
+                               "sha256":  "6426b2d4b8275f39539b924f549f11cf5de2c05abb3061143a2e0d17ab4ca9f8"
+                           },
+                           {
+                               "path":  "front-end/src/app/verify/[id]/page.jsx",
+                               "git_blob":  "329da216f40d832d4d6b047b8910e2a128774a75",
+                               "sha256":  "836dca7fd69fd4544c8bca812458941406620b3a5cf70329ba76b36ee8d351a0"
+                           },
+                           {
+                               "path":  "front-end/src/catalog.js",
+                               "git_blob":  "13c5f71fbaa39ee8b59adcc7fca6ca48d499c31f",
+                               "sha256":  "9d9add0da275e9ccde60096816350f1503281f95fd4cd2d1b250f602184e9b22"
+                           },
+                           {
+                               "path":  "front-end/src/diagnostic.js",
+                               "git_blob":  "4447306e6acf8043749a8386ace1c7248fd2095e",
+                               "sha256":  "e17f7ed293407ad66d368421889fb4ad183c92bae82ca91162415dcc44b9a687"
+                           },
+                           {
+                               "path":  "front-end/src/foundation.css",
+                               "git_blob":  "b92969820f6bfea7675e7bade0c505d9229646bc",
+                               "sha256":  "190aef3de13d5eed35f499c61508cb1f02002cfa2b73bd82b6c80b4ecb613c06"
+                           },
+                           {
+                               "path":  "front-end/src/navigation.js",
+                               "git_blob":  "f722beb98c40718dcd6bb41e645f2afb9d324ef6",
+                               "sha256":  "2408c1371a2f85ee365d3bc8f6f8ca5453945b59a710cfb6a66c4b10a9d08659"
+                           },
+                           {
+                               "path":  "front-end/src/proof.js",
+                               "git_blob":  "88ba6165e48ec42f918d15a7734d405902350336",
+                               "sha256":  "31029132aa4ec90b6bd09bdb023c2159a594dd862e83e6f2c44b4554dfe12a3a"
+                           },
+                           {
+                               "path":  "front-end/src/roadmap.js",
+                               "git_blob":  "b4883024c94be9f87d27b13ded689253657f8667",
+                               "sha256":  "bd08e2100a4dfb72efa2e3dc7253b91040c3c380dc7ea8d1703b521d027d906c"
+                           },
+                           {
+                               "path":  "front-end/src/study.js",
+                               "git_blob":  "be4c7d9db90fd290d4c399a45d9efdb85dd5cd31",
+                               "sha256":  "b16beff648a57abe88022bc2a88cf0d455c88dcd2a4f6159439d64a0b0a0f174"
+                           },
+                           {
+                               "path":  "front-end/src/styles.css",
+                               "git_blob":  "6f0bbcb148704361d7ec9c1475126820a004e6ed",
+                               "sha256":  "e7e87b7e37d241c43c4a65b082d53458880c60811d67632606133605a15a4e74"
+                           },
+                           {
+                               "path":  "front-end/src/ui.jsx",
+                               "git_blob":  "993fdc776ae27e791465fee0df8b824d1e888988",
+                               "sha256":  "b5245ff985b46b2def67551f3395f96894de0e5e7eda95f2ed6c5c93e5036172"
+                           },
+                           {
+                               "path":  "front-end/tests/api.test.js",
+                               "git_blob":  "aec9d5fab56cbe97460977ce14a32f3577ce3981",
+                               "sha256":  "52f8b4ade4494035973c241c86cf21876d9a725c66894e306f1cf85e70f94ef9"
+                           },
+                           {
+                               "path":  "front-end/tests/catalog.test.js",
+                               "git_blob":  "522f3f5e26e4416c5971047c409993084f3c4f67",
+                               "sha256":  "edd8e32f1970ef3a3669e821e6b58b1192733d6f942f50c84d9f3f753778a1bd"
+                           },
+                           {
+                               "path":  "front-end/tests/diagnostic.test.js",
+                               "git_blob":  "2d55b2370bc315b9c3a21e81d2e2094e35561e5b",
+                               "sha256":  "4d55451958debf16191ce5d3300b01c3280e83495141bcb2fe8d3d72cfd3ad4c"
+                           },
+                           {
+                               "path":  "front-end/tests/proof.test.js",
+                               "git_blob":  "8923968fe9f69fab456b93ee265fc97027ee87d6",
+                               "sha256":  "aeb41db5737157c6f3e8ba68f6f8c89a37a64472f050b1f5068fb84a8f0fe973"
+                           },
+                           {
+                               "path":  "front-end/tests/roadmap.test.js",
+                               "git_blob":  "775515bd65da7a782720d76bcb18ca3358152063",
+                               "sha256":  "bbb30411811b0616e96d7fdf2474d7d019012f694fbf1c81b1d5a5b4bd96ed5e"
+                           },
+                           {
+                               "path":  "front-end/tests/study.test.js",
+                               "git_blob":  "543a1029b60ccd81bf283ed9c72ea533603b5a7f",
+                               "sha256":  "2c3f58eab5c0b3e46800a83c3c8e8ad88a6e11f78cee98147197725567f51ccc"
+                           },
+                           {
+                               "path":  "front-end/tests/support/render-foundation.js",
+                               "git_blob":  "7a6cad05e2bdc03a9c975917d538ed4e13763ab6",
+                               "sha256":  "aac2513588c7165f1bfc072648731e888d9faf6983660240620a8d1d62e154e2"
+                           }
+                       ],
+    "artifacts":  [
+                      {
+                          "path":  "build-complete.txt",
+                          "bytes":  75,
+                          "sha256":  "368b1b88a7267a8899580a3dc4a3e6fa56a6172a93f19d036988f79caee7b29b"
+                      },
+                      {
+                          "path":  "build-final-exit.txt",
+                          "bytes":  2,
+                          "sha256":  "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+                      },
+                      {
+                          "path":  "build-final.txt",
+                          "bytes":  2038,
+                          "sha256":  "93c4df33ae180f72f506eef82ea89c052f807c978e9aff78298294e13b42b145"
+                      },
+                      {
+                          "path":  "build.txt",
+                          "bytes":  75,
+                          "sha256":  "368b1b88a7267a8899580a3dc4a3e6fa56a6172a93f19d036988f79caee7b29b"
+                      },
+                      {
+                          "path":  "coverage-exit.txt",
+                          "bytes":  2,
+                          "sha256":  "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+                      },
+                      {
+                          "path":  "coverage.txt",
+                          "bytes":  10331,
+                          "sha256":  "4029b1a4d58b0e35e7eb62945902b929a9be7430f6ab6fe5fd1d3eae1a949d3a"
+                      },
+                      {
+                          "path":  "install.txt",
+                          "bytes":  26,
+                          "sha256":  "5bdeaed496dbf1317d8e75e35e39549636e8fbbc40f8f228ac83e7077f61e8a4"
+                      },
+                      {
+                          "path":  "tests.txt",
+                          "bytes":  8171,
+                          "sha256":  "adb01f657e7a099d23c74e334acd1bcf6391c4884ea0f032ca3f2365ad49c9fb"
+                      },
+                      {
+                          "path":  "tool-status.json",
+                          "bytes":  4018,
+                          "sha256":  "d9bb83e564a90a15e3186845b4f8c1345a8b3b63456d52c25da882525976efe4"
+                      }
+                  ],
+    "final_sha_location":  "TASK-043 review comment / attachments; subsequent commits only docs and evidence"
+}

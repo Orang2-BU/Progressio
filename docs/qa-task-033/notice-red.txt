@@ -1,0 +1,65 @@
+Date: 2026-10-08
+CWD: front-end/ in TASK-033 worktree
+Command: node --test --test-name-pattern='expired session' tests/foundation.test.js
+Exit: 1
+Control: recreated the old expired-success notice only in the in-memory test loader.
+Replacement: return { tone: 'warning', title: 'Sesi berakhir' } -> return { tone: 'success' }
+Product files were not modified. Loader restored before GREEN.
+Other five tests were explicitly filtered, not an acceptance run.
+TAP version 13
+# Subtest: expired session renders a warning; local logout and registration render success
+not ok 1 - expired session renders a warning; local logout and registration render success
+  ---
+  duration_ms: 1428.5335
+  location: 'D:\\Grinding Coder\\CODING PROJECT\\HACKATON\\Progressio\\.sokudo\\worktrees\\task-033-tuntaskan-qa-fondasi-frontend-dan-rapikan-handof\\front-end\\tests\\foundation.test.js:10:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /ui-notice-warning/. Input:
+
+    '<div class="auth-layout"><section class="auth-story" aria-label="Tentang Progressio"><span class="eyebrow">TURNING PROGRESS INTO PROOF</span><h1>Kemampuanmu.<br/><span>Buktinya nyata.</span></h1><p>Kenali kemampuanmu hari ini. Bangun langkah yang tepat untuk tujuan berikutnya.</p><ol class="journey"><li><span>01</span><div><strong>Ukur titik awal</strong><p>Kenali kemampuan dan celah yang perlu kamu isi.</p></div></li><li><span>02</span><div><strong>Ikuti arah yang jelas</strong><p>Roadmap disusun dari target dan prasyaratnya.</p></div></li><li><span>03</span><div><strong>Tunjukkan bukti</strong><p>Assessment menghubungkan kemampuan dengan evidence.</p></div></li></ol><div class="story-foot">Belajar dengan arah. Berkembang dengan bukti.</div></section><section class="auth-panel" aria-labelledby="form-title"><p class="eyebrow">SELAMAT DATANG KEMBALI</p><h2 id="form-title">Masuk ke workspace</h2><p class="intro">Gunakan username yang kamu pilih saat mendaftar.</p><div class="ui-notice ui-notice-success" role="status"><svg class="" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><div><strong>Berhasil</strong><div>Sesi berakhir. Masuk kembali untuk melanjutkan.</div></div></div><form aria-busy="false"><fieldset><div class="field"><label for="username">Username</label><div><input id="username" type="text" required="" maxLength="150" autoComplete="username" aria-invalid="false" name="username" value=""/></div></div><div class="field"><label for="password">Kata sandi</label><div class="password-field"><input id="password" type="password" required="" autoComplete="current-password" aria-invalid="false" name="password" value=""/><button class="reveal" type="button" aria-pressed="false">Lihat</button></div></div><button class="button primary full" type="submit">Masuk<svg class="" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></fieldset></form><p class="auth-switch">Belum punya akun? <a href="/register">Daftar sekarang</a></p><p class="session-note">Sesi hanya tersimpan selama halaman ini terbuka. Muat ulang halaman untuk memulai sesi baru.</p></section></div>'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<div class="auth-layout"><section class="auth-story" aria-label="Tentang Progressio"><span class="eyebrow">TURNING PROGRESS INTO PROOF</span><h1>Kemampuanmu.<br/><span>Buktinya nyata.</span></h1><p>Kenali kemampuanmu hari ini. Bangun langkah yang tepat untuk tujuan berikutnya.</p><ol class="journey"><li><span>01</span><div><strong>Ukur titik awal</strong><p>Kenali kemampuan dan celah yang perlu kamu isi.</p></div></li><li><span>02</span><div><strong>Ikuti arah yang jelas</strong><p>Roadmap disusun dari target dan prasyaratnya.</p></div></li><li><span>03</span><div><strong>Tunjukkan bukti</strong><p>Assessment menghubungkan kemampuan dengan evidence.</p></div></li></ol><div class="story-foot">Belajar dengan arah. Berkembang dengan bukti.</div></section><section class="auth-panel" aria-labelledby="form-title"><p class="eyebrow">SELAMAT DATANG KEMBALI</p><h2 id="form-title">Masuk ke workspace</h2><p class="intro">Gunakan username yang kamu pilih saat mendaftar.</p><div class="ui-notice ui-notice-success" role="status"><svg class="" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><div><strong>Berhasil</strong><div>Sesi berakhir. Masuk kembali untuk melanjutkan.</div></div></div><form aria-busy="false"><fieldset><div class="field"><label for="username">Username</label><div><input id="username" type="text" required="" maxLength="150" autoComplete="username" aria-invalid="false" name="username" value=""/></div></div><div class="field"><label for="password">Kata sandi</label><div class="password-field"><input id="password" type="password" required="" autoComplete="current-password" aria-invalid="false" name="password" value=""/><button class="reveal" type="button" aria-pressed="false">Lihat</button></div></div><button class="button primary full" type="submit">Masuk<svg class="" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></fieldset></form><p class="auth-switch">Belum punya akun? <a href="/register">Daftar sekarang</a></p><p class="session-note">Sesi hanya tersimpan selama halaman ini terbuka. Muat ulang halaman untuk memulai sesi baru.</p></section></div>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Grinding%20Coder/CODING%20PROJECT/HACKATON/Progressio/.sokudo/worktrees/task-033-tuntaskan-qa-fondasi-frontend-dan-rapikan-handof/front-end/tests/foundation.test.js:16:14)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: workspace marks exactly one of four destination links, and no flow link
+ok 2 - workspace marks exactly one of four destination links, and no flow link # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.4031
+  ...
+# Subtest: diagnostic focus shell omits workspace chrome and announces actual progress
+ok 3 - diagnostic focus shell omits workspace chrome and announces actual progress # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.2125
+  ...
+# Subtest: public verification loading renders without sidebar or auth redirect
+ok 4 - public verification loading renders without sidebar or auth redirect # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.1991
+  ...
+# Subtest: shared loading, empty and error states expose visible text and semantic roles
+ok 5 - shared loading, empty and error states expose visible text and semantic roles # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.1913
+  ...
+# Subtest: auth forms retain input labels, password toggle and supported registration roles
+ok 6 - auth forms retain input labels, password toggle and supported registration roles # SKIP test name does not match pattern
+  ---
+  duration_ms: 0.3034
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 5
+# todo 0
+# duration_ms 1979.1142

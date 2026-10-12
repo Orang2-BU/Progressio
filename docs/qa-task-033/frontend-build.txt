@@ -1,0 +1,19 @@
+Date: 2026-10-08
+Source: 6720ba17f202ae8f0872e74611f06f6c83d8a17d; product files unchanged
+CWD: front-end/ in TASK-033 worktree
+Node: 20.20.2; npm: 10.8.2
+Install: npm ci --ignore-scripts --no-audit --no-fund (exit 0, 23 packages)
+Command (PowerShell): $env:NEXT_TELEMETRY_DISABLED='1'; $env:API_PROXY_TARGET='http://127.0.0.1:1'; npm run build
+Exit: 0
+BUILD_ID: VingnZOeanjtsDF1kOyKJ
+Persisted local artifacts: front-end/.next/BUILD_ID, front-end/.next/routes-manifest.json (ignored generated build)
+First attempt before installing dependency: exit 1, 'next' is not recognized.
+
+Selected stdout from completed build (execution record, not a complete raw log):
+Next.js 16.3.7 (Turbopack)
+Warning: multiple lockfiles; root inferred at worktree package-lock.json.
+Compiled successfully in 14.7s
+Finished TypeScript in 19ms
+Generating static pages using 11 workers (13/13) in 1312ms
+Routes: /, /_not-found, /assessment, /catalog, /credentials, /diagnostic, /diagnostic/result, /login, /profile, /register, /roadmap, /study; /verify/[id] dynamic.
+No backend/start/dev process run.

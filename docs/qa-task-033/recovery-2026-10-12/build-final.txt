@@ -1,0 +1,53 @@
+
+> progressio-web@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+npm.cmd : ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+At line:2 char:120
++ ... 'Continue'; npm.cmd run build *> ../docs/qa-task-033/recovery-2026-10 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (⚠ Warning: Next...not be correct.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+ We detected multiple lockfiles and selected the directory of D:\Grinding Coder\CODING PROJECT\HACKATON\Progressio\.sok
+udo\worktrees\task-043-pulihkan-kandidat-qa-aman-untuk-menutup-task-033\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if
+it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles:
+   * D:\Grinding Coder\CODING PROJECT\HACKATON\Progressio\.sokudo\worktrees\task-043-pulihkan-kandidat-qa-aman-untuk-me
+nutup-task-033\front-end\package-lock.json
+
+✓ Running next.config.mjs took 97ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1797ms
+  Running TypeScript ...
+  Finished TypeScript in 8ms ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/13) ...
+  Generating static pages using 11 workers (3/13)
+  Generating static pages using 11 workers (6/13)
+  Generating static pages using 11 workers (9/13)
+✓ Generating static pages using 11 workers (13/13) in 5.1s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /assessment
+├ ○ /catalog
+├ ○ /credentials
+├ ○ /diagnostic
+├ ○ /diagnostic/result
+├ ○ /login
+├ ○ /profile
+├ ○ /register
+├ ○ /roadmap
+├ ○ /study
+└ ƒ /verify/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

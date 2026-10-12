@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, test } from 'node:test';
+import { afterEach, beforeEach, describe, test } from 'node:test';
+import React from 'react';
 import nextConfig from '../next.config.mjs';
-import { ApiError, getSession, getServerSession, login, logout, register, request } from '../src/api.js';
+import { ApiError, getSession, getServerSession, login, logout, register, reloadProfile, request } from '../src/api.js';
+import { loadProgress } from '../src/study.js';
+import { foundationRenderer } from './support/render-foundation.js';
 
 const originalFetch = globalThis.fetch;
 const profile = { id: 1, username: 'student', email: 'student@example.test', role: 'student', date_joined: '2026-09-29T00:00:00Z' };
@@ -120,4 +123,148 @@ test('field validation, non-JSON errors, and network errors remain readable', as
 test('non-object JSON error bodies fall back to a readable API error', async () => {
   globalThis.fetch = async () => new Response(JSON.stringify('unavailable'), { status: 503 });
   await assert.rejects(register({}), (error) => error.status === 503 && /Permintaan belum berhasil/.test(error.message));
+});
+
+test('failed profile reload reports the error without clearing the authenticated identity', async () => {
+  let profileCalls = 0;
+  globalThis.fetch = async (url) => {
+    if (url.endsWith('auth/login')) return response({ access: 'initial', refresh: 'refresh-token' });
+    if (url.endsWith('auth/me')) {
+      profileCalls += 1;
+      return profileCalls === 1 ? response(profile) : response({ detail: 'Service unavailable' }, 503);
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  await login({ username: 'student', password: 'secret' });
+  const originalUser = getSession().user;
+  await assert.rejects(reloadProfile(), /Service unavailable/);
+  assert.equal(getSession().user, originalUser);
+});
+
+test('progress API failure can be retried without clearing the authenticated identity', async () => {
+  globalThis.fetch = async (url) => {
+    if (url.endsWith('auth/login')) return response({ access: 'initial', refresh: 'refresh-token' });
+    if (url.endsWith('auth/me')) return response(profile);
+    if (url.endsWith('progress')) return response({ detail: 'Service unavailable' }, 503);
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  await login({ username: 'student', password: 'secret' });
+  const originalUser = getSession().user;
+  await assert.rejects(loadProgress(), /Service unavailable/);
+  assert.equal(getSession().user, originalUser);
+});
+
+// Keep foundation regression coverage in the frontend-only default test entrypoint.
+describe('frontend foundation rendering', () => {
+  const originalFoundationFetch = globalThis.fetch;
+  beforeEach(() => { globalThis.fetch = () => { throw new Error('Foundation rendering must not contact any API'); }; });
+  afterEach(() => { globalThis.fetch = originalFoundationFetch; });
+
+  test('expired session renders a warning; local logout and registration render success', () => {
+    for (const reason of ['Sesi berakhir. Masuk kembali untuk melanjutkan.', 'Kamu sudah keluar dari akun.', 'Akun pelajar-qa berhasil dibuat. Masuk dengan username dan kata sandimu.']) {
+      const { app, render } = foundationRenderer({ session: { user: null, reason } });
+      const markup = render(app.AuthPage, { mode: 'login' });
+      assert.match(markup, /role="status"/);
+      if (reason.startsWith('Sesi berakhir')) {
+        assert.match(markup, /ui-notice-warning/);
+        assert.match(markup, /<strong>Sesi berakhir<\/strong>/);
+        assert.doesNotMatch(markup, /<strong>Berhasil<\/strong>/);
+      } else {
+        assert.match(markup, /ui-notice-success/);
+        assert.match(markup, /<strong>Berhasil<\/strong>/);
+      }
+      assert.ok(markup.includes(reason));
+      assert.match(markup, /Sesi hanya tersimpan selama halaman ini terbuka/);
+    }
+  });
+
+  test('workspace marks exactly one of four destination links, and no flow link', () => {
+    for (const path of ['/', '/catalog', '/credentials', '/profile', '/catalog/', '/diagnostic', '/diagnostic/result', '/roadmap', '/study', '/assessment', '/catalog/detail']) {
+      const { app, render } = foundationRenderer({ path });
+      const markup = render(app.WorkspaceLayout, { children: 'Konten QA' });
+      const navigation = markup.match(/<nav aria-label="Navigasi workspace">([\s\S]*?)<\/nav>/)[1];
+      assert.equal((navigation.match(/<a /g) || []).length, 4);
+      const normalized = path.replace(/\/$/, '') || '/';
+      const expected = ['/', '/catalog', '/credentials', '/profile'].includes(normalized);
+      const active = [...navigation.matchAll(/<a\b[^>]*aria-current="page"[^>]*>/g)];
+      assert.equal(active.length, expected ? 1 : 0, path);
+      if (expected) assert.ok(active[0][0].includes(`href="${normalized}"`), path);
+    }
+  });
+
+  test('diagnostic focus shell omits workspace chrome and announces actual progress', () => {
+    const { app, render } = foundationRenderer({ path: '/diagnostic', session: { user: { username: 'pelajar-qa', role: 'student' }, reason: '' } });
+    const markup = render(app.default, { children: React.createElement(app.FocusLayout, { exitHref: '/catalog?track=10', completed: 2, total: 5 }, 'Soal QA') });
+    assert.doesNotMatch(markup, /class="topbar"|<footer|Navigasi workspace/);
+    assert.match(markup, /Soal QA/);
+    assert.doesNotMatch(markup, /Mengalihkan halaman/);
+    assert.match(markup, /href="#main"/);
+    const focus = render(app.FocusLayout, { exitHref: '/catalog?track=10', completed: 2, total: 5, children: 'Soal QA' });
+    assert.match(focus, /aria-label="Tutup diagnostic dan kembali ke target"/);
+    assert.match(focus, /href="\/catalog\?track=10"/);
+    assert.match(focus, /aria-valuenow="2"/);
+    assert.match(focus, /aria-valuemax="5"/);
+    assert.match(focus, /2 \/ 5 dijawab/);
+  });
+
+  test('public verification loading SSR markup omits sidebar and redirect placeholder', () => {
+    const { app, render, load } = foundationRenderer({ path: '/verify/11111111-1111-4111-8111-111111111111' });
+    const proof = load('Proof.jsx').default;
+    const markup = render(app.default, { children: React.createElement(proof, { mode: 'verify', credentialId: '11111111-1111-4111-8111-111111111111' }) });
+    assert.match(markup, /Verifikasi credential/);
+    assert.match(markup, /role="status">Memuat data server/);
+    assert.match(markup, /mock dan standar draft bukan bukti final/);
+    assert.doesNotMatch(markup, /Navigasi workspace|Mengalihkan halaman/);
+  });
+
+  test('shared loading, empty and error states expose visible text and semantic roles', () => {
+    const { ui, render } = foundationRenderer();
+    assert.match(render(ui.LoadingState, { children: 'Memuat target…' }), /role="status"[\s\S]*Memuat target/);
+    const empty = render(ui.EmptyState, { title: 'Belum ada target', children: 'Pilih target untuk mulai.', action: React.createElement(ui.Button, { href: '/catalog' }, 'Pilih target') });
+    assert.match(empty, /role="status"/);
+    assert.match(empty, /Belum ada target/);
+    assert.match(empty, /href="\/catalog"/);
+    assert.match(render(ui.Notice, { tone: 'error', children: 'Tidak dapat memuat target.' }), /role="alert"[\s\S]*Kesalahan[\s\S]*Tidak dapat memuat target/);
+    const unknown = render(ui.ProgressBar, { value: 4, max: 0, label: 'Soal dijawab' });
+    assert.match(unknown, /aria-valuetext="Total belum tersedia"/);
+    assert.doesNotMatch(unknown, /aria-valuenow=/);
+  });
+
+  test('auth forms retain input labels, password toggle and supported registration roles', () => {
+    const { app, render } = foundationRenderer();
+    for (const mode of ['login', 'register']) {
+      const markup = render(app.AuthPage, { mode });
+      assert.match(markup, /<label for="username">Username<\/label>/);
+      assert.match(markup, /<input[^>]*id="username"[^>]*name="username"/);
+      assert.match(markup, /<label for="password">Kata sandi<\/label>/);
+      assert.match(markup, /<input[^>]*type="password"/);
+      assert.match(markup, /<button[^>]*type="button"[^>]*aria-pressed="false">Lihat/);
+      if (mode === 'register') {
+        assert.match(markup, /<label for="role">Saya bergabung sebagai/);
+        assert.match(markup, /value="student"/);
+        assert.match(markup, /value="recruiter"/);
+        assert.match(markup, /Konfirmasi kata sandi/);
+      }
+    }
+  });
+
+  test('dashboard and profile render honest server-backed loading and unsupported states', () => {
+    const user = { username: 'pelajar-qa', email: 'pelajar@example.test', role: 'student', date_joined: '2026-09-29T00:00:00Z' };
+    const { load, render } = foundationRenderer({ path: '/', session: { user, reason: '' } });
+    const dashboard = render(load('Dashboard.jsx').default, { user });
+    assert.match(dashboard, /Halo, pelajar-qa/);
+    assert.match(dashboard, /Pilih target belajar pertamamu/);
+    assert.match(dashboard, /Memuat ringkasan akun dan progres belajar/);
+    assert.doesNotMatch(dashboard, /Total XP[\s\S]*?<strong>\d/);
+
+    const profile = render(load('Profile.jsx').default);
+    assert.match(profile, />pelajar-qa</);
+    assert.match(profile, /pelajar@example\.test/);
+    assert.match(profile, /Memuat kemajuan akun/);
+    assert.match(profile, /Streak, level, lencana, dan peta aktivitas belum tersedia dari server/);
+    assert.match(profile, /Edit profil, segera/);
+    assert.match(profile, /Ganti kata sandi, segera/);
+    assert.match(profile, /Pengingat belajar, segera/);
+    assert.match(profile, /Privasi profil, segera/);
+  });
 });

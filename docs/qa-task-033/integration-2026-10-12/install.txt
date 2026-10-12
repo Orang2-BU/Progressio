@@ -1,0 +1,11 @@
+﻿TASK-044 isolated frontend snapshot install evidence
+
+Date: 2026-10-12 (Asia/Jakarta)
+Snapshot base: 59ebc369eff75dd063ca568322e0ca3cade23705
+Source manifest: snapshot-manifest.json
+Working directory: C:\Users\ramar\AppData\Local\Temp\progressio-task044-safe-acbdf876b2e749f1a334bfa69f5705e0\front-end
+Command: npm ci --ignore-scripts --no-audit --no-fund
+Exit: 0
+Output: added 23 packages in 44s
+
+No backend, Mobile, provider, .env or main checkout untracked file was present in the snapshot.

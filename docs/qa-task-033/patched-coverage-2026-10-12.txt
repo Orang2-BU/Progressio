@@ -1,0 +1,223 @@
+TAP version 13
+# Subtest: register sends exact payload without authorization; login loads real profile
+ok 1 - register sends exact payload without authorization; login loads real profile
+  ---
+  duration_ms: 57.6846
+  ...
+# Subtest: Next proxy preserves Django endpoints with and without a trailing slash
+ok 2 - Next proxy preserves Django endpoints with and without a trailing slash
+  ---
+  duration_ms: 0.8924
+  ...
+# Subtest: SSR snapshot stays anonymous even when the client is authenticated
+ok 3 - SSR snapshot stays anonymous even when the client is authenticated
+  ---
+  duration_ms: 1.6874
+  ...
+# Subtest: wrong credentials preserve error and never refresh
+ok 4 - wrong credentials preserve error and never refresh
+  ---
+  duration_ms: 2.1412
+  ...
+# Subtest: concurrent 401 requests share one refresh and retry once
+ok 5 - concurrent 401 requests share one refresh and retry once
+  ---
+  duration_ms: 3.69
+  ...
+# Subtest: invalid refresh ends session without an infinite retry
+ok 6 - invalid refresh ends session without an infinite retry
+  ---
+  duration_ms: 3.849
+  ...
+# Subtest: logout during refresh cannot restore the old session
+ok 7 - logout during refresh cannot restore the old session
+  ---
+  duration_ms: 5.4238
+  ...
+# Subtest: field validation, non-JSON errors, and network errors remain readable
+ok 8 - field validation, non-JSON errors, and network errors remain readable
+  ---
+  duration_ms: 3.1823
+  ...
+# Subtest: frontend foundation rendering
+    # Subtest: expired session renders a warning; local logout and registration render success
+    ok 1 - expired session renders a warning; local logout and registration render success
+      ---
+      duration_ms: 2229.2053
+      ...
+    # Subtest: workspace marks exactly one of four destination links, and no flow link
+    ok 2 - workspace marks exactly one of four destination links, and no flow link
+      ---
+      duration_ms: 3472.2832
+      ...
+    # Subtest: diagnostic focus shell omits workspace chrome and announces actual progress
+    ok 3 - diagnostic focus shell omits workspace chrome and announces actual progress
+      ---
+      duration_ms: 177.5344
+      ...
+    # Subtest: public verification loading SSR markup omits sidebar and redirect placeholder
+    ok 4 - public verification loading SSR markup omits sidebar and redirect placeholder
+      ---
+      duration_ms: 528.5249
+      ...
+    # Subtest: shared loading, empty and error states expose visible text and semantic roles
+    ok 5 - shared loading, empty and error states expose visible text and semantic roles
+      ---
+      duration_ms: 363.6145
+      ...
+    # Subtest: auth forms retain input labels, password toggle and supported registration roles
+    ok 6 - auth forms retain input labels, password toggle and supported registration roles
+      ---
+      duration_ms: 325.0519
+      ...
+    1..6
+ok 9 - frontend foundation rendering
+  ---
+  duration_ms: 7097.0824
+  type: 'suite'
+  ...
+# Subtest: catalog pagination preserves parent filters and never attaches a token or follows an external URL
+ok 10 - catalog pagination preserves parent filters and never attaches a token or follows an external URL
+  ---
+  duration_ms: 91.1247
+  ...
+# Subtest: empty catalog, malformed payload and repeated pagination are handled
+ok 11 - empty catalog, malformed payload and repeated pagination are handled
+  ---
+  duration_ms: 6.6173
+  ...
+# Subtest: cancelled catalog requests cannot proceed to a new page
+ok 12 - cancelled catalog requests cannot proceed to a new page
+  ---
+  duration_ms: 5.871
+  ...
+# Subtest: selection URLs round-trip all target kinds without trusting client-supplied slugs
+ok 13 - selection URLs round-trip all target kinds without trusting client-supplied slugs
+  ---
+  duration_ms: 5.3387
+  ...
+# Subtest: invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+ok 14 - invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+  ---
+  duration_ms: 2.2213
+  ...
+# Subtest: login returns to the target URL and rejects external or unknown destinations
+ok 15 - login returns to the target URL and rejects external or unknown destinations
+  ---
+  duration_ms: 1.227
+  ...
+# Subtest: questions, incomplete answers, explicit unknown and server result contracts
+ok 16 - questions, incomplete answers, explicit unknown and server result contracts
+  ---
+  duration_ms: 14.3712
+  ...
+# Subtest: diagnostic target validates the selected parent chain using public endpoints
+ok 17 - diagnostic target validates the selected parent chain using public endpoints
+  ---
+  duration_ms: 96.6089
+  ...
+# Subtest: lost diagnostic POST response is never automatically submitted again
+ok 18 - lost diagnostic POST response is never automatically submitted again
+  ---
+  duration_ms: 3.4839
+  ...
+# Subtest: assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+ok 19 - assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+  ---
+  duration_ms: 13.3678
+  ...
+# Subtest: server results are validated, not inferred; legacy provenance never fabricated
+ok 20 - server results are validated, not inferred; legacy provenance never fabricated
+  ---
+  duration_ms: 1.1055
+  ...
+# Subtest: result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+ok 21 - result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+  ---
+  duration_ms: 1.6498
+  ...
+# Subtest: lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+ok 22 - lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+  ---
+  duration_ms: 81.2209
+  ...
+# Subtest: public verification needs no token; invalid UUID rejected before network
+ok 23 - public verification needs no token; invalid UUID rejected before network
+  ---
+  duration_ms: 2.1084
+  ...
+# Subtest: roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+ok 24 - roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+  ---
+  duration_ms: 8.7204
+  ...
+# Subtest: roadmap validates server totals, target, order and empty satisfied route without client grading
+ok 25 - roadmap validates server totals, target, order and empty satisfied route without client grading
+  ---
+  duration_ms: 3.2713
+  ...
+# Subtest: roadmap requests are read-only, authenticated and preserve API failure/cancellation
+ok 26 - roadmap requests are read-only, authenticated and preserve API failure/cancellation
+  ---
+  duration_ms: 90.9911
+  ...
+# Subtest: study URL preserves target; source links reject unsafe protocols and credentials
+ok 27 - study URL preserves target; source links reject unsafe protocols and credentials
+  ---
+  duration_ms: 8.2347
+  ...
+# Subtest: completion is derived from server lesson IDs, never from mastery or total count alone
+ok 28 - completion is derived from server lesson IDs, never from mastery or total count alone
+  ---
+  duration_ms: 1.5587
+  ...
+# Subtest: study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+ok 29 - study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+  ---
+  duration_ms: 104.5361
+  ...
+# Subtest: checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+ok 30 - checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+  ---
+  duration_ms: 6.4425
+  ...
+# Subtest: lost completion response is not automatically replayed and malformed results cannot grant a badge
+ok 31 - lost completion response is not automatically replayed and malformed results cannot grant a badge
+  ---
+  duration_ms: 6.4925
+  ...
+1..31
+# tests 36
+# suites 1
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8085.0552
+# start of coverage report
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# file                               | line % | branch % | funcs % | uncovered lines
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# next.config.mjs                    | 100.00 |    66.67 |  100.00 |
+# src\api.js                         |  93.55 |    84.38 |   83.33 | 94-96 120-124
+# src\App.jsx                        |  72.64 |    82.76 |   37.04 | 15-18 20-27 29-31 34-39 48 50-58 71-83 100-101 161-167 201-202 210-212
+# src\catalog.js                     |  18.82 |    91.46 |   60.00 | 9-11 13-19 21-23 25-31 33-55 57-64 66-76 78-81 83-85
+# src\diagnostic.js                  | 100.00 |    97.87 |  100.00 |
+# src\navigation.js                  |  42.86 |   100.00 |   66.67 | 4-7
+# src\proof.js                       |  22.86 |    86.90 |   59.46 | 17 19-34 36-46 48-59 61-66 68-80 82-86 88-89 91-105
+# src\Proof.jsx                      |  36.31 |    28.57 |   30.77 | 19-22 24-25 27 29-32 55-59 62-64 73-78 81-126 128-154 156-157
+# src\roadmap.js                     | 100.00 |   100.00 |  100.00 |
+# src\study.js                       |  24.24 |    96.15 |   67.74 | 11-13 15-18 20 22-31 33-54 56-62 64-66
+# src\ui.jsx                         |  93.98 |    65.63 |   90.00 | 15 17 22 29-30
+# tests\api.test.js                  | 100.00 |    98.21 |   94.44 |
+# tests\catalog.test.js              | 100.00 |   100.00 |  100.00 |
+# tests\diagnostic.test.js           | 100.00 |   100.00 |  100.00 |
+# tests\proof.test.js                | 100.00 |   100.00 |  100.00 |
+# tests\roadmap.test.js              | 100.00 |   100.00 |  100.00 |
+# tests\study.test.js                |  98.89 |    98.15 |  100.00 | 46
+# tests\support\render-foundation.js | 100.00 |   100.00 |   66.67 |
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# all files                          |  75.57 |    91.14 |   75.89 |
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# end of coverage report

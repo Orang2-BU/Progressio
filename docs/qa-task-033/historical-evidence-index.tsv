@@ -1,0 +1,22 @@
+file	bytes	sha256	location
+revision-services-green.txt	7338	92fc3a7590a91c372b50108d01f43d26dd8c8be5cb03424047226a283ea05f6a	TASK-029 attachment; verified exists 2026-10-08
+revision-services-mutation.txt	3306	9e57cf0de73abc6c2d1e8162aff79e02a2d174aaef78b53c077f49b4db2ae8fe	TASK-029 attachment; verified exists 2026-10-08
+revision-backend-sqlite.txt	8178	814ac96bd4b70dee129de93132165964cf2d0391f9c2241203812fcb5d6b8011	TASK-029 attachment; verified exists 2026-10-08
+revision-proxy.txt	1576	bbe5fae947ead44bc7d004ddfca26f11e30688c0d0575d0c0238bad44b79ddf7	TASK-029 attachment; verified exists 2026-10-08
+revision-api-contract.txt	1744	aaa482a5773a5548c0fed7858a3aa56cfd0bae712d81f599b733dc5fd27b32fc	TASK-029 attachment; verified exists 2026-10-08
+revision-frontend.txt	13642	f0fd966f810b38b74d6d7e4d7d3898cd5ada775b5752db399a229147357fcfd5	TASK-029 attachment; verified exists 2026-10-08
+revision-foundation.txt	1832	8d25bf117a1c802c2c8c6f837682fc1f4016d814388f5f14d31cd2133f7a9b0f	TASK-029 attachment; verified exists 2026-10-08
+revision-isolation-red.txt	33134	8dc1546eba6a66aab6c7d986c64940acd3c2ab6e5d2bb05b6a1e6a811af36760	TASK-029 attachment; verified exists 2026-10-08
+revision-isolation-green.txt	2464	1e9bc5bb7fa8857da4438f4a98506eb15121bf1486a7b64d2b1ebe9ffcc15f09	TASK-029 attachment; verified exists 2026-10-08
+revision-e2e-audit.json	1070	eef970dcb670db44f9535e6925a7660d67554e00c795437b9d709881cae45840	TASK-029 attachment; verified exists 2026-10-08
+revision-cleanup-red.txt	3130	53e705b8dce9033311b882967650a04bace417428daa36fb4b126ce7e1b83a85	TASK-029 attachment; verified exists 2026-10-08
+revision-cleanup-green.txt	1306	69c7de6f01ed0643158af64578e5c6f68ba3638f7a3d61584965bd4ae0252257	TASK-029 attachment; verified exists 2026-10-08
+revision-offline-coverage.txt	2854	89fd8a3eb9ebe082efebfff4692209ee2b04f4696b85e728e4bbde247db27e29	TASK-029 attachment; verified exists 2026-10-08
+revision-frontend-build.txt	4054	da75d3857c89a4f3d541970b80a396de0fd016fcffdc77c151427a1acf42044e	TASK-029 attachment; verified exists 2026-10-08
+revision-coverage.txt	1716	c260da12f98daf1682bbb6f3aa9b4e1254ccb3c779ec5aca70fadefb7f27e2e9	TASK-029 attachment; verified exists 2026-10-08
+revision-proxy-lines.txt	392	523254f2776f4c6e0e448b8c083b3dc79a38da93a05c8cc1393eaedf5a056b99	TASK-029 attachment; verified exists 2026-10-08
+security-continuation.txt	1659	6e5f656999bac9eef65536b115a621134b3251e11caf08f3ef5bbd0f0f618ab4	TASK-029 attachment; verified exists 2026-10-08
+review-history-16a34c1.txt	2839	f5cd83ef3a9536c14e8465be8a4e1e04dab1368ad6aafbe6d1032c6e8613cb64	TASK-029 attachment; verified exists 2026-10-08
+review-diff-16a34c1.patch	97663	bcfaf41a15ac1d6dc7168e2d339f4d5118b095bdea7aac01cc5c61a2b8aff12c	TASK-029 attachment; verified exists 2026-10-08
+review-sources-16a34c1.txt	135054	0cbd28cf29b7642b0d2bf3a54fe14ddf90b04453b841ca2b854d083cfb8d9225	TASK-029 attachment; verified exists 2026-10-08
+review-docs-12429d1.patch	2354	07e66e1e9023754b37eb9aa747e464d2013077a28bdeae5391af2a352d504709	TASK-029 attachment; verified exists 2026-10-08

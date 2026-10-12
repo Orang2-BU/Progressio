@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-12",
+  "e2e_inline_validation": {
+    "valid": true,
+    "stepCount": 18,
+    "diagnostics": []
+  },
+  "e2e_file_validation": {
+    "absolute": "escapes every e2e/ directory",
+    "relative": "not found under any e2e/ directory"
+  },
+  "e2e_run": "NOT RUN",
+  "heals": 0,
+  "screenshots": [],
+  "lsp": {
+    "front-end/tests/api.test.js": "diagnostics did not arrive in time",
+    "front-end/tests/support/render-foundation.js": "diagnostics did not arrive in time"
+  },
+  "card_sources_not_executed": true,
+  "latest_delta_review": {
+    "reviewer": "Adit",
+    "verdict": "REVIEW BLOCKED",
+    "task": "TASK-033",
+    "comment_id": "94e8431c-4bd9-4be9-a8e3-f982798e32da",
+    "reason": "Reviewer sandbox denied read-only shell access; patch attachments/resources unavailable in reviewer session",
+    "patch_bytes": 151656,
+    "patch_sha256_verified_by_jessica": "e36c4c77752ea50e990f317af50a053c1272e6f853b625af56052f500febe544",
+    "reviewer_verified_patch": false,
+    "patch_precedes_this_review_note": true,
+    "previous_delta_5233d538_task034": "APPROVED",
+    "parent_clearance": false,
+    "release_ready": false
+  }
+}

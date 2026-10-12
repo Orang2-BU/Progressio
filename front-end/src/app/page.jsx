@@ -1,4 +1,4 @@
-import { WorkspacePage } from '../App.jsx';
+import DashboardRoute from './dashboard-route.jsx';
 
 export const metadata = { title: 'Workspace' };
-export default function Page() { return <WorkspacePage />; }
+export default function Page() { return <DashboardRoute />; }

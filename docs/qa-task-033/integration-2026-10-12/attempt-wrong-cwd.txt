@@ -1,0 +1,5 @@
+Operational invocation error, not a test result.
+Command: npm test
+Working directory: repository root, which has no package.json.
+Result: npm ENOENT (-4058); no test files ran.
+Resolution: reran from the isolated snapshot front-end directory; npm test exited 0. See tests.txt and tests-exit.txt.

@@ -1,0 +1,15 @@
+{
+  "task": "TASK-044",
+  "date": "2026-10-12",
+  "lsp": {
+    "files_requested": 12,
+    "css": { "path": "front-end/src/styles.css", "result": "no errors" },
+    "javascript_and_jsx": { "count": 11, "result": "diagnostics did not arrive in time" },
+    "unrelated_project_error": null
+  },
+  "e2e_list_flows": ["e2e/assessment-mock-label.yaml", "e2e/progressio-demo.yaml"],
+  "e2e_validate": { "file": "e2e/foundation-anonymous.yaml", "result": "NOT RUN: flow not found under any e2e directory" },
+  "e2e_run": "NOT RUN: no routed foundation flow/runtime; inherited BLOCKED HEAD is excluded",
+  "assessment_mock_label": "not rerun; budget exhausted",
+  "coverage": { "tests": 46, "passed": 46, "failed": 0, "skipped": 0, "overall_line_percent": 70.54, "app_jsx_line_percent": 16.38, "dashboard_jsx_line_percent": 46.43, "profile_jsx_line_percent": 82.18, "dashboard_logic_line_percent": 45.71 }
+}

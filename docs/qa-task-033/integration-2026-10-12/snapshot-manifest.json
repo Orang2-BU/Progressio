@@ -1,0 +1,99 @@
+{
+    "task":  "TASK-044",
+    "date":  "2026-10-12",
+    "snapshot_base":  "59ebc369eff75dd063ca568322e0ca3cade23705",
+    "integration_branch_head":  "6086b401951cb491cd2f4f267af1052d6ebd5480 (uncommitted integration source at test time)",
+    "source_task_042":  "421e36e62056278dfbf92f74532c5f4814a32b94",
+    "source_task_043_final":  "42cff215cd27c85aed6f20177a9de5398a81c488",
+    "source_task_043_tested":  "fa57bc6099b7d76936425be1ce0931934118933f",
+    "overlay_file_count":  18,
+    "overlays":  [
+                     {
+                         "path":  "front-end/package.json",
+                         "sha256":  "46f7532d20a4285fe5d7a1e31fae78ed4ea38f9e7d38dc98c2ac20c5702f0d23"
+                     },
+                     {
+                         "path":  "front-end/CHANGELOG.md",
+                         "sha256":  "1b2c8ab055faa37c2b258a06adb48b7bf4d8de2ba49b90180f3ec8f7e168e423"
+                     },
+                     {
+                         "path":  "front-end/src/App.jsx",
+                         "sha256":  "f0082646469271fac229c1522db9231fcf5fc11d8f61044b0c3b70857e0a8ef6"
+                     },
+                     {
+                         "path":  "front-end/src/Catalog.jsx",
+                         "sha256":  "fad07ac7661f3af743da76e488b422f84f3c9090863d4ee2c768a9719f1d19b2"
+                     },
+                     {
+                         "path":  "front-end/src/Dashboard.jsx",
+                         "sha256":  "181466040cde60db728ea3835f66fec5ee3df4bfb69f94898cf56a2098d10c5c"
+                     },
+                     {
+                         "path":  "front-end/src/Profile.jsx",
+                         "sha256":  "a452db97324720b5b5de7805c0fc92ba233915e1c0b0f3d2b3e81c51050d1941"
+                     },
+                     {
+                         "path":  "front-end/src/api.js",
+                         "sha256":  "264184672a1a6a90b7c096b7cc320de48a8b2c12e2334233a2c62b036391f619"
+                     },
+                     {
+                         "path":  "front-end/src/catalog.js",
+                         "sha256":  "ac85a90b2352f5cfcfab0bbdc93951dfb8bf2d05e541a28509836d08196b9ed9"
+                     },
+                     {
+                         "path":  "front-end/src/dashboard.js",
+                         "sha256":  "63be3e86f64fc38de19c9dfa1c2e6024c0dfbf731016381869d84a50d3a4f139"
+                     },
+                     {
+                         "path":  "front-end/src/styles.css",
+                         "sha256":  "198dd18b90525a6ddb63776f431e5634b4b3ee5c5973d4f651c392a92bcce3b0"
+                     },
+                     {
+                         "path":  "front-end/src/app/page.jsx",
+                         "sha256":  "c5f5dd3a93c3d9581dab5f0476bf78b524ea6163aad155e77e62ae4bfabd3122"
+                     },
+                     {
+                         "path":  "front-end/src/app/profile/page.jsx",
+                         "sha256":  "73d1eceb9b8e5667e3f5b08855a0dc7e7bc89c44fe43b15f3d9527f02efaea77"
+                     },
+                     {
+                         "path":  "front-end/src/app/dashboard-route.jsx",
+                         "sha256":  "a02f17a33b4004790a6ca1e322c00678968b3d5e05999e199ff2db2b21fc39f0"
+                     },
+                     {
+                         "path":  "front-end/tests/api.test.js",
+                         "sha256":  "66aabcb33230b36ce52482a04739bff9cbc078e32253167b2989b5290b87f089"
+                     },
+                     {
+                         "path":  "front-end/tests/catalog.test.js",
+                         "sha256":  "8760f0ad14c735f15e6df3dd47a2c11c883a9d6bb5550118eabb8424e055c2ed"
+                     },
+                     {
+                         "path":  "front-end/tests/dashboard.test.js",
+                         "sha256":  "b4bacd73c794de2f19c75f51d23d5faef31babbc6aa8ecb93d28c588422d5242"
+                     },
+                     {
+                         "path":  "front-end/tests/logout-accessibility.test.js",
+                         "sha256":  "1a62090d4332934548cb1d20bb801b212c9689e7848df0ca3a02a239f11f5ea6"
+                     },
+                     {
+                         "path":  "front-end/tests/support/render-foundation.js",
+                         "sha256":  "aac2513588c7165f1bfc072648731e888d9faf6983660240620a8d1d62e154e2"
+                     }
+                 ],
+    "excluded":  [
+                     "back-end/",
+                     "Mobile/",
+                     "provider services",
+                     "all untracked files from main checkout",
+                     "TASK-043 handoff paths with content collisions"
+                 ],
+    "notes":  [
+                  "Base was extracted with git archive; no blocked HEAD source tree was used as snapshot base.",
+                  "Only the 18 listed frontend files were overlaid, including merged catalog/UI/tests.",
+                  "package-lock.json is from the safe base and unchanged; SHA-256 ",
+                  "bfc5f5345a73e9245d470d97de827e3043f8aa6b609f892aaa57cda8e31be3e2",
+                  ".",
+                  "This snapshot does not prove the full integrated HEAD or browser behavior."
+              ]
+}

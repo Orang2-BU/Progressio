@@ -1,0 +1,169 @@
+Source: 6720ba17f202ae8f0872e74611f06f6c83d8a17d
+Date: 2026-10-08
+CWD: front-end/ in TASK-033 worktree
+Command: npm test
+Exit: 0
+
+> progressio-web@0.1.0 test
+> node --test tests/api.test.js tests/catalog.test.js tests/diagnostic.test.js tests/roadmap.test.js tests/study.test.js tests/proof.test.js
+
+TAP version 13
+# Subtest: register sends exact payload without authorization; login loads real profile
+ok 1 - register sends exact payload without authorization; login loads real profile
+  ---
+  duration_ms: 118.1234
+  ...
+# Subtest: Next proxy preserves Django endpoints with and without a trailing slash
+ok 2 - Next proxy preserves Django endpoints with and without a trailing slash
+  ---
+  duration_ms: 1.4115
+  ...
+# Subtest: SSR snapshot stays anonymous even when the client is authenticated
+ok 3 - SSR snapshot stays anonymous even when the client is authenticated
+  ---
+  duration_ms: 3.2317
+  ...
+# Subtest: wrong credentials preserve error and never refresh
+ok 4 - wrong credentials preserve error and never refresh
+  ---
+  duration_ms: 2.7273
+  ...
+# Subtest: concurrent 401 requests share one refresh and retry once
+ok 5 - concurrent 401 requests share one refresh and retry once
+  ---
+  duration_ms: 9.6102
+  ...
+# Subtest: invalid refresh ends session without an infinite retry
+ok 6 - invalid refresh ends session without an infinite retry
+  ---
+  duration_ms: 4.9767
+  ...
+# Subtest: logout during refresh cannot restore the old session
+ok 7 - logout during refresh cannot restore the old session
+  ---
+  duration_ms: 5.4712
+  ...
+# Subtest: field validation, non-JSON errors, and network errors remain readable
+ok 8 - field validation, non-JSON errors, and network errors remain readable
+  ---
+  duration_ms: 4.8944
+  ...
+# Subtest: catalog pagination preserves parent filters and never attaches a token or follows an external URL
+ok 9 - catalog pagination preserves parent filters and never attaches a token or follows an external URL
+  ---
+  duration_ms: 102.8996
+  ...
+# Subtest: empty catalog, malformed payload and repeated pagination are handled
+ok 10 - empty catalog, malformed payload and repeated pagination are handled
+  ---
+  duration_ms: 7.529
+  ...
+# Subtest: cancelled catalog requests cannot proceed to a new page
+ok 11 - cancelled catalog requests cannot proceed to a new page
+  ---
+  duration_ms: 2.3808
+  ...
+# Subtest: selection URLs round-trip all target kinds without trusting client-supplied slugs
+ok 12 - selection URLs round-trip all target kinds without trusting client-supplied slugs
+  ---
+  duration_ms: 3.3291
+  ...
+# Subtest: invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+ok 13 - invalid IDs, duplicate parameters, missing parents, wrong ancestry and inactive tracks are rejected
+  ---
+  duration_ms: 3.0754
+  ...
+# Subtest: login returns to the target URL and rejects external or unknown destinations
+ok 14 - login returns to the target URL and rejects external or unknown destinations
+  ---
+  duration_ms: 1.3813
+  ...
+# Subtest: questions, incomplete answers, explicit unknown and server result contracts
+ok 15 - questions, incomplete answers, explicit unknown and server result contracts
+  ---
+  duration_ms: 10.0964
+  ...
+# Subtest: diagnostic target validates the selected parent chain using public endpoints
+ok 16 - diagnostic target validates the selected parent chain using public endpoints
+  ---
+  duration_ms: 77.6077
+  ...
+# Subtest: lost diagnostic POST response is never automatically submitted again
+ok 17 - lost diagnostic POST response is never automatically submitted again
+  ---
+  duration_ms: 3.0969
+  ...
+# Subtest: assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+ok 18 - assessment payload has only answers/evidence and stable request ID, validates missing and unsafe inputs
+  ---
+  duration_ms: 10.5051
+  ...
+# Subtest: server results are validated, not inferred; legacy provenance never fabricated
+ok 19 - server results are validated, not inferred; legacy provenance never fabricated
+  ---
+  duration_ms: 0.5922
+  ...
+# Subtest: result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+ok 20 - result headings distinguish simulated, draft, reviewed, and missing provenance for both outcomes
+  ---
+  duration_ms: 1.4405
+  ...
+# Subtest: lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+ok 21 - lost POST is not automatically replayed and request-specific GET recovers without sending evidence again
+  ---
+  duration_ms: 62.6241
+  ...
+# Subtest: public verification needs no token; invalid UUID rejected before network
+ok 22 - public verification needs no token; invalid UUID rejected before network
+  ---
+  duration_ms: 2.0651
+  ...
+# Subtest: roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+ok 23 - roadmap uses exactly one server-resolved slug and keeps safe return-to-login URL
+  ---
+  duration_ms: 7.1278
+  ...
+# Subtest: roadmap validates server totals, target, order and empty satisfied route without client grading
+ok 24 - roadmap validates server totals, target, order and empty satisfied route without client grading
+  ---
+  duration_ms: 2.8375
+  ...
+# Subtest: roadmap requests are read-only, authenticated and preserve API failure/cancellation
+ok 25 - roadmap requests are read-only, authenticated and preserve API failure/cancellation
+  ---
+  duration_ms: 79.1106
+  ...
+# Subtest: study URL preserves target; source links reject unsafe protocols and credentials
+ok 26 - study URL preserves target; source links reject unsafe protocols and credentials
+  ---
+  duration_ms: 7.0001
+  ...
+# Subtest: completion is derived from server lesson IDs, never from mastery or total count alone
+ok 27 - completion is derived from server lesson IDs, never from mastery or total count alone
+  ---
+  duration_ms: 1.4327
+  ...
+# Subtest: study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+ok 28 - study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads
+  ---
+  duration_ms: 92.7966
+  ...
+# Subtest: checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+ok 29 - checkpoint sends only an answer; wrong feedback is not HTTP success-as-correct; completion has no body
+  ---
+  duration_ms: 7.3894
+  ...
+# Subtest: lost completion response is not automatically replayed and malformed results cannot grant a badge
+ok 30 - lost completion response is not automatically replayed and malformed results cannot grant a badge
+  ---
+  duration_ms: 5.1483
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 460.9501

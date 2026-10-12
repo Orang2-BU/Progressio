@@ -1,0 +1,339 @@
+{
+  "date": "2026-10-12",
+  "card_head": "35163d84467a0dcbfaf34eca18f9916c714ec255",
+  "source_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+  "test_delta_sha": "5233d5389c57fa8bef7a087944c01177531a7871",
+  "runtime": "C:\\Users\\ramar\\AppData\\Local\\Temp\\progressio-task033-t4p3k5zu",
+  "files": [
+    {
+      "path": "front-end/.env.example",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "c5344af1bdf356e8fc974c7fbcc6e33e1875abb3f0f5dcc30f9f63c79b07b7d6",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/.gitkeep",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/API_CONTRACT.md",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "ccf5f1feaaa827247d72efd8d2cd3a96511e053f19524727ecc21340a3b33152",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/DESIGN_FOUNDATION.md",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "e6ab1db687248a985476bbeef1270e83a33e04f2aa057898f06a017360ea6015",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/README.md",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "a3275e98180d2c6caa0cb60b500ba88a1ac4e17424b065d0d634c56d9bd7bb48",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/check_api_contract.py",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "5aa7c040fe5f97f4cccc73a18642c6794427a090cc466abd3e1d7431036855f4",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/next.config.mjs",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "ecaadd8da1d24961534ccc5920b3ca4f1f378c518af306c8a6f71fadbab64ef3",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/package-lock.json",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "bfc5f5345a73e9245d470d97de827e3043f8aa6b609f892aaa57cda8e31be3e2",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/package.json",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "8b94766293cc147cf8bc9254add4a5595bd58f7f324a5f2f934cfeb150147f82",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/App.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "b4a20ab4277438f5ec0e2a196483eea9712206cda3e5f65ecdb4d85e59af7f93",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/Catalog.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "8d7ab0c95e6a3fdb96336455575189e474a349e976fc9019d9b91f9f5b24887d",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/Diagnostic.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "d9d3fb72781353a4fa9f473e62ff07d304e636330bd6a0f572d45b1e8fc3e9d7",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/Proof.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "6cc0e6d284c1881e4c43f3dcb25a3654d5c6a3e69caf3c415c794f1da9383dc9",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/Roadmap.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "0e6435656eabe2b706c4081ebb2773a80b4b7314285aa2e5ba59c50c882f9d46",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/Study.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "9266a62eafd7f0f8b188ab64a4ef668a5028db58d53f5ba02b5c8cacf01a3724",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/api.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "d49ad7c65de401a50775282b4616d1ea7d0ac6215e3c629069e2407bfd433996",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/assessment/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "9ffe26401cfe47c566202f875e02db5d2f43dcb5714198420cb2fa0422caeffb",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/catalog/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "0c451df7c01d580be2b6d68ae0563a443553d3f5db51c025ff8f3ca2b34f5d5e",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/credentials/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "1d0424d1f09b762cb23efa5d9a35b3ef8aef0325036d00278d646265c7c875fe",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/diagnostic/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "ac2f573c3e926b9246a287cb443b68b7ad73b034b2a06a9bbbac7a032406852c",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/diagnostic/result/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "50a453d4fca9fea58c76a413e4c3825f80f4a77e9b699d5ada435900a1726368",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/layout.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "1e4dd9d81e8730de1b592e96ea09121f9ce8959427f5b505eb5ecf6cd33d2477",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/login/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "e8117e52ff4908834f43baaaff5fb6d69f9018cc21bcd103daeba281dcdd81bc",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/not-found.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "f543eb8f904e92dfdf09f357fdcafa1c4254bc2fd8bf5e975a5e5cdc1c9f8063",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "ebc7b623d2c4ee96cf9d8fe390d4ea2e2b6bdbd488b3b223e867b0667f88a997",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/profile/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "869b018118d8d8700dc1fb9a43eeb7a9c1c787341302a464265d54bc38eee784",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/register/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "47ac4eaa97e8be30a2b5c2e6fc6d9ccdbe100694fd7f547605f43bae3bf5113b",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/roadmap/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "7d41411042cd16ec793212f090cdd6f847622aff78a805da9d37baa1f88a35cd",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/study/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "6426b2d4b8275f39539b924f549f11cf5de2c05abb3061143a2e0d17ab4ca9f8",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/app/verify/[id]/page.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "836dca7fd69fd4544c8bca812458941406620b3a5cf70329ba76b36ee8d351a0",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/catalog.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "9d9add0da275e9ccde60096816350f1503281f95fd4cd2d1b250f602184e9b22",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/diagnostic.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "e17f7ed293407ad66d368421889fb4ad183c92bae82ca91162415dcc44b9a687",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/foundation.css",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "190aef3de13d5eed35f499c61508cb1f02002cfa2b73bd82b6c80b4ecb613c06",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/navigation.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "2408c1371a2f85ee365d3bc8f6f8ca5453945b59a710cfb6a66c4b10a9d08659",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/proof.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "31029132aa4ec90b6bd09bdb023c2159a594dd862e83e6f2c44b4554dfe12a3a",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/roadmap.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "bd08e2100a4dfb72efa2e3dc7253b91040c3c380dc7ea8d1703b521d027d906c",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/study.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "b16beff648a57abe88022bc2a88cf0d455c88dcd2a4f6159439d64a0b0a0f174",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/styles.css",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "e7e87b7e37d241c43c4a65b082d53458880c60811d67632606133605a15a4e74",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/src/ui.jsx",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "b5245ff985b46b2def67551f3395f96894de0e5e7eda95f2ed6c5c93e5036172",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/api.test.js",
+      "git_sha": "5233d5389c57fa8bef7a087944c01177531a7871",
+      "sha256": "bdc5f3d7ee97d829938bf08909b17c9311d173dc841dbea428aa3e89e1e460fb",
+      "matches_git_blob": true,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/backend_server.py",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "4e513a0314bb53108ab73500adbaa7e53190db0977e7303e6440f9b7ed15609a",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/catalog.test.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "edd8e32f1970ef3a3669e821e6b58b1192733d6f942f50c84d9f3f753778a1bd",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/diagnostic.test.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "4d55451958debf16191ce5d3300b01c3280e83495141bcb2fe8d3d72cfd3ad4c",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/proof.test.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "aeb41db5737157c6f3e8ba68f6f8c89a37a64472f050b1f5068fb84a8f0fe973",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/roadmap.test.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "bbb30411811b0616e96d7fdf2474d7d019012f694fbf1c81b1d5a5b4bd96ed5e",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/study.test.js",
+      "git_sha": "59ebc369eff75dd063ca568322e0ca3cade23705",
+      "sha256": "2c3f58eab5c0b3e46800a83c3c8e8ad88a6e11f78cee98147197725567f51ccc",
+      "matches_git_blob": false,
+      "matches_normalized_newlines": true
+    },
+    {
+      "path": "front-end/tests/support/render-foundation.js",
+      "git_sha": "5233d5389c57fa8bef7a087944c01177531a7871",
+      "sha256": "01ec5e2e3ab6fe59550be0c0bd4bbb7aa54a2fc4873ccb670feccc3cd149ab30",
+      "matches_git_blob": true,
+      "matches_normalized_newlines": true
+    }
+  ],
+  "backend_extracted": false
+}

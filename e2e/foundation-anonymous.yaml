@@ -1,0 +1,24 @@
+name: Foundation anonymous frontend smoke
+url: http://127.0.0.1:3133/login
+tags:
+  - frontend-only
+clearState: true
+---
+- launchApp
+- assertVisible: "Masuk ke workspace"
+- assertVisible: "Sesi hanya tersimpan selama halaman ini terbuka."
+- tapOn: "Lihat"
+- assertVisible: "Sembunyikan"
+- tapOn: "Sembunyikan"
+- assertVisible: "Lihat"
+- takeScreenshot: task033-login
+- tapOn: "Daftar sekarang"
+- assertVisible: "Buat akun Progressio"
+- assertVisible: "Konfirmasi kata sandi"
+- takeScreenshot: task033-register
+- openLink: "http://127.0.0.1:3133/diagnostic"
+- assertVisible: "Masuk ke workspace"
+- openLink: "http://127.0.0.1:3133/verify/11111111-1111-4111-8111-111111111111"
+- assertVisible: "Verifikasi credential"
+- assertVisible: "mock dan standar draft bukan bukti final"
+- takeScreenshot: task033-public-verification

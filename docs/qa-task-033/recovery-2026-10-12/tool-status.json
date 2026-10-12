@@ -1,0 +1,111 @@
+{
+  "task": "TASK-043",
+  "date": "2026-10-12",
+  "source_sha": "fa57bc6099b7d76936425be1ce0931934118933f",
+  "base": "59ebc369eff75dd063ca568322e0ca3cade23705",
+  "original_dispatcher_sha": "6086b401951cb491cd2f4f267af1052d6ebd5480",
+  "branch": "task-043-safe-composition",
+  "source_patch": {
+    "bytes": 151852,
+    "sha256": "a15a0f3e3336519cc88b025b7a64a3e8d92aecbb8eb4caaaad8ada947708a49c",
+    "task033_comment": "260ec60c-d412-4952-8b45-718a4e60efd3"
+  },
+  "test_mapping": {
+    "baseline": 30,
+    "approved_foundation": 6,
+    "safe_composition": 36,
+    "old_blocked_card": 37,
+    "excluded_inherited_test": "non-object JSON error bodies fall back to a readable API error",
+    "excluded_test_status": "NOT RUN; retained in old TASK-033 source/evidence; not a closed regression"
+  },
+  "execution": {
+    "npm_test": {
+      "pass": 36,
+      "fail": 0,
+      "skip": 0,
+      "exit_status": "unavailable after server restart"
+    },
+    "coverage": {
+      "pass": 36,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0,
+      "helper_line": 100,
+      "helper_branch": 100,
+      "helper_function": 66.67,
+      "all_files_line": 75.57,
+      "limitation": "Transpiled JSX has no source map; SSR excludes CSS/effects/events/hydration; aggregate is not product coverage."
+    },
+    "install": {
+      "completed_output": "added 23 packages in 50s",
+      "exit_status": "unavailable after server restart"
+    },
+    "build": {
+      "exit": 0,
+      "static_pages": 13,
+      "next": "16.3.8",
+      "warning": "multiple lockfiles / inferred root",
+      "earlier_attempts": [
+        "Interrupted by server restart; original log preserved",
+        "PowerShell ErrorActionPreference=Stop raised NativeCommandError on Next warning stderr; log preserved; final wrapper Continue captured native exit 0"
+      ]
+    },
+    "syntax": "PASS exit 0 for both test sources",
+    "whitespace": "PASS exit 0",
+    "runtime": {
+      "status": "NOT RUN",
+      "command": "npm run start -- --port 3143",
+      "env": {
+        "NEXT_TELEMETRY_DISABLED": "1",
+        "API_PROXY_TARGET": "http://127.0.0.1:1"
+      },
+      "reason": "CreateProcess rejected: blocked by policy",
+      "process_started": false
+    },
+    "backend": "NOT RUN; pending human"
+  },
+  "e2e": {
+    "discovered": [
+      "e2e/assessment-mock-label.yaml",
+      "e2e/progressio-demo.yaml"
+    ],
+    "inline_validation": {
+      "valid": true,
+      "stepCount": 18,
+      "diagnostics": []
+    },
+    "worktree_file_validation": {
+      "absolute": "escapes every e2e/ directory",
+      "workspace_relative": "escapes every e2e/ directory"
+    },
+    "interpreter_access": "No exposed interpreter tool",
+    "routing_change": "No registration/routing setter tool; no copy to human checkout",
+    "run": "NOT RUN",
+    "heals": 0,
+    "screenshots": [],
+    "assessment": "NOT RUN; prior heal budget exhausted"
+  },
+  "lsp": {
+    "initial": "Both source files timed out; unrelated Mobile generated header diagnostic also reported",
+    "after_server_restart": "Both source files: diagnostics did not arrive in time",
+    "verdict": "UNVERIFIED, not PASS"
+  },
+  "review": {
+    "approved_delta": "6720ba1..5233d538 remains APPROVED Adit TASK-034",
+    "new_composition": "PASS Adit for code/docs composition only at 9016d2932e7c857ce7b55cc887f8cf0755d57261; no blocking findings; later docs-only commit records this verdict",
+    "reviewed_patch_bytes": 210246,
+    "reviewed_patch_sha256": "9e51d658d58ede508778ade1c9320335b45cc6fb6d539bf939f8fcbfd8819f54",
+    "default_git_diff_commit": "fallback HEAD~1..HEAD",
+    "explicit_base_diff": "59ebc369eff75dd063ca568322e0ca3cade23705..HEAD readable",
+    "recorded_base_setter": "not exposed",
+    "release_ready": false,
+    "gates": [
+      "Adit",
+      "Bimo",
+      "Jono",
+      "Agus"
+    ],
+    "human_approve": "pending"
+  },
+  "log_encoding": "New recovery logs normalized to UTF-8/LF; trailing whitespace removed without changing results. Historical logs remain unchanged."
+}

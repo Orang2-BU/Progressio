@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { getSession, getServerSession, subscribe, login, register, logout, reloadProfile } from './api.js';
+import { getSession, getServerSession, subscribe, login, register, logout } from './api.js';
 import { loginDestination } from './navigation.js';
-import { Button, Icon, Notice, ProgressBar, StatusBadge } from './ui.jsx';
+import { Button, Icon, Notice, ProgressBar } from './ui.jsx';
 
-const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
+export const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
 
 function authNoticeProps(text) {
@@ -142,51 +142,14 @@ export function FocusLayout({ children, exitHref, completed = 0, total = 0 }) {
   </div>;
 }
 
-function Workspace({ user, profile }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function refresh() {
-    setBusy(true); setError('');
-    try { await reloadProfile(); } catch (issue) { setError(issue.message); }
-    finally { setBusy(false); }
-  }
-  return <WorkspaceLayout>
-    <section className="workspace-content">
-      <p className="eyebrow">{profile ? 'AKUN PROGRESSIO' : 'TITIK AWAL YANG BAIK'}</p>
-      <h1>{profile ? 'Profil akun' : <>Halo, <span>{user.username}.</span></>}</h1>
-      <p className="intro">{profile ? 'Informasi akunmu diambil langsung dari server.' : 'Akunmu siap. Perjalanan berikutnya dimulai dari tujuan yang kamu pilih.'}</p>
-      {!profile && <div className="welcome-card"><div><span className="eyebrow">FONDASI PERJALANANMU</span>
-        <h2>Kenali dirimu.<br />Tentukan arahmu.</h2><p>Progressio menghubungkan target keahlian, hasil penilaian, dan bukti kemampuan dalam satu perjalanan.</p>
-        <Button href="/catalog">Pilih target keahlian <Icon name="arrow" size={18}/></Button></div>
-        <div className="path-graphic" aria-hidden="true"><span>Target</span><i /><span>Assessment</span><i /><span>Proof</span></div>
-      </div>}
-      <div className="profile-card"><div className="section-heading"><h2>Identitas akun</h2><StatusBadge tone="success">Terhubung</StatusBadge></div>
-        <dl><div><dt>Username</dt><dd>{user.username}</dd></div><div><dt>Email</dt><dd>{user.email || 'Belum diisi'}</dd></div>
-          <div><dt>Peran</dt><dd>{roleNames[user.role] || user.role}</dd></div>
-          <div><dt>Bergabung</dt><dd>{new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(user.date_joined))}</dd></div></dl>
-        {error && <p className="error-summary" role="alert">{error}</p>}
-        <div className="profile-actions"><button className="button secondary" disabled={busy} onClick={refresh}>{busy ? 'Memuat profil…' : 'Muat ulang profil'}</button>
-          <span className="hint">Profil ditampilkan sebagai informasi baca saja.</span></div>
-      </div>
-    </section>
-  </WorkspaceLayout>;
-}
-
 export function AuthPage({ mode }) {
   const { reason } = useSession();
   const router = useRouter();
-  const search = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search);
-  const notice = mode !== 'login' ? '' : search?.get('logged_out') === '1' ? 'Kamu sudah keluar dari akun.' : reason;
-  return <AuthForm mode={mode} notice={notice}
+  return <AuthForm mode={mode} notice={mode === 'login' ? reason : ''}
     onRegistered={(username) => {
       logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
       router.replace('/login');
     }} />;
-}
-
-export function WorkspacePage({ profile = false }) {
-  const { user } = useSession();
-  return user ? <Workspace user={user} profile={profile} /> : null;
 }
 
 export default function App({ children }) {
@@ -205,7 +168,7 @@ export default function App({ children }) {
   const redirecting = (!user && privateRoute) || (user && publicRoute);
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     {!focusRoute && <header className="topbar"><div className="topbar-inner"><Brand /><div className="header-right">
-      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" onClick={() => { logout(); router.replace('/login?logged_out=1'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
+      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={() => { logout('Kamu sudah keluar dari akun.'); router.replace('/login'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
