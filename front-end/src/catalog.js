@@ -71,6 +71,30 @@ export function resolveTarget(selection, tracks, competencies, skills) {
   return record ? { ...record, kind: selection.target, track, competency, skill } : null;
 }
 
+const difficultyKeys = ['beginner', 'intermediate', 'advanced'];
+
+export function countByDifficulty(skills) {
+  const counts = { beginner: 0, intermediate: 0, advanced: 0 };
+  for (const item of skills) if (difficultyKeys.includes(item.difficulty)) counts[item.difficulty] += 1;
+  return counts;
+}
+
+export function filterSkills(skills, { search = '', difficulty = 'all' } = {}) {
+  const term = search.trim().toLowerCase();
+  return skills.filter((item) =>
+    (difficulty === 'all' || item.difficulty === difficulty) &&
+    (!term || item.title.toLowerCase().includes(term)));
+}
+
+export function formatMinutes(minutes) {
+  if (!Number.isFinite(minutes) || minutes <= 0) return 'Estimasi belum tersedia';
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours && rest) return `${hours} jam ${rest} menit`;
+  if (hours) return `${hours} jam`;
+  return `${rest} menit`;
+}
+
 export async function loadTarget(query, options) {
   const selection = parseSelection(new URLSearchParams(query));
   if (!selection.track) throw new ApiError('Pilih career track terlebih dahulu.');
