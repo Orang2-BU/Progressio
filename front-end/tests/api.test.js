@@ -160,8 +160,8 @@ describe('frontend foundation rendering', () => {
   beforeEach(() => { globalThis.fetch = () => { throw new Error('Foundation rendering must not contact any API'); }; });
   afterEach(() => { globalThis.fetch = originalFoundationFetch; });
 
-  test('expired session renders a warning; local logout and registration render success', () => {
-    for (const reason of ['Sesi berakhir. Masuk kembali untuk melanjutkan.', 'Kamu sudah keluar dari akun.', 'Akun pelajar-qa berhasil dibuat. Masuk dengan username dan kata sandimu.']) {
+  test('expired session and registration reasons render their notices', () => {
+    for (const reason of ['Sesi berakhir. Masuk kembali untuk melanjutkan.', 'Akun pelajar-qa berhasil dibuat. Masuk dengan username dan kata sandimu.']) {
       const { app, render } = foundationRenderer({ session: { user: null, reason } });
       const markup = render(app.AuthPage, { mode: 'login' });
       assert.match(markup, /role="status"/);
@@ -175,6 +175,22 @@ describe('frontend foundation rendering', () => {
       }
       assert.ok(markup.includes(reason));
       assert.match(markup, /Sesi hanya tersimpan selama halaman ini terbuka/);
+    }
+  });
+
+  test('logged_out query renders the local logout success notice', () => {
+    const originalWindow = globalThis.window;
+    globalThis.window = { location: { search: '?logged_out=1' } };
+    try {
+      const { app, render } = foundationRenderer({ session: { user: null, reason: '' } });
+      const markup = render(app.AuthPage, { mode: 'login' });
+      assert.match(markup, /role="status"/);
+      assert.match(markup, /ui-notice-success/);
+      assert.match(markup, /<strong>Berhasil<\/strong>/);
+      assert.match(markup, /Kamu sudah keluar dari akun\./);
+    } finally {
+      if (originalWindow === undefined) delete globalThis.window;
+      else globalThis.window = originalWindow;
     }
   });
 

@@ -1,0 +1,113 @@
+{
+    "task":  "TASK-044",
+    "review_round":  1,
+    "date":  "2026-10-12",
+    "snapshot_base":  "59ebc369eff75dd063ca568322e0ca3cade23705",
+    "integration_candidate_before_rework":  "5ff41a2058422fb4d2b1e503e40cd0a5199a7a88",
+    "overlay_count":  18,
+    "overlays":  [
+                     {
+                         "path":  "front-end/package.json",
+                         "sha256":  "46f7532d20a4285fe5d7a1e31fae78ed4ea38f9e7d38dc98c2ac20c5702f0d23"
+                     },
+                     {
+                         "path":  "front-end/CHANGELOG.md",
+                         "sha256":  "1b2c8ab055faa37c2b258a06adb48b7bf4d8de2ba49b90180f3ec8f7e168e423"
+                     },
+                     {
+                         "path":  "front-end/src/App.jsx",
+                         "sha256":  "058ddb5b7e2b9aeab49ef8602698c3c2339feed46cfb62df3800b6c705c19a7a"
+                     },
+                     {
+                         "path":  "front-end/src/Catalog.jsx",
+                         "sha256":  "fad07ac7661f3af743da76e488b422f84f3c9090863d4ee2c768a9719f1d19b2"
+                     },
+                     {
+                         "path":  "front-end/src/Dashboard.jsx",
+                         "sha256":  "181466040cde60db728ea3835f66fec5ee3df4bfb69f94898cf56a2098d10c5c"
+                     },
+                     {
+                         "path":  "front-end/src/Profile.jsx",
+                         "sha256":  "375d68201bd1158f11f206f84fa368c10bac0ed29cdd785ed649ebd938e20158"
+                     },
+                     {
+                         "path":  "front-end/src/api.js",
+                         "sha256":  "264184672a1a6a90b7c096b7cc320de48a8b2c12e2334233a2c62b036391f619"
+                     },
+                     {
+                         "path":  "front-end/src/catalog.js",
+                         "sha256":  "ac85a90b2352f5cfcfab0bbdc93951dfb8bf2d05e541a28509836d08196b9ed9"
+                     },
+                     {
+                         "path":  "front-end/src/dashboard.js",
+                         "sha256":  "63be3e86f64fc38de19c9dfa1c2e6024c0dfbf731016381869d84a50d3a4f139"
+                     },
+                     {
+                         "path":  "front-end/src/styles.css",
+                         "sha256":  "198dd18b90525a6ddb63776f431e5634b4b3ee5c5973d4f651c392a92bcce3b0"
+                     },
+                     {
+                         "path":  "front-end/src/app/page.jsx",
+                         "sha256":  "c5f5dd3a93c3d9581dab5f0476bf78b524ea6163aad155e77e62ae4bfabd3122"
+                     },
+                     {
+                         "path":  "front-end/src/app/profile/page.jsx",
+                         "sha256":  "73d1eceb9b8e5667e3f5b08855a0dc7e7bc89c44fe43b15f3d9527f02efaea77"
+                     },
+                     {
+                         "path":  "front-end/src/app/dashboard-route.jsx",
+                         "sha256":  "a02f17a33b4004790a6ca1e322c00678968b3d5e05999e199ff2db2b21fc39f0"
+                     },
+                     {
+                         "path":  "front-end/tests/api.test.js",
+                         "sha256":  "e044bbedf956cbe00f3295a0e02417b8bd20e067a0dd56c887ec039bdcd2e7ae"
+                     },
+                     {
+                         "path":  "front-end/tests/catalog.test.js",
+                         "sha256":  "8760f0ad14c735f15e6df3dd47a2c11c883a9d6bb5550118eabb8424e055c2ed"
+                     },
+                     {
+                         "path":  "front-end/tests/dashboard.test.js",
+                         "sha256":  "b4bacd73c794de2f19c75f51d23d5faef31babbc6aa8ecb93d28c588422d5242"
+                     },
+                     {
+                         "path":  "front-end/tests/logout-accessibility.test.js",
+                         "sha256":  "1a62090d4332934548cb1d20bb801b212c9689e7848df0ca3a02a239f11f5ea6"
+                     },
+                     {
+                         "path":  "front-end/tests/support/render-foundation.js",
+                         "sha256":  "aac2513588c7165f1bfc072648731e888d9faf6983660240620a8d1d62e154e2"
+                     }
+                 ],
+    "package_lock":  {
+                         "sha256":  "bfc5f5345a73e9245d470d97de827e3043f8aa6b609f892aaa57cda8e31be3e2",
+                         "source":  "safe base"
+                     },
+    "commands":  [
+                     {
+                         "command":  "npm ci",
+                         "cwd":  "isolated snapshot front-end",
+                         "exit":  0
+                     },
+                     {
+                         "summary":  "47 passed; 0 failed; 0 skipped",
+                         "command":  "npm test",
+                         "cwd":  "isolated snapshot front-end",
+                         "exit":  0
+                     },
+                     {
+                         "summary":  "13 routes generated",
+                         "command":  "npm run build",
+                         "cwd":  "isolated snapshot front-end",
+                         "exit":  0
+                     }
+                 ],
+    "snapshot_path":  "C:\\Users\\ramar\\AppData\\Local\\Temp\\progressio-task044-safe-snapshot-r3",
+    "notes":  [
+                  "Safe base extracted from git archive; no blocked inherited HEAD source tree was used.",
+                  "Only the 18 listed frontend paths were overlaid; package-lock.json remained from safe base.",
+                  "Snapshot contains the TASK-044 candidate UI/catalog/test deltas after the auth behavior regression fix.",
+                  "No backend, Mobile, provider, browser, or E2E code was run.",
+                  "This snapshot does not prove full integrated HEAD, browser behavior, or release gate clearance."
+              ]
+}

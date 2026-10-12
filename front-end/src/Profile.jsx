@@ -49,8 +49,8 @@ export default function Profile() {
   }
 
   function signOut() {
-    logout('Kamu sudah keluar dari akun.');
-    router.replace('/login');
+    logout();
+    router.replace('/login?logged_out=1');
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;
