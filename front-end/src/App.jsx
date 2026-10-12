@@ -10,6 +10,10 @@ import { Button, Icon, Notice, ProgressBar } from './ui.jsx';
 export const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
 
+export function logoutNoticeFromSearch(search) {
+  return search?.get('logged_out') === '1' ? 'Kamu sudah keluar dari akun.' : '';
+}
+
 function authNoticeProps(text) {
   if (text.startsWith('Sesi berakhir')) return { tone: 'warning', title: 'Sesi berakhir' };
   return { tone: 'success' };
@@ -145,8 +149,11 @@ export function FocusLayout({ children, exitHref, completed = 0, total = 0 }) {
 export function AuthPage({ mode }) {
   const { reason } = useSession();
   const router = useRouter();
-  const search = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search);
-  const notice = mode !== 'login' ? '' : search?.get('logged_out') === '1' ? 'Kamu sudah keluar dari akun.' : reason;
+  const [logoutNotice, setLogoutNotice] = useState('');
+  useEffect(() => {
+    setLogoutNotice(mode === 'login' ? logoutNoticeFromSearch(new URLSearchParams(window.location.search)) : '');
+  }, [mode]);
+  const notice = mode !== 'login' ? '' : logoutNotice || reason;
   return <AuthForm mode={mode} notice={notice}
     onRegistered={(username) => {
       logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
