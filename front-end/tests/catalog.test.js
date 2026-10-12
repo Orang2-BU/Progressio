@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { listCatalog, parseSelection, selectionHref, resolveTarget } from '../src/catalog.js';
+import { listCatalog, parseSelection, selectionHref, resolveTarget, filterSkills, countByDifficulty, formatMinutes } from '../src/catalog.js';
 import { login, logout } from '../src/api.js';
 import { loginDestination } from '../src/navigation.js';
 
@@ -73,6 +73,30 @@ test('invalid IDs, duplicate parameters, missing parents, wrong ancestry and ina
   assert.throws(() => resolveTarget(selected, tracks, competencies, [{ ...skills[0], competency: 99 }]), /Skill/);
   assert.throws(() => resolveTarget(selected, [{ ...tracks[0], is_active: false }], competencies, skills), /aktif/);
   assert.throws(() => resolveTarget(selected, [], [], []), /tersedia/);
+});
+
+test('skill difficulty filter and search narrow only the loaded list, and an unmatched filter yields an empty result', () => {
+  const list = [
+    { id: 1, title: 'REST API Design', difficulty: 'intermediate' },
+    { id: 2, title: 'Caching Basics', difficulty: 'beginner' },
+    { id: 3, title: 'Observability', difficulty: 'advanced' },
+  ];
+  assert.deepEqual(countByDifficulty(list), { beginner: 1, intermediate: 1, advanced: 1 });
+  assert.deepEqual(countByDifficulty([]), { beginner: 0, intermediate: 0, advanced: 0 });
+  assert.equal(filterSkills(list, { search: '', difficulty: 'all' }).length, 3);
+  assert.deepEqual(filterSkills(list, { search: '', difficulty: 'beginner' }).map((item) => item.id), [2]);
+  assert.deepEqual(filterSkills(list, { search: 'api', difficulty: 'all' }).map((item) => item.id), [1]);
+  assert.equal(filterSkills(list, { search: 'caching', difficulty: 'advanced' }).length, 0);
+  assert.equal(filterSkills(list, {}).length, 3);
+});
+
+test('estimated minutes are formatted as hours/minutes and missing estimates are labelled, never shown as 0', () => {
+  assert.equal(formatMinutes(45), '45 menit');
+  assert.equal(formatMinutes(90), '1 jam 30 menit');
+  assert.equal(formatMinutes(120), '2 jam');
+  assert.equal(formatMinutes(0), 'Estimasi belum tersedia');
+  assert.equal(formatMinutes(undefined), 'Estimasi belum tersedia');
+  assert.equal(formatMinutes(-5), 'Estimasi belum tersedia');
 });
 
 test('login returns to the target URL and rejects external or unknown destinations', () => {
