@@ -141,13 +141,14 @@ export default function Catalog() {
                 <input type="search" value={search} placeholder="Cari skill, misalnya caching" onChange={(event) => setSearch(event.target.value)} />
               </label>
             </div>
-            <div className="catalog-skill-tabs" role="tablist" aria-label="Filter tingkat kesulitan">
-              {difficultyTabs.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={difficulty === key}
+            <div className="catalog-skill-tabs" role="group" aria-label="Filter tingkat kesulitan">
+              {difficultyTabs.map(([key, label]) => <button key={key} type="button" aria-pressed={difficulty === key}
                 className={`catalog-skill-tab${difficulty === key ? ' is-active' : ''}`} onClick={() => setDifficulty(key)}>
                 {label} <span className="catalog-skill-tab-count">{key === 'all' ? totalSkills : difficultyCounts[key]}</span>
               </button>)}
             </div>
             <div className="catalog-skill-rows" role="radiogroup" aria-label="Daftar skill">
+              <div className="catalog-skill-head" aria-hidden="true"><span>Skill</span><span>Tingkat</span><span>Estimasi</span></div>
               <label className="catalog-skill-row is-clear"><input type="radio" name="skill" checked={!selection.skill} onChange={() => change('skill', '')} />
                 <span className="catalog-skill-main"><span className="catalog-skill-title">Seluruh competency</span>
                   <span className="catalog-skill-desc">Ukur semua skill pada competency ini, tanpa target skill tunggal.</span></span>
@@ -165,6 +166,8 @@ export default function Catalog() {
             </div>
             <p className="hint catalog-skill-summary">Menampilkan <b>{visibleSkills.length}</b> dari <b>{totalSkills}</b> skill.</p>
           </div>}
+          {skill && detail.loading && <LoadingState>Memuat detail skill…</LoadingState>}
+          {skill && !detail.loading && detail.error && <div className="catalog-description">{errorBlock(detail.error)}</div>}
           {skill && validDetail && <div className="catalog-description">
             <h3>{skill.title}</h3><p>{skill.description || 'Belum ada deskripsi skill.'}</p>
             <p className="hint"><DifficultyTag level={skill.difficulty} /> · Estimasi belajar {formatMinutes(skill.estimated_learning_minutes)} (bukan skor kemampuan).</p>
