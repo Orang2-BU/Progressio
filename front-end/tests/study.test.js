@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { login, logout } from '../src/api.js';
-import { studyHref, sourceHref, validateProgress, loadStudy, loadProgress, submitCheckpoint, completeLesson } from '../src/study.js';
+import { studyHref, sourceHref, validateProgress, loadStudy, loadProgress, submitCheckpoint, completeLesson, summarizeLessonProgress, pickActiveLesson, studyJourneyStatuses } from '../src/study.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
@@ -25,6 +25,23 @@ test('completion is derived from server lesson IDs, never from mastery or total 
   assert.equal(validateProgress({ ...progress, total_xp: 0, completed_lessons_count: 0, completed_lesson_ids: [], skills: [{ skill: 3, mastery: 100, xp: 0 }] }).completed_lesson_ids.length, 0);
   for (const invalid of [{ ...progress, completed_lesson_ids: undefined }, { ...progress, completed_lesson_ids: [7, 7], completed_lessons_count: 2 },
     { ...progress, completed_lessons_count: 2 }, { ...progress, total_xp: -1 }, { ...progress, skills: [{ skill: 3, mastery: null, xp: 0 }] }]) assert.throws(() => validateProgress(invalid));
+});
+test('lesson workspace progress counts only completed lesson IDs supplied by the server', () => {
+  assert.deepEqual(summarizeLessonProgress([{ id: 7 }, { id: 8 }, { id: 9 }], [7, 42]), {
+    completed: 1, total: 3, percentage: 33,
+  });
+  assert.deepEqual(summarizeLessonProgress([], []), { completed: 0, total: 0, percentage: 0 });
+});
+test('active lesson selection preserves a requested lesson and uses safe fallbacks', () => {
+  const lessons = [{ id: 7 }, { id: 8 }, { id: 9 }];
+  assert.deepEqual(pickActiveLesson(lessons, [7], 7), lessons[0]);
+  assert.deepEqual(pickActiveLesson(lessons, [7], null), lessons[1]);
+  assert.deepEqual(pickActiveLesson(lessons, null, null), lessons[0]);
+  assert.equal(pickActiveLesson([], [], null), undefined);
+});
+test('study journey does not infer diagnostic or roadmap completion from opening a lesson', () => {
+  assert.deepEqual(studyJourneyStatuses(false), ['upcoming', 'upcoming', 'upcoming', 'upcoming', 'locked']);
+  assert.deepEqual(studyJourneyStatuses(true), ['complete', 'upcoming', 'upcoming', 'current', 'locked']);
 });
 test('study loads all public pages, verifies skill track and rejects unrelated lesson/step payloads', async () => {
   let pages = 0;
@@ -73,6 +90,24 @@ test('checkpoint sends only an answer; wrong feedback is not HTTP success-as-cor
   assert.equal((await completeLesson(7)).xp_earned, 0);
   assert.deepEqual(await loadProgress(), progress);
   assert.equal(calls.length, 3);
+});
+test('checkpoint feedback reflects either server result and progress failures remain failures', async () => {
+  let checkpointResult = { correct: true, feedback: 'Correct' };
+  globalThis.fetch = async (url, options) => {
+    if (url.endsWith('auth/login')) return response({ access: 'token', refresh: 'refresh' });
+    if (url.endsWith('auth/me')) return response({ username: 'student' });
+    if (url.endsWith('checkpoint')) {
+      assert.deepEqual(JSON.parse(options.body), { answer: '200' });
+      return response(checkpointResult);
+    }
+    if (url.endsWith('progress')) return response({ detail: 'Temporarily unavailable' }, 503);
+    assert.fail(`unexpected ${url}`);
+  };
+  await login({ username: 'student', password: 'test' });
+  assert.deepEqual(await submitCheckpoint(9, '200'), { correct: true, feedback: 'Correct' });
+  checkpointResult = { correct: false, feedback: 'Try again' };
+  assert.deepEqual(await submitCheckpoint(9, '200'), { correct: false, feedback: 'Try again' });
+  await assert.rejects(loadProgress(), /Temporarily unavailable/);
 });
 test('lost completion response is not automatically replayed and malformed results cannot grant a badge', async () => {
   let posts = 0;

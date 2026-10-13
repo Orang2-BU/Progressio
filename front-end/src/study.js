@@ -26,6 +26,31 @@ export function validateProgress(data) {
 }
 export const loadProgress = async (options) => validateProgress(await request('progress', options));
 
+export function summarizeLessonProgress(lessons, completedLessonIds) {
+  const completedIds = new Set(completedLessonIds);
+  const completed = lessons.filter((lesson) => completedIds.has(lesson.id)).length;
+  return {
+    completed,
+    total: lessons.length,
+    percentage: lessons.length ? Math.round(completed / lessons.length * 100) : 0,
+  };
+}
+
+export function pickActiveLesson(lessons, completedLessonIds, requestedId) {
+  const requestedLesson = lessons.find((lesson) => lesson.id === requestedId);
+  if (requestedLesson) return requestedLesson;
+  if (completedLessonIds === null) return lessons[0];
+
+  const completedIds = new Set(completedLessonIds);
+  return lessons.find((lesson) => !completedIds.has(lesson.id)) || lessons[0];
+}
+
+export function studyJourneyStatuses(hasResolvedStudy) {
+  return hasResolvedStudy
+    ? ['complete', 'upcoming', 'upcoming', 'current', 'locked']
+    : ['upcoming', 'upcoming', 'upcoming', 'upcoming', 'locked'];
+}
+
 export async function loadStudy(query, options) {
   const params = new URLSearchParams(query);
   const value = params.get('learn');
