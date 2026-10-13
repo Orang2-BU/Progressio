@@ -37,8 +37,10 @@ class AIService:
         raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'. Expected 'mock' or 'http'.")
 
     @classmethod
-    def evaluate_submission(cls, assessment, submission_content):
+    def evaluate_submission(cls, assessment, submission_content, timeout_seconds=None):
         adapter = cls.get_adapter()
+        if timeout_seconds is not None and hasattr(adapter, 'timeout'):
+            adapter.timeout = min(adapter.timeout, max(1, int(timeout_seconds)))
         result = adapter.evaluate_submission(assessment, submission_content)
         if not isinstance(result, dict):
             return result

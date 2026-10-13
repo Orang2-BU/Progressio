@@ -305,6 +305,14 @@ class AIServicesTests(TestCase):
         with patch.dict(os.environ, {'AI_PROVIDER': ' GROQ ', 'GROQ_API_KEY': 'synthetic-key'}):
             self.assertIsInstance(AIService.get_adapter(), GroqAIAdapter)
 
+    def test_assessment_remaining_deadline_limits_provider_timeout(self):
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat', timeout=10)
+        with patch.object(adapter, 'evaluate_submission', return_value={'score': 50, 'feedback': 'OK'}), \
+                patch('apps.ai.services.AIService.get_adapter', return_value=adapter):
+            result = AIService.evaluate_submission(None, {'text': 'synthetic evidence'}, timeout_seconds=3)
+        self.assertEqual(adapter.timeout, 3)
+        self.assertEqual(result['provider'], 'http')
+
     def test_http_provider_outage_is_retryable_and_does_not_leak_vendor_body(self):
         adapter = HttpAIAdapter(api_url='https://ai.test/chat')
         error = HTTPError('https://ai.test/chat', 429, 'limited',
