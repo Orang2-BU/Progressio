@@ -15,7 +15,10 @@ class AIService:
 
     @classmethod
     def get_adapter(cls):
-        provider = os.getenv('AI_PROVIDER', 'mock').lower()
+        provider = os.getenv('AI_PROVIDER', 'mock').strip().lower()
+        if provider == 'groq':
+            from .adapters.groq import GroqAIAdapter
+            return GroqAIAdapter()
         if provider == 'http':
             if not os.getenv('AI_API_URL', '').strip():
                 raise ImproperlyConfigured(

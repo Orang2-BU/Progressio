@@ -15,6 +15,7 @@ from apps.assessments.services import AssessmentEvaluationService
 from .tasks import evaluate_submission_ai_task
 from .services import AIService
 from .adapters.http_adapter import HttpAIAdapter
+from .adapters.groq import GroqAIAdapter
 from unittest.mock import MagicMock, patch
 import json
 import os
@@ -222,3 +223,31 @@ class AIServicesTests(TestCase):
         sent_body = json.loads(request.data.decode('utf-8'))
         self.assertEqual(sent_body['model'], 'test-model')
         self.assertEqual(sent_body['task'], 'test_result')
+
+    def test_groq_adapter_builds_chat_json_schema_request_and_server_provenance(self):
+        with patch.dict(os.environ, {'GROQ_API_KEY': 'synthetic-key', 'AI_MODEL': 'openai/gpt-oss-20b'}):
+            adapter = GroqAIAdapter(api_url='https://groq.test/chat')
+        schema = {'type': 'object', 'additionalProperties': False,
+                  'properties': {'score': {'type': 'number'}}, 'required': ['score']}
+        body = adapter._build_request_body('evaluation', 'Use only evidence.', {'text': 'sample'}, schema)
+        self.assertEqual(body['model'], 'openai/gpt-oss-20b')
+        self.assertEqual([message['role'] for message in body['messages']], ['system', 'user'])
+        self.assertEqual(json.loads(body['messages'][1]['content']),
+                         {'task': 'evaluation', 'data': {'text': 'sample'}})
+        self.assertEqual(body['response_format']['type'], 'json_schema')
+        self.assertTrue(body['response_format']['json_schema']['strict'])
+        self.assertEqual(body['response_format']['json_schema']['schema'], schema)
+        self.assertFalse(body['stream'])
+
+        adapter._request_json = lambda *args: {
+            'score': 5, 'provider': 'model-spoof', 'model': 'model-spoof',
+        }
+        result = adapter._call_or_fallback('evaluation', 'instructions', {}, schema, lambda: {})
+        self.assertEqual(result, {'score': 5, 'provider': 'groq', 'model': 'openai/gpt-oss-20b'})
+
+    def test_groq_adapter_requires_key_and_is_registered(self):
+        with patch.dict(os.environ, {'AI_PROVIDER': 'groq', 'GROQ_API_KEY': ''}):
+            with self.assertRaises(ImproperlyConfigured):
+                AIService.get_adapter()
+        with patch.dict(os.environ, {'AI_PROVIDER': ' GROQ ', 'GROQ_API_KEY': 'synthetic-key'}):
+            self.assertIsInstance(AIService.get_adapter(), GroqAIAdapter)

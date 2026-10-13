@@ -60,12 +60,16 @@ else:
 if APP_ENV == 'production':
     AI_PROVIDER = os.getenv('AI_PROVIDER', '').strip().lower()
     BLOCKCHAIN_PROVIDER = os.getenv('BLOCKCHAIN_PROVIDER', '').strip().lower()
-    if AI_PROVIDER not in {'mock', 'http', 'openai'}:
-        raise ValueError("Production requires AI_PROVIDER to be explicitly set to 'mock' or 'http'.")
+    if AI_PROVIDER not in {'mock', 'http', 'openai', 'groq'}:
+        raise ValueError("Production requires AI_PROVIDER to be explicitly set to 'mock', 'http', 'openai', or 'groq'.")
     if BLOCKCHAIN_PROVIDER not in {'mock', 'http'}:
         raise ValueError("Production requires BLOCKCHAIN_PROVIDER to be explicitly set to 'mock' or 'http'.")
-    if AI_PROVIDER in {'http', 'openai'} and not (os.getenv('AI_API_URL', '').strip() or os.getenv('OPENAI_API_KEY', '').strip()):
-        raise ValueError('AI_API_URL is required when production AI_PROVIDER=http (legacy openai needs OPENAI_API_KEY).')
+    if AI_PROVIDER == 'http' and not os.getenv('AI_API_URL', '').strip():
+        raise ValueError('AI_API_URL is required when production AI_PROVIDER=http.')
+    if AI_PROVIDER == 'openai' and not (os.getenv('AI_API_URL', '').strip() or os.getenv('OPENAI_API_KEY', '').strip()):
+        raise ValueError('AI_API_URL or OPENAI_API_KEY is required when production AI_PROVIDER=openai.')
+    if AI_PROVIDER == 'groq' and not os.getenv('GROQ_API_KEY', '').strip():
+        raise ValueError('GROQ_API_KEY is required when production AI_PROVIDER=groq.')
     if BLOCKCHAIN_PROVIDER == 'http' and not os.getenv('BLOCKCHAIN_SERVICE_URL', '').strip():
         raise ValueError('BLOCKCHAIN_SERVICE_URL is required when production BLOCKCHAIN_PROVIDER=http.')
     if os.getenv('AI_ALLOW_MOCK_FALLBACK', 'False').lower() in {'1', 'true', 'yes', 'on'}:
