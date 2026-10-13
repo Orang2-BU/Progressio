@@ -232,6 +232,69 @@ describe('frontend foundation rendering', () => {
     assert.doesNotMatch(markup, /Navigasi workspace|Mengalihkan halaman/);
   });
 
+  test('assessment result renders server threshold and rubric snapshot, and hides missing details', () => {
+    const { render, load } = foundationRenderer();
+    const Result = load('Proof.jsx').Result;
+    const scored = render(Result, { result: {
+      status: 'completed', score: 82, is_passed: true, feedback: 'Evidence konsisten.',
+      evaluation: {
+        provider: 'rules', review_status: 'reviewed', curriculum_version: '2026.1',
+        passing_score: 70, max_score: 100,
+        rubric: [{ criterion: 'Evidence lengkap', weight: 60 }, { criterion: 'Penjelasan', weight: 40 }],
+      },
+    } });
+    assert.match(scored, /Ambang lulus saat dinilai:[\s\S]*70 \/ 100[\s\S]*status lulus mengikuti keputusan server/);
+    assert.match(scored, /Rubrik pada snapshot penilaian/);
+    assert.match(scored, /Evidence lengkap[\s\S]*60[\s\S]*Penjelasan[\s\S]*40/);
+    assert.match(scored, /skor per kriteria tidak tersedia/);
+    assert.match(scored, /Evidence konsisten\./);
+
+    const legacy = render(Result, { result: {
+      status: 'completed', score: 50, is_passed: false, feedback: '', evaluation: {},
+    } });
+    assert.doesNotMatch(legacy, /Ambang lulus saat dinilai|Rubrik pada snapshot penilaian|Evidence lengkap|Penjelasan/);
+    assert.match(legacy, /maksimum tidak dicatat/);
+    assert.match(legacy, /Feedback belum tersedia/);
+  });
+
+  test('credential rendering requires confirmed validity, provenance, and integrity for final status', () => {
+    const { render, load } = foundationRenderer({ path: '/verify/11111111-1111-4111-8111-111111111111' });
+    const CredentialView = load('Proof.jsx').CredentialView;
+    const credential = {
+      credential_id: '11111111-1111-4111-8111-111111111111', status: 'issued', is_valid: true,
+      integrity_verified: true, integrity_reason: 'Hash cocok.', score: 90, evidences: [],
+      standard: { mode: 'final', proof_provider: 'http', curriculum_version: '2026.1' },
+    };
+    const renderCredential = (overrides = {}) => render(CredentialView, { data: { ...credential, ...overrides }, publicView: true });
+
+    const integrityUnconfirmed = renderCredential({ integrity_verified: false, integrity_reason: 'Hash tidak cocok.' });
+    assert.match(integrityUnconfirmed, /Terbit · belum terverifikasi/);
+    assert.match(integrityUnconfirmed, /Credential diterbitkan, tetapi belum valid\/terverifikasi/);
+    assert.match(integrityUnconfirmed, /Hash tidak cocok\./);
+    assert.doesNotMatch(integrityUnconfirmed, /ui-status-success[^>]*>Final</);
+    assert.doesNotMatch(integrityUnconfirmed, /ui-status-warning[^>]*>Draft</);
+
+    const invalid = renderCredential({ is_valid: false, integrity_reason: 'Credential tidak valid.' });
+    assert.match(invalid, /Terbit · belum terverifikasi/);
+    assert.match(invalid, /Credential tidak valid\./);
+    assert.doesNotMatch(invalid, /ui-status-success[^>]*>Final</);
+    assert.doesNotMatch(invalid, /ui-status-warning[^>]*>Draft</);
+
+    const final = renderCredential();
+    assert.match(final, /ui-status-success[^>]*>Final</);
+    assert.match(final, /Credential final · integritas server terkonfirmasi/);
+
+    const draft = renderCredential({ status: 'draft', is_valid: false, integrity_verified: false, standard: { mode: 'demo' } });
+    assert.match(draft, /ui-status-warning[^>]*>Draft</);
+    assert.match(draft, /Bukan credential final terverifikasi/);
+    assert.doesNotMatch(draft, /Credential final · integritas server terkonfirmasi/);
+
+    const revoked = renderCredential({ status: 'revoked', is_valid: false, integrity_verified: false });
+    assert.match(revoked, /ui-status-error[^>]*>Dicabut</);
+    assert.match(revoked, /Credential dicabut/);
+    assert.doesNotMatch(revoked, /ui-status-success[^>]*>Final</);
+  });
+
   test('shared loading, empty and error states expose visible text and semantic roles', () => {
     const { ui, render } = foundationRenderer();
     assert.match(render(ui.LoadingState, { children: 'Memuat target…' }), /role="status"[\s\S]*Memuat target/);
