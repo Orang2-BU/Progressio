@@ -27,14 +27,14 @@ class CredentialService:
                     snapshot.get('curriculum_version') == competency.career_track.curriculum_version):
                 previous = selected.get(submission.assessment.skill_id)
                 def rank(s):
-                    return (s.evaluation.get('review_status') == 'reviewed' and s.evaluation.get('provider') in ('rules', 'openai'),
+                    return (s.evaluation.get('review_status') == 'reviewed' and s.evaluation.get('provider') in ('rules', 'openai', 'groq'),
                         s.score / s.evaluation['max_score'], s.pk)
                 if previous is None or rank(submission) > rank(previous):
                     selected[submission.assessment.skill_id] = submission
         missing = [{'id': skill.id, 'title': skill.title} for skill in skills if skill.id not in selected]
         ready = bool(skills) and not missing
         final = ready and competency.career_track.is_active and bool(competency.career_track.curriculum_version) and competency.career_track.curriculum_schema_version > 0 and competency.career_track.metadata.get('status') == 'reviewed' and all(
-            s.evaluation.get('review_status') == 'reviewed' and s.evaluation.get('provider') in ('rules', 'openai')
+            s.evaluation.get('review_status') == 'reviewed' and s.evaluation.get('provider') in ('rules', 'openai', 'groq')
             for s in selected.values()) and os.getenv('BLOCKCHAIN_PROVIDER', 'mock').lower() == 'http'
         reason = ('Eligible for final issuance.' if final else
             'Demo only: reviewed curriculum, reviewed non-mock evidence and a live proof provider are required.' if ready else

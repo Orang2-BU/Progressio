@@ -75,7 +75,10 @@ class AssessmentEvaluationService:
         try:
             if not isinstance(evaluation, dict):
                 raise ValueError()
-            raw_score = float(evaluation['score'])
+            source_score = evaluation['score']
+            if isinstance(source_score, bool) or not isinstance(source_score, (int, float)):
+                raise ValueError()
+            raw_score = float(source_score)
             if not math.isfinite(raw_score):
                 raise ValueError()
         except (ValueError, TypeError, KeyError) as exc:
@@ -84,8 +87,14 @@ class AssessmentEvaluationService:
         assessment = submission.assessment
         if assessment.max_score <= 0 or assessment.passing_score > assessment.max_score:
             raise ValidationError({'detail': 'Assessment scoring configuration is invalid.'})
-        score = round(max(0.0, min(raw_score, float(assessment.max_score))), 2)
-        feedback = evaluation.get('feedback') or cls._default_feedback(assessment, score)
+        if raw_score < 0 or raw_score > assessment.max_score:
+            raise ValidationError({'detail': 'Evaluator returned a score outside the configured range; no result was saved.'})
+        score = round(raw_score, 2)
+        feedback = evaluation.get('feedback')
+        if feedback is None:
+            feedback = cls._default_feedback(assessment, score)
+        if not isinstance(feedback, str) or len(feedback) > 10000:
+            raise ValidationError({'detail': 'Evaluator returned invalid feedback; no result was saved.'})
         track = assessment.skill.competency.career_track
         provider = evaluation.get('provider') or (
             'rules' if assessment.evaluation_mode == 'rules'
@@ -95,6 +104,7 @@ class AssessmentEvaluationService:
         submission.feedback = feedback
         submission.evaluation = {
             'provider': provider,
+            **({'model': evaluation['model']} if isinstance(evaluation.get('model'), str) else {}),
             'review_status': assessment.grading_config.get('review_status', 'unreviewed'),
             'curriculum_version': track.curriculum_version,
             'curriculum_schema_version': track.curriculum_schema_version,

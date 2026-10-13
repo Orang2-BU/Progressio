@@ -155,6 +155,16 @@ class CredentialAPITests(TransactionTestCase):
         self.assertNotIn('student_email', verification.data['standard'])
         self.assertEqual(self.client.get(url).status_code, 401)
 
+    @patch.dict('os.environ', {'BLOCKCHAIN_PROVIDER': 'http'})
+    def test_reviewed_groq_evidence_is_recognized_for_final_eligibility(self):
+        self.client.force_authenticate(user=self.user)
+        submission = self.create_passed_submission()
+        submission.evaluation['provider'] = 'groq'
+        submission.save(update_fields=['evaluation'])
+        result = self.client.get(reverse('credential-eligibility', args=[self.comp.pk]))
+        self.assertTrue(result.data['demo_ready'])
+        self.assertTrue(result.data['eligible'])
+
     def test_old_and_stale_evidence_do_not_qualify_and_detail_is_private(self):
         self.client.force_authenticate(user=self.user)
         s = self.create_passed_submission()

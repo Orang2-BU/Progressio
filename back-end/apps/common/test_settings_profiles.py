@@ -13,7 +13,9 @@ SETTING_ENV = (
     'DB_ENGINE',
     'DEFAULT_FROM_EMAIL', 'TRUST_X_FORWARDED_PROTO',
     'SECURE_HSTS_SECONDS', 'SECURE_HSTS_INCLUDE_SUBDOMAINS', 'SECURE_HSTS_PRELOAD',
-    'AI_PROVIDER', 'BLOCKCHAIN_PROVIDER', 'OPENAI_API_KEY', 'AI_ALLOW_MOCK_FALLBACK',
+    'AI_PROVIDER', 'BLOCKCHAIN_PROVIDER', 'OPENAI_API_KEY', 'GROQ_API_KEY',
+    'AI_API_URL', 'AI_API_KEY', 'AI_MODEL', 'AI_TIMEOUT_SECONDS',
+    'AI_MAX_COMPLETION_TOKENS', 'AI_ALLOW_MOCK_FALLBACK',
     'BLOCKCHAIN_SERVICE_URL',
     'THROTTLE_CACHE_URL', 'THROTTLE_CACHE_ALIAS', 'THROTTLE_CACHE_KEY_PREFIX',
     'THROTTLE_CACHE_TIMEOUT', 'CELERY_BROKER_URL',
@@ -72,6 +74,34 @@ class SettingsProfileTests(TestCase):
         )
         self.assertNotEqual(missing_providers.returncode, 0)
         self.assertIn('AI_PROVIDER', missing_providers.stderr)
+
+    def test_groq_profile_requires_key_and_bounded_request_budget(self):
+        required = {
+            'APP_ENV': 'production',
+            'SECRET_KEY': 'Synthetic-test-only-secret-0123456789-ABCDEFGHIJKLMNOP',
+            'DEBUG': 'False', 'ALLOWED_HOSTS': 'api.example.com',
+            'CORS_ALLOWED_ORIGINS': 'https://app.example.com',
+            'CSRF_TRUSTED_ORIGINS': 'https://app.example.com',
+            'DB_NAME': 'progressio_test', 'DB_USER': 'progressio_test',
+            'DB_PASSWORD': 'synthetic-test-only-password', 'DB_HOST': 'db.example.com',
+            'AI_PROVIDER': 'groq', 'BLOCKCHAIN_PROVIDER': 'mock',
+            'THROTTLE_CACHE_URL': 'redis://127.0.0.1:6379/1',
+        }
+        missing_key = self.run_manage('check', **required)
+        self.assertNotEqual(missing_key.returncode, 0)
+        self.assertIn('GROQ_API_KEY is required', missing_key.stderr)
+
+        configured = self.run_manage(
+            'check', **required, GROQ_API_KEY='synthetic-groq-key',
+            AI_TIMEOUT_SECONDS='10', AI_MAX_COMPLETION_TOKENS='2048',
+        )
+        self.assertEqual(configured.returncode, 0, configured.stderr)
+
+        excessive_timeout = self.run_manage(
+            'check', **required, GROQ_API_KEY='synthetic-groq-key', AI_TIMEOUT_SECONDS='45',
+        )
+        self.assertNotEqual(excessive_timeout.returncode, 0)
+        self.assertIn('AI_TIMEOUT_SECONDS must be between 1 and 10', excessive_timeout.stderr)
 
     def test_production_rejects_debug_and_wildcard(self):
         base = {

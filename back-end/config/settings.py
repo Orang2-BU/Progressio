@@ -57,8 +57,21 @@ else:
     DEBUG = os.getenv('DEBUG', 'True').lower() in {'1', 'true', 'yes', 'on'}
     ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,backend').split(',') if host.strip()]
 
+AI_PROVIDER = os.getenv('AI_PROVIDER', 'mock' if APP_ENV == 'local' else '').strip().lower()
+if AI_PROVIDER == 'groq':
+    if not os.getenv('GROQ_API_KEY', '').strip():
+        raise ImproperlyConfigured('GROQ_API_KEY is required when AI_PROVIDER=groq.')
+    try:
+        groq_timeout = int(os.getenv('AI_TIMEOUT_SECONDS', '10'))
+        groq_output_tokens = int(os.getenv('AI_MAX_COMPLETION_TOKENS', '2048'))
+    except ValueError as exc:
+        raise ImproperlyConfigured('Groq timeout and completion token settings must be integers.') from exc
+    if not 1 <= groq_timeout <= 10:
+        raise ImproperlyConfigured('AI_TIMEOUT_SECONDS must be between 1 and 10 for Groq.')
+    if not 1 <= groq_output_tokens <= 8192:
+        raise ImproperlyConfigured('AI_MAX_COMPLETION_TOKENS must be between 1 and 8192.')
+
 if APP_ENV == 'production':
-    AI_PROVIDER = os.getenv('AI_PROVIDER', '').strip().lower()
     BLOCKCHAIN_PROVIDER = os.getenv('BLOCKCHAIN_PROVIDER', '').strip().lower()
     if AI_PROVIDER not in {'mock', 'http', 'openai', 'groq'}:
         raise ValueError("Production requires AI_PROVIDER to be explicitly set to 'mock', 'http', 'openai', or 'groq'.")

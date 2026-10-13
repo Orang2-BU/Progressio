@@ -1,7 +1,9 @@
+import math
 import os
+import re
 from django.core.exceptions import ImproperlyConfigured
 from .adapters.mock import MockAIAdapter
-from .adapters.http_adapter import HttpAIAdapter
+from .adapters.http_adapter import AIProviderProtocolError, HttpAIAdapter
 from apps.careers.models import CareerTrack
 from apps.skills.models import Skill
 from apps.learning.models import SkillProgress
@@ -110,10 +112,7 @@ class AIService:
             for p in user_progresses
         ]
 
-        user_profile = {
-            'username': user.username,
-            'email': user.email,
-        }
+        user_profile = {'username': user.username}
 
         target = target_skill or target_competency or career_track
         track_data = {
@@ -123,7 +122,42 @@ class AIService:
         }
 
         adapter = cls.get_adapter()
-        return adapter.analyze_skill_gap(user_profile, track_data, user_skills, required_skills)
+        result = adapter.analyze_skill_gap(user_profile, track_data, user_skills, required_skills)
+        from .serializers import SkillGapAnalysisResponseSerializer
+        serializer = SkillGapAnalysisResponseSerializer(data=result)
+        if not serializer.is_valid():
+            raise AIProviderProtocolError('AI provider returned an invalid skill-gap response.')
+        data = serializer.validated_data
+        required_by_id = {item['id']: item for item in required_skills}
+        user_by_id = {item['id']: item for item in user_skills}
+        response_skills = data['missing_skills'] + data['acquired_skills']
+        response_ids = [item['id'] for item in response_skills]
+        if (any(isinstance(item['id'], bool) or item['id'] not in required_by_id
+                for item in response_skills)
+                or len(response_ids) != len(set(response_ids))):
+            raise AIProviderProtocolError('AI provider returned skill IDs outside the request.')
+
+        missing = []
+        acquired = []
+        for skill in required_skills:
+            progress = user_by_id.get(skill['id'], {})
+            mastery = progress.get('mastery', 0)
+            if isinstance(mastery, bool) or not math.isfinite(float(mastery)) or not 0 <= float(mastery) <= 100:
+                raise AIProviderProtocolError('Stored skill progress is invalid.')
+            if float(mastery) >= 70:
+                acquired.append({key: skill[key] for key in ('id', 'title', 'difficulty')})
+            else:
+                missing.append({
+                    'id': skill['id'], 'title': skill['title'], 'difficulty': skill['difficulty'],
+                    'current_mastery': float(mastery),
+                    'estimated_minutes': skill['estimated_learning_minutes'],
+                })
+        data['target_career_track'] = track_data['title']
+        data['missing_skills'] = missing
+        data['acquired_skills'] = acquired
+        data['match_percentage'] = round(len(acquired) * 100 / len(required_skills), 1) if required_skills else 0
+        data['recommended_priority_skill'] = missing[0]['title'] if missing else None
+        return data
 
     @classmethod
     def get_learning_recommendations(cls, user):
@@ -151,4 +185,24 @@ class AIService:
         }
 
         adapter = cls.get_adapter()
-        return adapter.generate_learning_recommendations(user_profile, {}, weak_areas)
+        result = adapter.generate_learning_recommendations(user_profile, {}, weak_areas)
+        from .serializers import LearningRecommendationsResponseSerializer
+        serializer = LearningRecommendationsResponseSerializer(data=result)
+        if not serializer.is_valid():
+            raise AIProviderProtocolError('AI provider returned invalid recommendations.')
+        data = serializer.validated_data
+        hours = data['estimated_weekly_study_hours']
+        allowed_skill_ids = {item['id'] for item in weak_areas}
+        if not math.isfinite(hours) or hours < 0 or hours > 80:
+            raise AIProviderProtocolError('AI provider returned an invalid study-time estimate.')
+        for item in data['recommendations']:
+            action = item['action_url']
+            if action == '/api/v1/learning-path':
+                continue
+            match = re.fullmatch(r'/api/v1/skills/(\d+)/lessons', action)
+            if not match or int(match.group(1)) not in allowed_skill_ids:
+                raise AIProviderProtocolError('AI provider returned an unknown recommendation route.')
+            if any(len(item[field]) > 1000 for field in ('title', 'reason')):
+                raise AIProviderProtocolError('AI provider returned oversized recommendation text.')
+        data['student_name'] = user.username
+        return data

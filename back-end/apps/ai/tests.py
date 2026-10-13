@@ -63,6 +63,32 @@ class AIServicesTests(TestCase):
         self.assertEqual(response.data['missing_skills'][0]['title'], 'Kubernetes Orchestration')
         self.assertIn('ai_insights', response.data)
 
+    def test_skill_gap_uses_only_server_mastery_and_never_sends_user_email(self):
+        from .adapters.mock import MockAIAdapter
+        self.client.force_authenticate(user=self.user)
+        SkillProgress.objects.create(user=self.user, skill=self.skill1, mastery=80.0, xp=150)
+        adapter = MockAIAdapter()
+        original = adapter.analyze_skill_gap
+        captured = {}
+
+        def spoofed_result(profile, target, user_skills, required_skills):
+            captured.update(profile=profile)
+            result = original(profile, target, user_skills, required_skills)
+            result['acquired_skills'].append(result['missing_skills'].pop())
+            result['match_percentage'] = 100
+            return result
+
+        with patch.object(adapter, 'analyze_skill_gap', side_effect=spoofed_result), \
+                patch('apps.ai.services.AIService.get_adapter', return_value=adapter):
+            response = self.client.post(reverse('ai-skill-gap-analysis'),
+                                        {'career_track_id': self.track.id}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('email', captured['profile'])
+        self.assertEqual(response.data['match_percentage'], 50.0)
+        self.assertEqual([item['id'] for item in response.data['missing_skills']], [self.skill2.id])
+        self.assertEqual([item['id'] for item in response.data['acquired_skills']], [self.skill1.id])
+
     def test_learning_recommendations_endpoint(self):
         self.client.force_authenticate(user=self.user)
         # User has a skill in progress (mastery 40%)
@@ -75,6 +101,28 @@ class AIServicesTests(TestCase):
         self.assertEqual(response.data['student_name'], 'ai_student')
         self.assertEqual(len(response.data['recommendations']), 1)
         self.assertIn('Docker Containers', response.data['recommendations'][0]['title'])
+
+    def test_learning_recommendations_reject_unsafe_routes_and_keep_user_name_server_side(self):
+        from .adapters.mock import MockAIAdapter
+        from .adapters.http_adapter import AIProviderProtocolError
+        SkillProgress.objects.create(user=self.user, skill=self.skill1, mastery=40.0, xp=50)
+        adapter = MockAIAdapter()
+        captured = {}
+
+        def unsafe_recommendations(profile, progress, weak_areas):
+            captured['profile'] = profile
+            return {
+                'student_name': 'spoofed', 'focus_area': 'Docker',
+                'recommendations': [{'type': 'open', 'title': 'External', 'reason': 'Go elsewhere',
+                                     'action_url': 'https://attacker.invalid'}],
+                'estimated_weekly_study_hours': 4,
+            }
+
+        with patch.object(adapter, 'generate_learning_recommendations', side_effect=unsafe_recommendations), \
+                patch('apps.ai.services.AIService.get_adapter', return_value=adapter):
+            with self.assertRaises(AIProviderProtocolError):
+                AIService.get_learning_recommendations(self.user)
+        self.assertNotIn('email', captured['profile'])
 
     def test_ai_evaluation_celery_task(self):
         assessment = Assessment.objects.create(
@@ -171,7 +219,7 @@ class AIServicesTests(TestCase):
         self.assertEqual(task_submission.evaluation, http_submission.evaluation)
 
     def test_celery_rejects_nonfinite_score_without_completing_submission(self):
-        for score in (float('nan'), float('inf'), float('-inf')):
+        for score in (float('nan'), float('inf'), float('-inf'), True, -1, 101):
             with self.subTest(score=score):
                 submission = Submission.objects.create(
                     user=self.user,
