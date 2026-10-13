@@ -13,6 +13,14 @@ def api_exception_handler(exc, context):
     number, means a client never has to parse prose to schedule its retry.
     """
     response = drf_exception_handler(exc, context)
+    api_code = getattr(exc, 'api_code', None)
+    if response is not None and api_code and isinstance(response.data, dict):
+        response.data['code'] = api_code
+        retry_after = getattr(exc, 'retry_after_seconds', None)
+        if retry_after is not None:
+            seconds = max(1, math.ceil(retry_after))
+            response.data['retry_after_seconds'] = seconds
+            response['Retry-After'] = str(seconds)
     wait = getattr(exc, 'wait', None)
     if response is not None and wait is not None and isinstance(response.data, dict):
         seconds = max(1, math.ceil(wait))

@@ -1,9 +1,10 @@
 from collections import defaultdict
 import math
 import os
+import time
 from django.contrib.auth import get_user_model
 
-from django.db import transaction
+from django.db import connection, transaction, OperationalError
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import APIException
@@ -17,10 +18,29 @@ from .models import DiagnosticAttempt, DiagnosticQuestion, Submission
 class AssessmentEvaluationService:
     """Server-side assessment lifecycle and grading orchestration."""
 
+    TOTAL_REQUEST_SECONDS = 12
+    DATABASE_LOCK_TIMEOUT = '1000ms'
+    DATABASE_STATEMENT_TIMEOUT = '11000ms'
+
+    @classmethod
+    def submit_and_evaluate(cls, user, assessment, content, request_id=None):
+        deadline = time.monotonic() + cls.TOTAL_REQUEST_SECONDS
+        try:
+            return cls._submit_and_evaluate(user, assessment, content, request_id, deadline)
+        except OperationalError as exc:
+            raise cls._api_error(
+                'Assessment service is busy. Retry with the same request ID.',
+                'assessment_database_timeout', 503,
+            ) from exc
+
     @classmethod
     @transaction.atomic
-    def submit_and_evaluate(cls, user, assessment, content, request_id=None):
-        # ponytail: per-user transaction lock includes synchronous grading; use jobs if latency/throughput grows.
+    def _submit_and_evaluate(cls, user, assessment, content, request_id, deadline):
+        # The lock protects progress/replay identity; PostgreSQL bounds lock and query waits.
+        if connection.vendor == 'postgresql':
+            with connection.cursor() as cursor:
+                cursor.execute(f"SET LOCAL lock_timeout = '{cls.DATABASE_LOCK_TIMEOUT}'")
+                cursor.execute(f"SET LOCAL statement_timeout = '{cls.DATABASE_STATEMENT_TIMEOUT}'")
         get_user_model().objects.select_for_update().get(pk=user.pk)
         if request_id:
             previous = Submission.objects.filter(user=user, request_id=request_id).first()
@@ -54,11 +74,29 @@ class AssessmentEvaluationService:
         submission.save(update_fields=['status'])
 
         if assessment.evaluation_mode == assessment.EvaluationMode.AI:
-            evaluation = cls._evaluate_with_ai(assessment, content)
+            remaining = deadline - time.monotonic()
+            if remaining <= 1:
+                raise cls._api_error('Assessment deadline exceeded. Retry with the same request ID.',
+                                     'assessment_deadline_exceeded', 503)
+            timeout_seconds = min(10, max(1, math.floor(remaining) - 1))
+            evaluation = cls._evaluate_with_ai(assessment, content, timeout_seconds)
         else:
             evaluation = cls._evaluate_with_rules(assessment, content)
 
-        return cls.complete_evaluation(submission.pk, evaluation)
+        completed = cls.complete_evaluation(submission.pk, evaluation)
+        if time.monotonic() > deadline:
+            raise cls._api_error('Assessment deadline exceeded. Retry with the same request ID.',
+                                 'assessment_deadline_exceeded', 503)
+        return completed
+
+    @staticmethod
+    def _api_error(detail, code, status_code, retry_after_seconds=None):
+        error = APIException(detail=detail, code=code)
+        error.status_code = status_code
+        error.api_code = code
+        if retry_after_seconds is not None:
+            error.retry_after_seconds = retry_after_seconds
+        return error
 
     @classmethod
     @transaction.atomic
@@ -156,32 +194,29 @@ class AssessmentEvaluationService:
         }
 
     @staticmethod
-    def _evaluate_with_ai(assessment, content):
+    def _evaluate_with_ai(assessment, content, timeout_seconds=10):
         from apps.ai.services import AIService
         from apps.ai.adapters.http_adapter import AIProviderProtocolError, AIProviderUnavailable
 
         try:
-            evaluation = AIService.evaluate_submission(assessment, content)
+            evaluation = AIService.evaluate_submission(assessment, content, timeout_seconds)
         except AIProviderUnavailable as exc:
-            error = APIException(
-                detail={'detail': 'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
-                        'code': 'ai_provider_unavailable',
-                        **({'retry_after_seconds': exc.retry_after_seconds}
-                           if exc.retry_after_seconds is not None else {})},
+            error = AssessmentEvaluationService._api_error(
+                'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
+                'ai_provider_unavailable', 503, exc.retry_after_seconds,
             )
-            error.status_code = 503
             raise error from exc
         except AIProviderProtocolError as exc:
-            error = APIException(detail={'detail': 'AI provider returned an invalid evaluation response.',
-                                          'code': 'ai_provider_invalid_response'})
-            error.status_code = 502
+            error = AssessmentEvaluationService._api_error(
+                'AI provider returned an invalid evaluation response.',
+                'ai_provider_invalid_response', 502,
+            )
             raise error from exc
         except Exception as exc:
-            error = APIException(
-                detail={'detail': 'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
-                        'code': 'ai_provider_unavailable'},
+            error = AssessmentEvaluationService._api_error(
+                'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
+                'ai_provider_unavailable', 503,
             )
-            error.status_code = 503
             raise error from exc
         if not isinstance(evaluation, dict) or evaluation.get('score') is None:
             raise ValidationError({'detail': 'AI provider returned an invalid evaluation result.'})

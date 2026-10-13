@@ -210,6 +210,7 @@ class AssessmentModelAndAPITests(TestCase):
         with patch('apps.ai.services.AIService.get_adapter', side_effect=RuntimeError('secret provider detail')):
             response = self.client.post(url, body, format='json')
         self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data['code'], 'ai_provider_unavailable')
         self.assertNotIn('secret', str(response.data))
         self.assertEqual(Submission.objects.count(), 0)
         with patch('apps.assessments.services.AssessmentEvaluationService._evaluate_with_ai', return_value={'score': 90, 'provider': 'mock-fallback'}):
@@ -222,6 +223,20 @@ class AssessmentModelAndAPITests(TestCase):
             invalid = self.client.post(url, {'request_id': str(uuid.uuid4()), 'content': {'text': 'evidence'}}, format='json')
         self.assertEqual(invalid.status_code, 400)
         self.assertEqual(Submission.objects.count(), 1)
+
+    def test_database_lock_timeout_is_a_retryable_503(self):
+        from django.db import OperationalError
+        from unittest.mock import patch
+        self.client.force_authenticate(user=self.user)
+        with patch('apps.assessments.services.AssessmentEvaluationService._submit_and_evaluate',
+                   side_effect=OperationalError('synthetic lock timeout')):
+            response = self.client.post(
+                reverse('assessment-submit', args=[self.assessment.pk]),
+                {'content': {}}, format='json',
+            )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data['code'], 'assessment_database_timeout')
+        self.assertNotIn('synthetic lock timeout', str(response.data))
 
     def test_public_quiz_requires_complete_valid_answers(self):
         self.client.force_authenticate(user=self.user)
