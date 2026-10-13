@@ -1,0 +1,99 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Set DB_NAME in back-end/.env.demo}
+      POSTGRES_USER: ${DB_USER:?Set DB_USER in back-end/.env.demo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in back-end/.env.demo}
+    ports:
+      - "127.0.0.1:5435:5432"
+    volumes:
+      - demo_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - demo_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    restart: unless-stopped
+    command: >-
+      sh -c "python manage.py migrate && python manage.py seed_demo &&
+      python manage.py demo_preflight &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"
+    ports:
+      - "127.0.0.1:8001:8000"
+    env_file:
+      - path: ./back-end/.env.demo
+        required: true
+    environment:
+      APP_ENV: local
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      DB_ENGINE: postgresql
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      THROTTLE_CACHE_URL: redis://redis:6379/1
+      THROTTLE_CACHE_KEY_PREFIX: progressio-demo
+      AI_ALLOW_MOCK_FALLBACK: "False"
+      PUBLIC_WEB_URL: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/ready/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    restart: unless-stopped
+    command: celery -A config worker -l INFO
+    env_file:
+      - path: ./back-end/.env.demo
+        required: true
+    environment:
+      APP_ENV: local
+      DEBUG: "True"
+      DB_ENGINE: postgresql
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      THROTTLE_CACHE_URL: redis://redis:6379/1
+      THROTTLE_CACHE_KEY_PREFIX: progressio-demo
+      AI_ALLOW_MOCK_FALLBACK: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  demo_db_data:
+  demo_redis_data:

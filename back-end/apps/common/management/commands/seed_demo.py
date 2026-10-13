@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from apps.curriculum.importer import import_track
@@ -25,14 +25,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         tracks = available_tracks()
         if not tracks:
-            self.stdout.write(self.style.WARNING('No curriculum packages found under curriculum/tracks/.'))
+            raise CommandError('No curriculum packages found under curriculum/tracks/.')
 
         for track_id in tracks:
             try:
                 report = import_track(track_id)
             except CurriculumError as error:
-                self.stdout.write(self.style.ERROR(f'{track_id}: {error}'))
-                continue
+                raise CommandError(f'{track_id}: {error}') from error
             created = sum(report.created.values())
             updated = sum(report.updated.values())
             self.stdout.write(f'{track_id}: {created} created, {updated} updated')

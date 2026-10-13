@@ -9,3 +9,8 @@ class HealthCheckResponseSerializer(serializers.Serializer):
         default="Progressio backend service is running smoothly.",
         help_text="Status message"
     )
+
+
+class ReadinessResponseSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=('ready', 'not_ready'))
+    components = serializers.DictField(child=serializers.ChoiceField(choices=('ok', 'unavailable')))

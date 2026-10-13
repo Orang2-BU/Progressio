@@ -36,6 +36,7 @@ staticfiles/
 # Environment variables
 .env
 .env.local
+/back-end/.env.demo
 
 # IDE & OS
 .vscode/

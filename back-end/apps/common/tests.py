@@ -1,10 +1,12 @@
 import os
+from io import StringIO
 from unittest.mock import patch
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.assessments.models import Assessment, DiagnosticQuestion
@@ -44,6 +46,30 @@ class HealthCheckTests(TestCase):
         self.assertEqual(response.data['service'], 'Progressio API')
         self.assertEqual(response.data['version'], '1.0.0')
         self.assertIn('message', response.data)
+
+    def test_readiness_separates_liveness_from_unseeded_demo_catalog(self):
+        self.assertEqual(self.client.get(reverse('health-check')).status_code, status.HTTP_200_OK)
+        response = self.client.get(reverse('readiness-check'))
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.data['status'], 'not_ready')
+        self.assertEqual(response.data['components']['database'], 'ok')
+        self.assertEqual(response.data['components']['cache'], 'ok')
+        self.assertEqual(response.data['components']['catalog'], 'unavailable')
+        self.assertEqual(set(response.data), {'status', 'components'})
+
+    def test_readiness_sanitizes_cache_and_database_failures(self):
+        with patch('apps.common.views.caches') as mocked_caches:
+            mocked_caches.__getitem__.side_effect = RuntimeError('synthetic redis credential')
+            response = self.client.get(reverse('readiness-check'))
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.data['components']['cache'], 'unavailable')
+        self.assertNotIn('synthetic redis credential', str(response.data))
+
+        with patch('apps.common.views.connection.cursor', side_effect=RuntimeError('synthetic database password')):
+            response = self.client.get(reverse('readiness-check'))
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.data['components']['database'], 'unavailable')
+        self.assertNotIn('synthetic database password', str(response.data))
 
     def test_openapi_schema_endpoint(self):
         """OpenAPI schema should be generated successfully."""
@@ -104,3 +130,37 @@ class HealthCheckTests(TestCase):
         self.assertTrue(Skill.objects.exists())
         self.assertFalse(Skill.objects.filter(is_managed=False).exists())
         self.assertTrue(User.objects.filter(username='student').exists())
+
+
+class SeedDemoCommandTests(TestCase):
+    def test_missing_or_invalid_curriculum_fails_without_creating_demo_accounts(self):
+        with patch('apps.common.management.commands.seed_demo.available_tracks', return_value=[]):
+            with self.assertRaises(CommandError):
+                call_command('seed_demo', verbosity=0)
+        self.assertFalse(User.objects.filter(username='student').exists())
+
+        def import_track(track_id):
+            if track_id == 'first':
+                User.objects.create_user(username='partial-import')
+                return type('ImportReport', (), {
+                    'created': {}, 'updated': {}, 'warnings': [],
+                })()
+            from apps.curriculum.loader import CurriculumError
+            raise CurriculumError('synthetic invalid package')
+
+        with patch('apps.common.management.commands.seed_demo.available_tracks',
+                   return_value=['first', 'broken']), \
+                patch('apps.common.management.commands.seed_demo.import_track', side_effect=import_track):
+            with self.assertRaises(CommandError):
+                call_command('seed_demo', verbosity=0)
+        self.assertFalse(User.objects.filter(username__in=['student', 'partial-import']).exists())
+
+    def test_demo_preflight_checks_a_two_skill_demo_and_omits_provider_secrets(self):
+        with self.assertRaises(CommandError):
+            call_command('demo_preflight', stdout=StringIO(), stderr=StringIO())
+        call_command('seed_demo', verbosity=0, stdout=StringIO())
+        output = StringIO()
+        call_command('demo_preflight', stdout=output)
+        self.assertIn('two-skill competencies', output.getvalue())
+        self.assertIn('Demo preflight passed.', output.getvalue())
+        self.assertNotIn('GROQ_API_KEY', output.getvalue())
