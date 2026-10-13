@@ -37,6 +37,7 @@ test('register sends exact payload without authorization; login loads real profi
 
 test('Next proxy preserves Django endpoints with and without a trailing slash', async () => {
   assert.equal(nextConfig.skipTrailingSlashRedirect, true);
+  assert.equal(nextConfig.turbopack.root, process.cwd());
   const rules = await nextConfig.rewrites();
   assert.equal(rules[0].source, '/api/:path*/');
   assert.ok(rules[0].destination.endsWith('/api/:path*/'));

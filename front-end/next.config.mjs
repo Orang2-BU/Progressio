@@ -9,6 +9,7 @@ export default {
   // Django mixes slash-ended list endpoints with slashless auth/detail endpoints.
   skipTrailingSlashRedirect: true,
   agentRules: false,
+  turbopack: { root: process.cwd() },
   async rewrites() {
     return [
       { source: '/api/:path*/', destination: `${backend}/api/:path*/` },
