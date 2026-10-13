@@ -88,10 +88,34 @@ services:
       THROTTLE_CACHE_URL: redis://redis:6379/1
       THROTTLE_CACHE_KEY_PREFIX: progressio-demo
       AI_ALLOW_MOCK_FALLBACK: "False"
+      DEMO_ANCHOR_PRIVATE_KEY: ""
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  demo_anchor_worker:
+    build:
+      context: .
+      dockerfile: back-end/Dockerfile
+    restart: unless-stopped
+    command: python manage.py process_demo_anchors --loop
+    env_file:
+      - path: ./back-end/.env.demo
+        required: true
+      - path: ./back-end/.env.anchor-worker
+        required: true
+    environment:
+      APP_ENV: local
+      DEBUG: "True"
+      DB_ENGINE: postgresql
+      DB_HOST: db
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      db:
         condition: service_healthy
 
 volumes:

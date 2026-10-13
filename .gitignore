@@ -37,6 +37,7 @@ staticfiles/
 .env
 .env.local
 /back-end/.env.demo
+/back-end/.env.anchor-worker
 
 # IDE & OS
 .vscode/

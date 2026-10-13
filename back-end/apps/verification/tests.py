@@ -10,6 +10,7 @@ from apps.competencies.models import Competency
 from apps.credentials.models import Credential, Evidence
 from apps.credentials.services import CredentialService
 from apps.blockchain.services import BlockchainService
+from apps.blockchain.models import DemoAnchor
 
 User = get_user_model()
 
@@ -101,3 +102,18 @@ class PublicVerificationAPITests(TransactionTestCase):
                 response = self.client.get(reverse('verify-credential', args=[self.credential.pk]))
                 self.assertFalse(response.data['is_valid'])
                 self.assertFalse(response.data['integrity_verified'])
+
+    def test_public_verification_exposes_demo_anchor_but_never_issues_demo_credential(self):
+        demo = Credential.objects.create(user=self.user, competency=self.comp,
+            status=Credential.Status.DRAFT, score=75,
+            metadata={'mode': 'demo', 'student_name': 'John Doe'})
+        anchor = DemoAnchor.objects.create(credential=demo, credential_hash='a' * 64,
+            signer_address='0x' + '1' * 40, transaction_hash='0x' + '2' * 64,
+            state=DemoAnchor.State.CONFIRMED, block_number=123)
+        response = self.client.get(reverse('verify-credential', args=[demo.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['is_valid'])
+        self.assertEqual(response.data['status'], Credential.Status.DRAFT)
+        self.assertEqual(response.data['demo_anchor']['transaction_hash'], anchor.transaction_hash)
+        self.assertNotIn('raw_signed_transaction', response.data['demo_anchor'])
+        self.assertNotIn('private_key', response.data['demo_anchor'])

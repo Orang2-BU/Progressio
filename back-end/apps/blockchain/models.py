@@ -80,3 +80,29 @@ class ProofAttempt(TimestampMixin):
     outcome = models.CharField(max_length=20, default='started')
     error_code = models.CharField(max_length=40, blank=True)
     transaction_hash = models.CharField(max_length=66, blank=True)
+
+
+class DemoAnchor(TimestampMixin):
+    """Base Sepolia transaction for a non-final demo credential; never issues it."""
+
+    class State(models.TextChoices):
+        QUEUED = 'queued', 'Queued'
+        SUBMITTED = 'submitted', 'Submitted'
+        CONFIRMED = 'confirmed', 'Confirmed'
+        FAILED = 'failed', 'Failed'
+
+    credential = models.OneToOneField(Credential, on_delete=models.CASCADE, related_name='demo_anchor')
+    credential_hash = models.CharField(max_length=64)
+    network = models.CharField(max_length=40, default='base-sepolia')
+    chain_id = models.PositiveIntegerField(default=84532)
+    signer_address = models.CharField(max_length=42)
+    transaction_hash = models.CharField(max_length=66, blank=True)
+    block_number = models.PositiveBigIntegerField(null=True, blank=True)
+    state = models.CharField(max_length=20, choices=State.choices, default=State.QUEUED)
+    error_code = models.CharField(max_length=40, blank=True)
+    # Signed transactions are safe to re-broadcast after a worker crash and do not contain the key.
+    raw_signed_transaction = models.TextField(blank=True)
+
+    class Meta:
+        db_table = 'blockchain_demo_anchors'
+        ordering = ['-created_at']

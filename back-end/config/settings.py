@@ -265,6 +265,7 @@ THROTTLE_RATES = {
     'expensive_assessment': throttle_rate('THROTTLE_RATE_ASSESSMENT_SUBMIT', '30/hour'),
     'expensive_ai': throttle_rate('THROTTLE_RATE_AI', '20/hour'),
     'expensive_credential': throttle_rate('THROTTLE_RATE_CREDENTIAL_ISSUE', '10/hour'),
+    'expensive_demo_anchor': throttle_rate('THROTTLE_RATE_DEMO_ANCHOR', '5/hour'),
     # Unauthenticated credential verification, which may call the proof provider.
     'public_verify': throttle_rate('THROTTLE_RATE_PUBLIC_VERIFY', '60/min'),
 }

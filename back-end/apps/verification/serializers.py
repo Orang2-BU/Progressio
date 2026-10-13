@@ -2,7 +2,8 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from apps.credentials.models import Credential
 from apps.credentials.serializers import EvidenceSerializer, build_verification_url
-from apps.blockchain.serializers import BlockchainProofSerializer
+from apps.blockchain.serializers import BlockchainProofSerializer, DemoAnchorSerializer
+from apps.blockchain.models import DemoAnchor
 
 
 class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
@@ -20,6 +21,7 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
     verification_url = serializers.SerializerMethodField()
     evidences = EvidenceSerializer(many=True, read_only=True)
     blockchain_proof = BlockchainProofSerializer(read_only=True)
+    demo_anchor = serializers.SerializerMethodField()
     standard = serializers.SerializerMethodField()
 
     class Meta:
@@ -35,6 +37,7 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
             'issued_at',
             'evidences',
             'blockchain_proof',
+            'demo_anchor',
             'integrity_verified',
             'integrity_reason',
             'verification_url',
@@ -85,6 +88,13 @@ class PublicCredentialVerificationSerializer(serializers.ModelSerializer):
         # Public snapshot deliberately omits student_email and raw private submission content.
         return {key: obj.metadata.get(key) for key in ('curriculum_version', 'curriculum_schema_version',
             'observable_behaviors', 'skill_standards', 'mode', 'proof_provider')}
+
+    @extend_schema_field(DemoAnchorSerializer(allow_null=True))
+    def get_demo_anchor(self, obj):
+        if obj.status != Credential.Status.DRAFT or obj.metadata.get('mode') != 'demo':
+            return None
+        anchor = DemoAnchor.objects.filter(credential=obj).first()
+        return DemoAnchorSerializer(anchor).data if anchor else None
 
     def get_competency_title(self, obj) -> str:
         return obj.metadata.get('competency_title', obj.competency.title)

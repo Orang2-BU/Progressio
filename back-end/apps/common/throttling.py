@@ -234,6 +234,12 @@ class CredentialIssueBudget(AccountBudget):
     scope = 'expensive_credential'
 
 
+class DemoAnchorBudget(AccountBudget):
+    """Demo anchors spend faucet-funded gas from the shared signer wallet."""
+
+    scope = 'expensive_demo_anchor'
+
+
 class PublicVerifyBudget(ClientAddressBudget):
     """Public verification re-derives the hash and may call the proof provider."""
 
