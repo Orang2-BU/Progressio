@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException
 
 from apps.learning.models import SkillProgress
 from apps.learning.services import ProgressService
@@ -147,11 +148,31 @@ class AssessmentEvaluationService:
     @staticmethod
     def _evaluate_with_ai(assessment, content):
         from apps.ai.services import AIService
+        from apps.ai.adapters.http_adapter import AIProviderProtocolError, AIProviderUnavailable
 
         try:
-            evaluation = AIService.get_adapter().evaluate_submission(assessment, content)
+            evaluation = AIService.evaluate_submission(assessment, content)
+        except AIProviderUnavailable as exc:
+            error = APIException(
+                detail={'detail': 'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
+                        'code': 'ai_provider_unavailable',
+                        **({'retry_after_seconds': exc.retry_after_seconds}
+                           if exc.retry_after_seconds is not None else {})},
+            )
+            error.status_code = 503
+            raise error from exc
+        except AIProviderProtocolError as exc:
+            error = APIException(detail={'detail': 'AI provider returned an invalid evaluation response.',
+                                          'code': 'ai_provider_invalid_response'})
+            error.status_code = 502
+            raise error from exc
         except Exception as exc:
-            raise ValidationError({'detail': 'Evaluation service unavailable; no result was saved. Retry with the same request ID.'}) from exc
+            error = APIException(
+                detail={'detail': 'Evaluation service is temporarily unavailable; no result was saved. Retry with the same request ID.',
+                        'code': 'ai_provider_unavailable'},
+            )
+            error.status_code = 503
+            raise error from exc
         if not isinstance(evaluation, dict) or evaluation.get('score') is None:
             raise ValidationError({'detail': 'AI provider returned an invalid evaluation result.'})
         return evaluation

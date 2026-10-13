@@ -7,6 +7,8 @@ class MockAIAdapter(BaseAIAdapter):
     Produces deterministic, structured, high-quality responses without requiring API keys.
     """
 
+    provider_name = 'mock'
+
     def analyze_skill_gap(self, user_profile, target_career_track, user_skills, required_skills):
         user_skill_ids = {s['id'] for s in user_skills if s.get('mastery', 0) >= 70.0}
 

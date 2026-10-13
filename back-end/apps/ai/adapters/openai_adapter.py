@@ -12,6 +12,8 @@ from .http_adapter import AIProviderError, HttpAIAdapter  # noqa: F401
 class OpenAIAdapter(HttpAIAdapter):
     """Deprecated: thin wrapper di atas HttpAIAdapter."""
 
+    provider_name = 'openai'
+
     def __init__(self, api_key=None, model=None, timeout=None, allow_mock_fallback=None,
                  api_url=None, base_url=None):
         url = (

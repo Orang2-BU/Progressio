@@ -4,10 +4,11 @@ import os
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .http_adapter import HttpAIAdapter
+from .http_adapter import AIProviderError, HttpAIAdapter
 
 
 class GroqAIAdapter(HttpAIAdapter):
+    provider_name = 'groq'
     API_URL = 'https://api.groq.com/openai/v1/chat/completions'
     DEFAULT_MODEL = 'openai/gpt-oss-20b'
 
@@ -19,11 +20,18 @@ class GroqAIAdapter(HttpAIAdapter):
         self.max_completion_tokens = int(os.getenv('AI_MAX_COMPLETION_TOKENS', '2048'))
         if self.max_completion_tokens < 1 or self.max_completion_tokens > 8192:
             raise ImproperlyConfigured('AI_MAX_COMPLETION_TOKENS must be between 1 and 8192.')
+        timeout_value = timeout or os.getenv('AI_TIMEOUT_SECONDS', '10')
+        try:
+            timeout_seconds = int(timeout_value)
+        except (TypeError, ValueError) as exc:
+            raise ImproperlyConfigured('AI_TIMEOUT_SECONDS must be an integer between 1 and 10.') from exc
+        if timeout_seconds < 1 or timeout_seconds > 10:
+            raise ImproperlyConfigured('AI_TIMEOUT_SECONDS must be between 1 and 10.')
         super().__init__(
             api_url=api_url or self.API_URL,
             api_key=key,
             model=model or os.getenv('AI_MODEL', self.DEFAULT_MODEL),
-            timeout=timeout or os.getenv('AI_TIMEOUT_SECONDS', '10'),
+            timeout=timeout_seconds,
             allow_mock_fallback=allow_mock_fallback,
         )
 
@@ -51,6 +59,8 @@ class GroqAIAdapter(HttpAIAdapter):
 
     def _call_or_fallback(self, name, instructions, payload, schema, fallback):
         result = super()._call_or_fallback(name, instructions, payload, schema, fallback)
+        if not isinstance(result, dict):
+            raise AIProviderError('AI provider returned an invalid result object.')
         if result.get('provider') == 'mock-fallback':
             result.pop('model', None)
             return result

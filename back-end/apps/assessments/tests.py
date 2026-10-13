@@ -209,7 +209,7 @@ class AssessmentModelAndAPITests(TestCase):
         body = {'request_id': str(uuid.uuid4()), 'content': {'text': 'Example evidence'}}
         with patch('apps.ai.services.AIService.get_adapter', side_effect=RuntimeError('secret provider detail')):
             response = self.client.post(url, body, format='json')
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 503)
         self.assertNotIn('secret', str(response.data))
         self.assertEqual(Submission.objects.count(), 0)
         with patch('apps.assessments.services.AssessmentEvaluationService._evaluate_with_ai', return_value={'score': 90, 'provider': 'mock-fallback'}):

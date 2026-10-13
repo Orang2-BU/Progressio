@@ -19,6 +19,9 @@ from .adapters.groq import GroqAIAdapter
 from unittest.mock import MagicMock, patch
 import json
 import os
+from io import BytesIO
+from urllib.error import HTTPError
+from .adapters.http_adapter import AIProviderProtocolError, AIProviderUnavailable
 
 User = get_user_model()
 
@@ -115,6 +118,7 @@ class AIServicesTests(TestCase):
             status=Submission.Status.SUBMITTED,
         )
         adapter = MagicMock()
+        adapter.provider_name = 'test-provider'
         adapter.evaluate_submission.return_value = {
             'score': 40, 'feedback': 'Passed', 'provider': 'test-provider',
         }
@@ -155,6 +159,7 @@ class AIServicesTests(TestCase):
             status=Submission.Status.SUBMITTED,
         )
         adapter = MagicMock()
+        adapter.provider_name = 'test-provider'
         adapter.evaluate_submission.return_value = evaluation
         with patch('apps.ai.tasks.AIService.get_adapter', return_value=adapter):
             evaluate_submission_ai_task(task_submission.id)
@@ -251,3 +256,21 @@ class AIServicesTests(TestCase):
                 AIService.get_adapter()
         with patch.dict(os.environ, {'AI_PROVIDER': ' GROQ ', 'GROQ_API_KEY': 'synthetic-key'}):
             self.assertIsInstance(AIService.get_adapter(), GroqAIAdapter)
+
+    def test_http_provider_outage_is_retryable_and_does_not_leak_vendor_body(self):
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat')
+        error = HTTPError('https://ai.test/chat', 429, 'limited',
+                          {'Retry-After': '5'}, BytesIO(b'synthetic vendor detail'))
+        with patch('apps.ai.adapters.http_adapter.urlopen', side_effect=error):
+            with self.assertRaises(AIProviderUnavailable) as raised:
+                adapter._request_json('test', 'instructions', {}, {})
+        self.assertEqual(raised.exception.retry_after_seconds, 5)
+        self.assertNotIn('synthetic vendor detail', str(raised.exception))
+
+    def test_http_provider_rejects_malformed_structured_response(self):
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat')
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"choices":[]}'
+        with patch('apps.ai.adapters.http_adapter.urlopen', return_value=response):
+            with self.assertRaises(AIProviderProtocolError):
+                adapter._request_json('test', 'instructions', {}, {})

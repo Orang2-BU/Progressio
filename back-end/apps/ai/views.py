@@ -9,6 +9,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from apps.common.schema import THROTTLED_RESPONSE
 from apps.common.throttling import AiServiceBudget
+from .adapters.http_adapter import AIProviderProtocolError, AIProviderUnavailable
 
 from .serializers import (
     SkillGapAnalysisRequestSerializer,
@@ -17,6 +18,20 @@ from .serializers import (
 )
 from .services import AIService
 from apps.careers.models import CareerTrack
+
+
+def provider_error_response(exc):
+    if isinstance(exc, AIProviderUnavailable):
+        payload = {'detail': 'AI provider is temporarily unavailable. Retry with the same request ID.',
+                   'code': 'ai_provider_unavailable'}
+        if exc.retry_after_seconds is not None:
+            payload['retry_after_seconds'] = exc.retry_after_seconds
+        return Response(payload, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    if isinstance(exc, AIProviderProtocolError):
+        return Response({'detail': 'AI provider returned an invalid response.',
+                         'code': 'ai_provider_invalid_response'},
+                        status=status.HTTP_502_BAD_GATEWAY)
+    return None
 
 
 @extend_schema(tags=["AI Services"])
@@ -47,10 +62,13 @@ class SkillGapAnalysisView(APIView):
         career_track_id = validated_data['career_track_id']
         career_track = get_object_or_404(CareerTrack, pk=career_track_id)
 
-        analysis = AIService.perform_skill_gap_analysis(
-            user=request.user,
-            career_track=career_track
-        )
+        try:
+            analysis = AIService.perform_skill_gap_analysis(
+                user=request.user,
+                career_track=career_track
+            )
+        except (AIProviderUnavailable, AIProviderProtocolError) as exc:
+            return provider_error_response(exc)
 
         response_serializer = SkillGapAnalysisResponseSerializer(analysis)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -76,6 +94,9 @@ class LearningRecommendationsView(APIView):
         }
     )
     def get(self, request, *args, **kwargs):
-        recommendations = AIService.get_learning_recommendations(request.user)
+        try:
+            recommendations = AIService.get_learning_recommendations(request.user)
+        except (AIProviderUnavailable, AIProviderProtocolError) as exc:
+            return provider_error_response(exc)
         response_serializer = LearningRecommendationsResponseSerializer(recommendations)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

@@ -24,10 +24,9 @@ def evaluate_submission_ai_task(submission_id):
                 submission.status = Submission.Status.EVALUATING
                 submission.save(update_fields=['status'])
 
-        adapter = AIService.get_adapter()
-        evaluation = adapter.evaluate_submission(
+        evaluation = AIService.evaluate_submission(
             assessment=submission.assessment,
-            submission_content=submission.content
+            submission_content=submission.content,
         )
         submission = AssessmentEvaluationService.complete_evaluation(
             submission_id, evaluation

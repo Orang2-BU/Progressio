@@ -41,7 +41,20 @@ class AIProviderError(RuntimeError):
     """Raised when the configured AI provider cannot return a valid result."""
 
 
+class AIProviderUnavailable(AIProviderError):
+    """A transient provider outage; safe to retry with the same request ID."""
+
+    def __init__(self, message='AI provider is temporarily unavailable.', retry_after_seconds=None):
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
+
+class AIProviderProtocolError(AIProviderError):
+    """The provider returned an invalid response or rejected our protocol."""
+
+
 class HttpAIAdapter(BaseAIAdapter):
+    provider_name = 'http'
     """Generic HTTP AI adapter — vendor-agnostic placeholder."""
 
     def __init__(self, api_url=None, api_key=None, model=None, timeout=None,
@@ -232,7 +245,7 @@ class HttpAIAdapter(BaseAIAdapter):
                 return json.loads(msg['content'])
         if isinstance(response_body, str):
             return json.loads(response_body)
-        raise AIProviderError('AI API response did not contain parseable JSON.')
+        raise AIProviderProtocolError('AI provider response did not contain structured JSON.')
 
     def _call_or_fallback(self, name, instructions, payload, schema, fallback):
         try:
@@ -256,11 +269,21 @@ class HttpAIAdapter(BaseAIAdapter):
             with urlopen(request, timeout=self.timeout) as response:
                 response_body = json.loads(response.read().decode('utf-8'))
         except HTTPError as exc:
-            detail = exc.read().decode('utf-8', errors='replace')[:500]
-            raise AIProviderError(f'AI API returned HTTP {exc.code}: {detail}') from exc
-        except (URLError, TimeoutError, ValueError) as exc:
-            raise AIProviderError(f'AI API request failed: {exc}') from exc
+            retry_after = None
+            try:
+                value = exc.headers.get('Retry-After')
+                if value and value.strip().isdigit():
+                    retry_after = min(60, max(1, int(value.strip())))
+            except (AttributeError, TypeError, ValueError):
+                pass
+            if exc.code == 429 or exc.code >= 500:
+                raise AIProviderUnavailable(retry_after_seconds=retry_after) from exc
+            raise AIProviderProtocolError('AI provider rejected the request.') from exc
+        except (URLError, TimeoutError) as exc:
+            raise AIProviderUnavailable() from exc
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise AIProviderProtocolError('AI provider returned invalid JSON.') from exc
         try:
             return self._extract_json(response_body)
-        except (TypeError, json.JSONDecodeError) as exc:
-            raise AIProviderError('AI API returned non-JSON output.') from exc
+        except (TypeError, json.JSONDecodeError, KeyError) as exc:
+            raise AIProviderProtocolError('AI provider returned invalid structured output.') from exc

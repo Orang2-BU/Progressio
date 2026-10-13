@@ -35,6 +35,23 @@ class AIService:
         raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'. Expected 'mock' or 'http'.")
 
     @classmethod
+    def evaluate_submission(cls, assessment, submission_content):
+        adapter = cls.get_adapter()
+        result = adapter.evaluate_submission(assessment, submission_content)
+        if not isinstance(result, dict):
+            return result
+        if result.get('provider') == 'mock-fallback':
+            result.pop('model', None)
+            return result
+        provider = getattr(adapter, 'provider_name', None)
+        result['provider'] = provider if isinstance(provider, str) else 'unknown'
+        result.pop('model', None)
+        model = getattr(adapter, 'model', None)
+        if isinstance(model, str) and model:
+            result['model'] = model
+        return result
+
+    @classmethod
     def perform_skill_gap_analysis(cls, user, career_track, target_skill=None, target_competency=None):
         """
         Gathers user skill progress and the skills a target requires, then
