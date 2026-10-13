@@ -257,6 +257,44 @@ describe('frontend foundation rendering', () => {
     assert.match(legacy, /Feedback belum tersedia/);
   });
 
+  test('credential rendering requires confirmed validity, provenance, and integrity for final status', () => {
+    const { render, load } = foundationRenderer({ path: '/verify/11111111-1111-4111-8111-111111111111' });
+    const CredentialView = load('Proof.jsx').CredentialView;
+    const credential = {
+      credential_id: '11111111-1111-4111-8111-111111111111', status: 'issued', is_valid: true,
+      integrity_verified: true, integrity_reason: 'Hash cocok.', score: 90, evidences: [],
+      standard: { mode: 'final', proof_provider: 'http', curriculum_version: '2026.1' },
+    };
+    const renderCredential = (overrides = {}) => render(CredentialView, { data: { ...credential, ...overrides }, publicView: true });
+
+    const integrityUnconfirmed = renderCredential({ integrity_verified: false, integrity_reason: 'Hash tidak cocok.' });
+    assert.match(integrityUnconfirmed, /Terbit · belum terverifikasi/);
+    assert.match(integrityUnconfirmed, /Credential diterbitkan, tetapi belum valid\/terverifikasi/);
+    assert.match(integrityUnconfirmed, /Hash tidak cocok\./);
+    assert.doesNotMatch(integrityUnconfirmed, /ui-status-success[^>]*>Final</);
+    assert.doesNotMatch(integrityUnconfirmed, /ui-status-warning[^>]*>Draft</);
+
+    const invalid = renderCredential({ is_valid: false, integrity_reason: 'Credential tidak valid.' });
+    assert.match(invalid, /Terbit · belum terverifikasi/);
+    assert.match(invalid, /Credential tidak valid\./);
+    assert.doesNotMatch(invalid, /ui-status-success[^>]*>Final</);
+    assert.doesNotMatch(invalid, /ui-status-warning[^>]*>Draft</);
+
+    const final = renderCredential();
+    assert.match(final, /ui-status-success[^>]*>Final</);
+    assert.match(final, /Credential final · integritas server terkonfirmasi/);
+
+    const draft = renderCredential({ status: 'draft', is_valid: false, integrity_verified: false, standard: { mode: 'demo' } });
+    assert.match(draft, /ui-status-warning[^>]*>Draft</);
+    assert.match(draft, /Bukan credential final terverifikasi/);
+    assert.doesNotMatch(draft, /Credential final · integritas server terkonfirmasi/);
+
+    const revoked = renderCredential({ status: 'revoked', is_valid: false, integrity_verified: false });
+    assert.match(revoked, /ui-status-error[^>]*>Dicabut</);
+    assert.match(revoked, /Credential dicabut/);
+    assert.doesNotMatch(revoked, /ui-status-success[^>]*>Final</);
+  });
+
   test('shared loading, empty and error states expose visible text and semantic roles', () => {
     const { ui, render } = foundationRenderer();
     assert.match(render(ui.LoadingState, { children: 'Memuat target…' }), /role="status"[\s\S]*Memuat target/);
