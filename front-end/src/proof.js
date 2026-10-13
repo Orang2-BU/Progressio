@@ -71,6 +71,16 @@ export function resultLabel(s) {
     : qualifier ? 'Provenance penilai/review belum lengkap — status evidence final belum dapat dipastikan.' : '';
   return { heading, label };
 }
+export function resultSnapshot(result) {
+  const evaluation = result?.evaluation || {};
+  return {
+    passingScore: Number.isFinite(evaluation.passing_score) ? evaluation.passing_score : null,
+    maxScore: Number.isFinite(evaluation.max_score) ? evaluation.max_score : null,
+    rubric: Array.isArray(evaluation.rubric)
+      ? evaluation.rubric.filter((row) => row && typeof row.criterion === 'string' && Number.isFinite(row.weight))
+      : [],
+  };
+}
 export async function submitAssessment(a, body) {
   const result = validateSubmission(await request(`assessments/${a.id}/submit`, { method: 'POST', body }), a.id);
   if (result.request_id !== body.request_id) throw new ApiError('Request hasil tidak cocok. Periksa riwayat sebelum mencoba lagi.');

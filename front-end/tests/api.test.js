@@ -232,6 +232,31 @@ describe('frontend foundation rendering', () => {
     assert.doesNotMatch(markup, /Navigasi workspace|Mengalihkan halaman/);
   });
 
+  test('assessment result renders server threshold and rubric snapshot, and hides missing details', () => {
+    const { render, load } = foundationRenderer();
+    const Result = load('Proof.jsx').Result;
+    const scored = render(Result, { result: {
+      status: 'completed', score: 82, is_passed: true, feedback: 'Evidence konsisten.',
+      evaluation: {
+        provider: 'rules', review_status: 'reviewed', curriculum_version: '2026.1',
+        passing_score: 70, max_score: 100,
+        rubric: [{ criterion: 'Evidence lengkap', weight: 60 }, { criterion: 'Penjelasan', weight: 40 }],
+      },
+    } });
+    assert.match(scored, /Ambang lulus saat dinilai:[\s\S]*70 \/ 100[\s\S]*status lulus mengikuti keputusan server/);
+    assert.match(scored, /Rubrik pada snapshot penilaian/);
+    assert.match(scored, /Evidence lengkap[\s\S]*60[\s\S]*Penjelasan[\s\S]*40/);
+    assert.match(scored, /skor per kriteria tidak tersedia/);
+    assert.match(scored, /Evidence konsisten\./);
+
+    const legacy = render(Result, { result: {
+      status: 'completed', score: 50, is_passed: false, feedback: '', evaluation: {},
+    } });
+    assert.doesNotMatch(legacy, /Ambang lulus saat dinilai|Rubrik pada snapshot penilaian|Evidence lengkap|Penjelasan/);
+    assert.match(legacy, /maksimum tidak dicatat/);
+    assert.match(legacy, /Feedback belum tersedia/);
+  });
+
   test('shared loading, empty and error states expose visible text and semantic roles', () => {
     const { ui, render } = foundationRenderer();
     assert.match(render(ui.LoadingState, { children: 'Memuat target…' }), /role="status"[\s\S]*Memuat target/);

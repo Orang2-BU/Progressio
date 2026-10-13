@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { request } from './api.js';
-import { loadAssessments, assessmentPayload, submitAssessment, recoverSubmission, loadCredentials, loadVerification, proofHref, resultLabel } from './proof.js';
+import { loadAssessments, assessmentPayload, submitAssessment, recoverSubmission, loadCredentials, loadVerification, proofHref, resultLabel, resultSnapshot } from './proof.js';
 import { sourceHref } from './study.js';
 import { Button, EmptyState, Icon, Notice, StatusBadge } from './ui.jsx';
 
@@ -153,12 +153,15 @@ function AssessmentForm({ assessment: a, query }) {
   </form>;
 }
 
-function Result({ result }) {
+export function Result({ result }) {
   const { heading, label } = resultLabel(result);
+  const snapshot = resultSnapshot(result);
   return <section className="proof-section proof-result"><div className="proof-section-title"><div><p className="eyebrow">HASIL PENILAIAN SERVER</p><h2>{heading}</h2></div><StatusBadge tone={result.is_passed ? 'success' : 'warning'}>{result.status}</StatusBadge></div>
-    <div className="proof-result-score"><strong>{result.score ?? '—'}</strong><span>/ {result.evaluation.max_score ?? 'maksimum tidak dicatat'}</span></div>
+    <div className="proof-result-score"><strong>{result.score ?? '—'}</strong><span>/ {snapshot.maxScore ?? 'maksimum tidak dicatat'}</span></div>
+    {snapshot.passingScore !== null && <p className="proof-muted">Ambang lulus saat dinilai: <strong>{snapshot.passingScore} / {snapshot.maxScore ?? 'maksimum tidak dicatat'}</strong> · status lulus mengikuti keputusan server.</p>}
     {label && <Notice tone="warning" title="Batas status evidence">{label}</Notice>}
     <p className="proof-feedback">{result.feedback || 'Feedback belum tersedia.'}</p>
+    {snapshot.rubric.length > 0 && <div className="proof-rubric proof-result-rubric"><div className="proof-section-title"><h3>Rubrik pada snapshot penilaian</h3><span>Kriteria dan bobot dari server; skor per kriteria tidak tersedia.</span></div><div className="proof-table-wrap"><table><caption className="sr-only">Rubrik yang tersimpan saat submission dinilai</caption><thead><tr><th>Kriteria</th><th className="numeric">Bobot</th></tr></thead><tbody>{snapshot.rubric.map((row, index) => <tr key={`${row.criterion}-${index}`}><td>{row.criterion}</td><td className="numeric">{row.weight}</td></tr>)}</tbody></table></div></div>}
     <dl className="proof-provenance"><div><dt>Penilai</dt><dd>{result.evaluation.provider || 'tidak dicatat'}</dd></div><div><dt>Review</dt><dd>{result.evaluation.review_status || 'tidak dicatat'}</dd></div><div><dt>Versi kurikulum</dt><dd>{result.evaluation.curriculum_version || 'tidak dicatat'}</dd></div></dl>
   </section>;
 }

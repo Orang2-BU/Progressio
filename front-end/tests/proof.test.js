@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assessmentPayload, validateAssessment, validateSubmission, submitAssessment, recoverSubmission, proofHref, loadVerification, loadCredentials, resultLabel } from '../src/proof.js';
+import { assessmentPayload, validateAssessment, validateSubmission, submitAssessment, recoverSubmission, proofHref, loadVerification, loadCredentials, resultLabel, resultSnapshot } from '../src/proof.js';
 import { login, logout } from '../src/api.js';
 
 const key = 'f1cf4884-8f43-4cb9-ae87-b4d7049874ec';
@@ -44,6 +44,19 @@ test('result headings distinguish simulated, draft, reviewed, and missing proven
   assert.match(result(undefined, undefined, true).label, /belum lengkap/);
   assert.equal(result('other', 'reviewed', true).heading, 'Lulus assessment (provenance belum lengkap)');
   assert.equal(resultLabel({ ...submission, status: 'evaluating' }).heading, 'Belum selesai dinilai');
+});
+
+test('result snapshot preserves only server-supplied threshold and rubric details', () => {
+  const scored = resultSnapshot({ evaluation: {
+    passing_score: 70, max_score: 100,
+    rubric: [{ criterion: 'Evidence lengkap', weight: 60 }, { criterion: 'Penjelasan', weight: 40 }],
+  } });
+  assert.deepEqual(scored, {
+    passingScore: 70,
+    maxScore: 100,
+    rubric: [{ criterion: 'Evidence lengkap', weight: 60 }, { criterion: 'Penjelasan', weight: 40 }],
+  });
+  assert.deepEqual(resultSnapshot({ evaluation: {} }), { passingScore: null, maxScore: null, rubric: [] });
 });
 
 test('lost POST is not automatically replayed and request-specific GET recovers without sending evidence again', async () => {
