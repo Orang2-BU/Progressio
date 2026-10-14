@@ -1,5 +1,6 @@
 """Safe transport helpers for requests carrying provider credentials."""
 import ipaddress
+import os
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, build_opener
@@ -27,6 +28,8 @@ def validate_provider_url(url, *, has_credentials):
         raise ValueError('Provider URL must be an absolute HTTPS URL without userinfo or fragments.')
     if parsed.scheme == 'https':
         return url
+    if os.getenv('APP_ENV', 'local').strip().lower() != 'local':
+        raise ValueError('HTTP provider URLs are allowed only in local development.')
     try:
         loopback = hostname.lower() == 'localhost' or ipaddress.ip_address(hostname).is_loopback
     except ValueError:

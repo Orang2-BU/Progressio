@@ -14,9 +14,9 @@ SETTING_ENV = (
     'DEFAULT_FROM_EMAIL', 'TRUST_X_FORWARDED_PROTO',
     'SECURE_HSTS_SECONDS', 'SECURE_HSTS_INCLUDE_SUBDOMAINS', 'SECURE_HSTS_PRELOAD',
     'AI_PROVIDER', 'BLOCKCHAIN_PROVIDER', 'OPENAI_API_KEY', 'GROQ_API_KEY',
-    'AI_API_URL', 'AI_API_KEY', 'AI_MODEL', 'AI_TIMEOUT_SECONDS',
+    'AI_API_URL', 'AI_API_KEY', 'OPENAI_BASE_URL', 'AI_MODEL', 'AI_TIMEOUT_SECONDS',
     'AI_MAX_COMPLETION_TOKENS', 'AI_ALLOW_MOCK_FALLBACK',
-    'BLOCKCHAIN_SERVICE_URL',
+    'BLOCKCHAIN_SERVICE_URL', 'BLOCKCHAIN_SERVICE_TOKEN',
     'THROTTLE_CACHE_URL', 'THROTTLE_CACHE_ALIAS', 'THROTTLE_CACHE_KEY_PREFIX',
     'THROTTLE_CACHE_TIMEOUT', 'CELERY_BROKER_URL',
     'THROTTLE_RATE_AUTH_REGISTER', 'THROTTLE_RATE_AUTH_LOGIN',
@@ -165,6 +165,31 @@ class SettingsProfileTests(TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn('WARNINGS', result.stdout + result.stderr)
+
+    def test_production_rejects_insecure_provider_urls_before_startup(self):
+        base = {
+            'APP_ENV': 'production',
+            'SECRET_KEY': 'Synthetic-test-only-secret-0123456789-ABCDEFGHIJKLMNOP',
+            'DEBUG': 'False', 'ALLOWED_HOSTS': 'api.example.com',
+            'CORS_ALLOWED_ORIGINS': 'https://app.example.com',
+            'CSRF_TRUSTED_ORIGINS': 'https://app.example.com',
+            'DB_NAME': 'progressio_test', 'DB_USER': 'progressio_test',
+            'DB_PASSWORD': 'synthetic-test-only-password', 'DB_HOST': 'db.example.com',
+            'THROTTLE_CACHE_URL': 'redis://127.0.0.1:6379/1',
+        }
+        ai = self.run_manage(
+            'check', **base, AI_PROVIDER='http', AI_API_URL='http://127.0.0.1:8080/v1',
+            AI_API_KEY='', BLOCKCHAIN_PROVIDER='mock',
+        )
+        self.assertNotEqual(ai.returncode, 0)
+        self.assertIn('HTTP provider URLs are allowed only in local development', ai.stderr)
+
+        blockchain = self.run_manage(
+            'check', **base, AI_PROVIDER='mock', BLOCKCHAIN_PROVIDER='http',
+            BLOCKCHAIN_SERVICE_URL='http://127.0.0.1:8081', BLOCKCHAIN_SERVICE_TOKEN='',
+        )
+        self.assertNotEqual(blockchain.returncode, 0)
+        self.assertIn('HTTP provider URLs are allowed only in local development', blockchain.stderr)
 
     def test_production_email_requires_smtp_when_enabled(self):
         required = {

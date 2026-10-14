@@ -1,4 +1,5 @@
 import unittest
+import os
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 from urllib.request import Request
@@ -10,7 +11,7 @@ from apps.common.http_transport import (
     validate_provider_url,
 )
 from apps.ai.adapters.http_adapter import AIProviderError, HttpAIAdapter
-from apps.blockchain.adapters.http import HTTPBlockchainAdapter
+from apps.blockchain.adapters.http import BlockchainProviderError, HTTPBlockchainAdapter
 
 
 class ProviderTransportTests(unittest.TestCase):
@@ -30,6 +31,11 @@ class ProviderTransportTests(unittest.TestCase):
         self.assertEqual(validate_provider_url('http://[::1]:8080/v1', has_credentials=False),
                          'http://[::1]:8080/v1')
 
+    def test_production_rejects_even_unauthenticated_loopback_http(self):
+        with patch.dict(os.environ, {'APP_ENV': 'production'}):
+            with self.assertRaisesRegex(ValueError, 'only in local development'):
+                validate_provider_url('http://127.0.0.1:8080/v1', has_credentials=False)
+
     def test_provider_adapters_reject_insecure_urls_before_network(self):
         with self.assertRaises(ValueError):
             HttpAIAdapter(api_url='http://ai.example.test/v1', api_key='synthetic-key')
@@ -44,6 +50,18 @@ class ProviderTransportTests(unittest.TestCase):
             adapter._extract_json({'output': [{'content': [
                 {'type': 'refusal', 'refusal': 'synthetic sensitive provider response'}]}]})
         self.assertNotIn('synthetic sensitive provider response', str(raised.exception))
+
+    def test_blockchain_redirect_is_not_followed_or_exposed(self):
+        adapter = HTTPBlockchainAdapter(
+            service_url='https://signer.example.test', api_token='synthetic-token')
+        redirect = HTTPError(
+            'https://signer.example.test/proofs', 307, 'Temporary Redirect',
+            {'Location': 'https://attacker.example.test/collect'}, None)
+        with patch('apps.blockchain.adapters.http.open_provider_request', side_effect=redirect) as opened:
+            with self.assertRaises(BlockchainProviderError) as raised:
+                adapter._post('/proofs', {'credential_id': 'synthetic-id'})
+        self.assertEqual(opened.call_count, 1)
+        self.assertEqual(str(raised.exception), 'Blockchain service returned HTTP 307.')
 
     def test_redirect_handler_never_creates_a_followup_request(self):
         redirect = _NoRedirect().redirect_request(
