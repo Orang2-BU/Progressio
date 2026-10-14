@@ -127,13 +127,13 @@ Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi 
 
 ## COMP-009 — Tutup fixture dan QA backend runtime
 
-Status: **IN PROGRESS — fixture/proxy/fail-closed smoke lulus; PostgreSQL/Redis belum tersedia (Docker daemon Sokudo tak terjangkau)**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-029/027.
+Status: **PASS terbatas pada backend candidate `ff542e7` — fixture/proxy, PostgreSQL concurrency, Redis lintas proses, dan fail-closed tervalidasi; belum deployment/clearance release**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency source backend lulus; komposisi akhir tetap COMP-007. Tiket: TASK-029/027.
 
 - [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal. Uji bind-failure dengan port guard sintetis keluar non-zero dan tidak meninggalkan listener/DB. Isolasi konkurensi masih terbuka.
-- [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN. Regresi sequential SQLite pass 2; lima concurrency tests tercatat skipped karena backend bukan PostgreSQL.
-- [ ] Sediakan Redis disposable; buktikan cache/throttle lintas proses, 429/retry/expiry, dan destination guard. Jangan mewarisi instance pengguna.
-- [x] Probe guard mode production dengan environment sintetis `APP_ENV=production`, `DB_ENGINE=sqlite`; startup ditolak sebelum Django berjalan. Probe hosted dengan PostgreSQL/provider nyata masih terbuka.
-- [ ] Petakan acceptance QA backend lama ke bukti baru dan simpan run ID/SHA/environment/exit/artefak/cleanup.
+- [x] PostgreSQL disposable: test concurrency 7/7 PASS dan suite semua app 200/200 PASS, dengan interleaving deterministik, isolation, mastery, dan XP.
+- [x] Redis disposable: lintas dua proses berbagi 429; budget 1/sec expire dan retry kembali ke respons handler; destination/transport guards ada dalam suite 200/200.
+- [x] Production synthetic config memakai PostgreSQL+Redis diterima; tanpa Redis atau dengan SQLite ditolak fail-closed. API health 200 pada run PG+Redis.
+- [x] Petakan acceptance TASK-027/029 dan simpan SHA/environment/hasil/cleanup di laporan COMP-009.
 
 Selesai ketika acceptance runtime mempunyai hasil nyata atau blocker spesifik tetap terbuka. Hasil SQLite tidak menutup row locking PostgreSQL. Commit fixture/test/runbook yang berubah, tanpa artefak runtime atau secret.
 

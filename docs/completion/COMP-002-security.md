@@ -24,4 +24,4 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Verdict: **CHANGES secara keseluruhan; 
 
 ## Batas verdict
 
-Ini bukan clearance untuk `main` atau satu kandidat demo. Provider backend, fixture, endpoint revoke, dan browser auth lulus terbatas pada SHA yang disebut; PostgreSQL/Redis runtime, Mobile terhadap backend, full browser/Sokudo journey, penerapan migrasi deployment, dan rehearsal belum diuji. Lima test backend yang skip tidak diklaim lulus. Tidak ada approval independen dari Bimo/Adit yang diklaim.
+Ini bukan clearance untuk `main` atau satu kandidat demo. Provider backend, fixture, endpoint revoke, dan browser auth lulus terbatas pada SHA yang disebut. PostgreSQL concurrency dan Redis shared throttle lokal kini diuji pada COMP-009; Mobile terhadap backend, full browser/Sokudo journey, penerapan migrasi deployment, dan rehearsal belum diuji. Hasil 200 test PostgreSQL tidak memiliki skip; hasil lama SQLite dengan 5 skip tidak diklaim setara. Tidak ada approval independen dari Bimo/Adit yang diklaim.
