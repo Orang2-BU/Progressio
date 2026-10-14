@@ -1,6 +1,6 @@
 # COMP-008 — Auth web dan Mobile pada backend disposable
 
-Tanggal: 14 Oktober 2026 (Asia/Jakarta). Status: **IN PROGRESS — web auth smoke PASS terbatas; Mobile belum diuji**. Run dijalankan assistant; bukan QA independen.
+Tanggal: 14 Oktober 2026 (Asia/Jakarta). Status: **IN PROGRESS — web browser auth/revoke PASS terbatas; Mobile belum diuji**. Run dijalankan assistant; bukan QA independen.
 
 ## Runtime yang dipin
 
@@ -31,6 +31,21 @@ Verifikasi pendukung pada source SHA ini: backend `apps.accounts` 23/23; suite D
 - 503/offline, timeout, request paralel lintas tab, origin/CSRF, expired refresh runtime, deployment PostgreSQL/Redis, dan SSR isolation masih menunggu COMP-010/009. Frontend unit tests meng-cover revoke failure dan double-click, tetapi bukan kegagalan runtime sebenarnya.
 - Deployment harus menerapkan migrasi `token_blacklist` sebelum endpoint logout digunakan. Migrasi deployment dan production database tidak dijalankan.
 
+## Follow-up browser regression pada kandidat `ff542e7`
+
+Untuk menutup gap bahwa API smoke sebelumnya tidak mengklik tombol UI, dijalankan Microsoft Edge headless melalui Playwright 1.64.0 dengan backend `backend_server.py --catalog` (SQLite in-memory di 8011) dan Next proxy di 3000. Akun, email, dan password seluruhnya sintetis dan tidak dicatat.
+
+| Browser flow | Hasil |
+| --- | --- |
+| Register melalui UI → login → dashboard | PASS; API register 201, login 200, `/me` 200 |
+| Dashboard viewport 375/768/1440 | PASS terbatas; `document.scrollWidth` sama dengan lebar viewport pada semua ukuran |
+| Logout sukses | PASS; endpoint 200, reuse refresh yang dicabut mendapat 401 |
+| Logout 503 sintetis | PASS; error alert tampil, pengguna tetap di dashboard dan sesi tetap aktif; refresh masih 200 |
+| Retry setelah 503 | PASS; retry ke backend nyata mendapat 200 dan navigasi kembali ke login |
+| Browser page errors | 0 |
+
+Critical defect ditemukan oleh smoke ini: `App.jsx` pada SHA `48cca73` memanggil setter logout yang tidak didefinisikan, sehingga klik Keluar crash sebelum request. Perbaikan dan regresi ada di `ff542e7`. Build/test frontend kemudian lulus.
+
 ## Keputusan
 
-COMP-008 belum PASS. Web auth/revoke path dan kontrak blacklist terbukti pada SQLite lokal; pekerjaan berikutnya adalah review/integrasi kandidat UI, kemudian uji Mobile pada runtime terisolasi bila Flutter tersedia, dan lanjutkan semua skenario yang belum dijalankan. Tidak ada klaim bahwa TASK-012 Mobile atau COMP-010 browser QA selesai.
+COMP-008 belum PASS. Web auth/revoke path kini dibuktikan melalui UI browser pada SQLite lokal. Uji Mobile nyata belum dapat dijalankan karena Flutter tidak ditemukan; timeout/offline nyata, reload, multi-tab/race, expiry, CSRF/origin, database deployment, dan skenario lain tetap terbuka. Ini bukan full COMP-010 browser QA atau clearance rilis.

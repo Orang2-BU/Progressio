@@ -1,5 +1,11 @@
 # Source review — backend-engineering resources (plan 004)
 
+## Revalidation — 2026-10-14
+
+Pada kandidat backend `48cca732318735dcf24a95580b8443415f26b6f9`, 13 file resource unik diperiksa ulang memakai `apps.learning.tasks.check_url` di Python 3.12. Checker mengirim HEAD, mengikuti redirect untuk membandingkan URL akhir, dan hanya fallback GET header-only bila HEAD mendapat 403/405; response ditutup tanpa membaca body.
+
+Hasil: **13 ok, 0 moved, 0 broken**. Ini bukti HTTP reachability saat pemeriksaan saja, bukan jaminan halaman dibuka dari UI operator. Semua `license_verified` tetap `false`; tidak ada teks penerbit disalin atau klaim hak pakai diubah. Lihat rincian historis per-resource di bawah (terakhir review konten 2026-10-05).
+
 Date of review: 2026-10-05. Package state: all 13 resources declare
 `license_verified: false`; **no resource file was changed by this review**
 because no content-specific publisher evidence was established

@@ -5,6 +5,21 @@ Date: 2026-10-07. Runtime: a fresh disposable backend process with
 The seeded account and all records are synthetic. The backend database is
 in-memory and resets when its process stops.
 
+## Follow-up smoke — 2026-10-14
+
+Candidate `codex/completion-integration` SHA `ff542e71d35c9ebbdedaaad5647d36c787928648`; Microsoft Edge headless + Playwright 1.64.0, Next 3000 proxied to in-memory fixture backend 8011. Accounts were synthetic and disappear on shutdown.
+
+| Area | Result |
+|---|---|
+| Auth UI | Register → login → dashboard passed (201/200/`/me` 200). |
+| Responsive subset | Dashboard tested at 375/768/1440; `scrollWidth == innerWidth` at each viewport; no horizontal overflow. Reduced-motion preference enabled. |
+| Logout | Click produced server 200; replay of the captured refresh token received 401. |
+| Logout failure/retry | Synthetic 503 showed an accessible alert and retained dashboard/session; refresh remained valid (200); retry against backend succeeded (200). |
+| Runtime errors | No browser page errors in the successful regression flows. |
+| Full product journey | NOT RUN: target/diagnostic/roadmap/study/checkpoint/assessment/draft/public verification still need integrated browser rehearsal. This local smoke is not a Sokudo run. |
+
+Browser smoke uncovered and led to fix for an undefined `setLogoutError` in the prior candidate; see COMP-007/008. Installed Chrome channel also emitted a dev hydration warning around `caret-color`; it did not reproduce in Edge headless, so browser/extension cause remains unconfirmed.
+
 | Area | Evidence expected | Result in this worktree |
 |---|---|---|
 | Runtime startup | Backend ready on 8011; Next.js on 3000; catalog contains Backend Engineering | Started `front-end/tests/backend_server.py --catalog` and Next.js with `API_PROXY_TARGET=http://127.0.0.1:8011`. Backend API returned the expected seeded track, competency, two skills, and a successful synthetic login. |

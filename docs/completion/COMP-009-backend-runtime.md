@@ -33,6 +33,7 @@ Concurrency test `back-end/apps/assessments/test_concurrency.py` sengaja mensyar
 
 - COMP-007 belum stabil, jadi runtime ini hanya smoke pada SHA komposisi parsial.
 - Perlu PostgreSQL dan Redis disposable untuk interleaving deterministik, isolasi user, konsistensi mastery/XP, cache/throttle lintas proses, expiry/retry, dan destination guard.
+- Environment check tambahan: WSL distro `Ubuntu` tidak memiliki `psql`, `redis-server`, atau Docker CLI. Distro `sokudo` memiliki Docker CLI, tetapi `docker ps` gagal karena daemon `unix:///var/run/docker.sock` tidak reachable; tidak ada container aktif yang bisa dipakai. Tidak ada service/container pengguna yang dihentikan atau disentuh.
 - Perlu probe fail-closed untuk config hosted valid pada runtime bersih.
 - Kasus cleanup yang diuji terbatas pada bind failure startup; cleanup pada exception request belum dijalankan.
 - Guard production menolak SQLite terverifikasi; konfigurasi valid dengan PostgreSQL/provider nyata dan Redis belum diverifikasi.

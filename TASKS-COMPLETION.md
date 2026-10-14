@@ -100,7 +100,7 @@ Selesai ketika revisi final dan perilaku komponen terbukti. Panel roadmap pada 3
 
 ## COMP-007 — Review final dan susun kandidat integrasi
 
-Status: **CHANGES — kandidat parsial dipin, komposisi final tertahan konflik**. Bukti: [laporan COMP-007](docs/completion/COMP-007-integration-review.md). Prioritas: P0. Dependency: COMP-002/004/005/006. Tiket: TASK-048.
+Status: **CHANGES — kandidat `ff542e7` memperbaiki logout yang gagal di browser; integrasi Diagnostic/Roadmap/Dashboard final dan full diff review masih terbuka**. Bukti: [laporan COMP-007](docs/completion/COMP-007-integration-review.md). Prioritas: P0. Dependency: COMP-002/004/005/006. Tiket: TASK-048.
 
 - [x] Inventaris history/base, file diff, serta overlap semua kandidat; petakan konflik integrasi.
 - [x] Rekonsiliasi report terdahulu dan review langsung kandidat komposisi keamanan + Study.
@@ -113,11 +113,12 @@ Selesai ketika kandidat stabil dan keputusan review dapat diaudit. Review yang d
 
 ## COMP-008 — Uji auth web dan Mobile dengan backend disposable
 
-Status: **IN PROGRESS — web revoke smoke pass; Mobile Flutter/runtime belum tersedia**. Bukti: [laporan COMP-008](docs/completion/COMP-008-auth-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-009/012.
+Status: **IN PROGRESS — web register/login/logout/revoke dan skenario 503 lulus pada browser; Mobile Flutter/runtime belum tersedia**. Bukti: [laporan COMP-008](docs/completion/COMP-008-auth-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-009/012.
 
 - [x] Bootstrap backend kandidat dengan local config, SQLite sementara, mock provider, port milik run, dan akun sintetis; migrasi blacklist diterapkan. Web saat ini Bearer in-memory, bukan cookie HttpOnly; Mobile menggunakan Bearer.
 - [x] Smoke web/API via Next proxy: register, login, `/me`, logout refresh blacklist, reuse refresh ditolak, akses token lama masih valid hingga expiry.
-- [ ] Uji web 503/timeout/network, origin/CSRF, refresh paralel/race dan expiry pada runtime; logout failure hanya diuji di frontend test.
+- [x] Web browser: register/login/dashboard/logout berhasil, refresh replay 401; synthetic 503 menampilkan alert, sesi tetap hidup, retry berhasil.
+- [ ] Uji timeout/offline nyata, origin/CSRF, refresh paralel lintas tab/race, expiry, dan reload.
 - [ ] Mobile nyata: register -> login username -> /auth/me -> restart/restore -> logout; pastikan secure storage dan server revoke sesuai kontrak.
 - [x] Backend accounts tests, full Django suite, OpenAPI, frontend suite/build/coverage dijalankan pada candidate SHA; Flutter analyze/test/build belum dapat dijalankan karena Flutter tidak ditemukan di PATH.
 - [ ] Uji Mobile 400/401/offline, refresh gagal/paralel, storage failure dan logout copy. OTP/reset/Google tetap unavailable.
@@ -126,7 +127,7 @@ Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi 
 
 ## COMP-009 — Tutup fixture dan QA backend runtime
 
-Status: **IN PROGRESS — fixture in-memory + endpoint smoke lulus; PostgreSQL/Redis belum tersedia**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-029/027.
+Status: **IN PROGRESS — fixture/proxy/fail-closed smoke lulus; PostgreSQL/Redis belum tersedia (Docker daemon Sokudo tak terjangkau)**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-029/027.
 
 - [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal. Uji bind-failure dengan port guard sintetis keluar non-zero dan tidak meninggalkan listener/DB. Isolasi konkurensi masih terbuka.
 - [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN. Regresi sequential SQLite pass 2; lima concurrency tests tercatat skipped karena backend bukan PostgreSQL.
@@ -138,12 +139,13 @@ Selesai ketika acceptance runtime mempunyai hasil nyata atau blocker spesifik te
 
 ## COMP-010 — Browser QA kandidat integrasi
 
-Status: **BLOCKED untuk matriks penuh — tool Sokudo tidak diekspos pada sesi; `.sokudo/` menyimpan 16 run historis yang semuanya gagal**. Prioritas: P0. Dependency: COMP-008/009 dan runner tersedia. Tiket: TASK-027/033/043/049; acceptance browser semua fitur terkait.
+Status: **BLOCKED untuk matriks penuh — local Edge smoke auth lulus, tetapi Sokudo runner/tool tidak terhubung; `.sokudo/` menyimpan 16 run historis yang semuanya gagal**. Bukti parsial: [demo test matrix](docs/demo-test-matrix.md). Prioritas: P0. Dependency: COMP-008/009 dan runner tersedia. Tiket: TASK-027/033/043/049; acceptance browser semua fitur terkait.
 
 - [x] Periksa ulang discovery/akses runner. Tool tidak tersedia di sesi; artefak historis membuktikan runner pernah berjalan tetapi run gagal di runtime/login/scroll. Lihat laporan COMP-006.
-- [ ] Pin runtime/fixture/source, validasi flow existing, selector unik, dan kemampuan runner; jangan menyebut validasi YAML sebagai run PASS.
-- [ ] Uji viewport 375/768/1440, light/dark, reduced motion, keyboard/fokus, loading/empty/error/retry, sidebar, dan public verification.
-- [ ] Uji logout success/failure/expired, reload, dua tab, refresh paralel/race, isolasi sesi, dan SSR lintas pengguna.
+- [x] Pin runtime/fixture/source untuk smoke lokal Edge/Playwright: source kandidat `ff542e7`, backend in-memory 8011, Next proxy 3000; selectors label exact. Ini bukan run Sokudo.
+- [x] Uji overflow dashboard pada viewport 375/768/1440 dan reduced-motion; tidak ada horizontal overflow dalam flow auth/dashboard.
+- [ ] Uji light/dark, keyboard/fokus penuh, loading/empty/error/retry umum, sidebar, dan public verification.
+- [x] Uji logout success dan synthetic 503/retry serta refresh replay; reload, dua tab, refresh paralel/expiry, isolasi SSR lintas pengguna belum diuji browser.
 - [ ] Uji lifecycle Study, roadmap selection/panel mobile, diagnostic recovery/exit, mock/draft label, serta state dashboard/profil.
 - [ ] Simpan run ID, screenshot/log yang aman, dan matriks per acceptance PASS/FAIL/NOT RUN; kembalikan defect ke task implementasi lalu uji ulang perubahan relevan.
 
@@ -151,9 +153,9 @@ Selesai ketika seluruh baris wajib mempunyai hasil aktual yang lolos pada kandid
 
 ## COMP-011 — Sumber, rehearsal, dan laporan akhir
 
-Status: TODO. Prioritas: P0. Dependency: COMP-010; persiapan sumber/runbook bisa dimulai lebih awal. Plan lama: 002/003/004/005.
+Status: **IN PROGRESS — 13 sumber unik lulus pemeriksaan header-only; rehearsal UI end-to-end belum dilakukan**. Bukti: [source review](docs/source-review.md) dan [demo test matrix](docs/demo-test-matrix.md). Prioritas: P0. Dependency: COMP-010; persiapan sumber/runbook bisa dimulai lebih awal. Plan lama: 002/003/004/005.
 
-- [ ] Periksa ulang 13 sumber dan URL yang dulu 503; bedakan status reachability, redirect/canonical, dan lisensi. Jangan mengubah klaim reuse tanpa bukti.
+- [x] Periksa ulang 13 sumber unik dengan checker header-only: 13 `ok`, 0 moved, 0 broken. Tetap pisahkan reachability dari hak pakai; seluruh `license_verified` tetap false.
 - [ ] Pastikan sumber yang digunakan dalam demo terbuka di browser operator; pertahankan label mock/draft dan failed attempt sesuai respons server.
 - [ ] Mulai dari runtime bersih dan lakukan rehearsal catalog -> diagnostic -> result -> roadmap -> study/checkpoint/completion -> rules/mock assessment -> draft credential -> public verification tanpa login.
 - [ ] Buktikan credential draft invalid/unverified/unanchored, tidak ada reward ganda, dan restart database in-memory dijelaskan di runbook.
