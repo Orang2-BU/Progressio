@@ -99,13 +99,14 @@ Selesai ketika revisi final dan perilaku komponen terbukti. Panel roadmap pada 3
 
 ## COMP-007 — Review final dan susun kandidat integrasi
 
-Status: TODO. Prioritas: P0. Dependency: COMP-002/004/005/006. Tiket: TASK-048.
+Status: **CHANGES — kandidat parsial dipin, komposisi final tertahan konflik**. Bukti: [laporan COMP-007](docs/completion/COMP-007-integration-review.md). Prioritas: P0. Dependency: COMP-002/004/005/006. Tiket: TASK-048.
 
-- [ ] Baca full diff dan history setiap kandidat terhadap base, termasuk inherited backend/auth; identifikasi seluruh source yang masuk komposisi final.
-- [ ] Review Study lifecycle, dashboard/logout, diagnostic, roadmap, kontrak keamanan, serta kualitas regresi dan metode coverage.
-- [ ] Laporkan temuan severity/file:line, reproduksi, dan fix konkret. Perbaikan menghasilkan SHA baru yang perlu direview lagi.
-- [ ] Pin satu kandidat integrasi melalui workflow branch/worktree yang terotorisasi; jangan menimpa pekerjaan lama atau menganggap setiap branch otomatis kompatibel.
-- [ ] Tulis PASS/CHANGES/BLOCKED per SHA dan per scope, dengan identitas pelaksana sebenarnya. Catat apakah review independen atau self-review.
+- [x] Inventaris history/base, file diff, serta overlap semua kandidat; petakan konflik integrasi.
+- [x] Rekonsiliasi report terdahulu dan review langsung kandidat komposisi keamanan + Study.
+- [ ] Selesaikan full source diff review untuk setiap kandidat dan review ulang semua finding pada satu SHA gabungan stabil.
+- [x] Laporkan blocker integrasi yang tereproduksi dan perilaku commit yang perlu dipertahankan; perubahan gabungan wajib direview ulang.
+- [x] Pin kandidat komposisi awal pada branch/worktree terpisah tanpa menimpa kandidat lama atau main.
+- [x] Tulis verdict sementara per SHA/scope dan jelaskan bahwa ini self-review, bukan approval independen.
 
 Selesai ketika kandidat stabil dan keputusan review dapat diaudit. Review yang didelegasikan owner dapat dikerjakan assistant, tetapi tidak boleh ditulis sebagai approval orang lain. Commit laporan; integrasi ke main/keputusan kartu adalah langkah terpisah.
 
