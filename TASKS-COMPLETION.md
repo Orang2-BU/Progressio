@@ -86,14 +86,14 @@ Selesai ketika acceptance state/data dan coverage terpenuhi. Ukuran 375/768/1440
 
 ## COMP-006 — Selesaikan diagnostic dan roadmap
 
-Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-018/019.
+Status: IN PROGRESS; bukti dan gap: [laporan COMP-006](docs/completion/COMP-006-diagnostic-roadmap.md). Prioritas: P0. Dependency: COMP-003. Tiket: TASK-018/019.
 
-- [ ] Pin kandidat revisi terbaru dan pastikan fix fokus/TDZ dinilai pada SHA yang benar.
+- [x] Pin kandidat revisi terbaru secara terpisah; fix fokus/TDZ dinilai pada SHA kandidat yang sesuai.
 - [ ] Diagnostic: semua ID terkirim, Belum tahu string kosong, pilihan tidak submit otomatis, prev/next mempertahankan jawaban, submit lock, abort/query berubah, uncertain submit/recovery, empty/404/error/retry, serta konfirmasi keluar/fokus.
-- [ ] Hasil diagnostic memakai overall score/tanggal/skill/rekomendasi server; tidak membuat XP, durasi, histori, atau mastery baru dari asumsi.
-- [ ] Roadmap: denominator unik, data duplikat, coverage/zero guard, urutan server, selection/fokus, query target, dan studyHref benar.
+- [x] Hasil diagnostic memakai overall score/tanggal/skill/rekomendasi server; tidak membuat XP, durasi, histori, atau mastery baru dari asumsi (validasi helper dan SSR/component evidence).
+- [x] Roadmap helper/DOM: denominator unik, duplicate, zero guard, urutan server, selection, query target, dan studyHref.
 - [ ] Uji tanpa diagnostic, skill cukup, prerequisite belum cukup, loading/error/empty; status locked/completion/credential mengikuti kontrak.
-- [ ] Jalankan tes/build/coverage sesuai acceptance dan commit defect yang terbukti beserta regresinya.
+- [x] Jalankan tes/build/coverage pada dua kandidat dan commit defect/regresi yang terbukti; lihat laporan untuk acceptance yang masih terbuka.
 
 Selesai ketika revisi final dan perilaku komponen terbukti. Panel roadmap pada 375px dan mode fokus diagnostic masih diuji di browser pada COMP-010.
 
