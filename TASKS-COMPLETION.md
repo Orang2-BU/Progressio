@@ -129,7 +129,7 @@ Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi 
 
 Status: **PASS terbatas pada backend candidate `ff542e7` — fixture/proxy, PostgreSQL concurrency, Redis lintas proses, dan fail-closed tervalidasi; belum deployment/clearance release**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency source backend lulus; komposisi akhir tetap COMP-007. Tiket: TASK-029/027.
 
-- [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal. Uji bind-failure dengan port guard sintetis keluar non-zero dan tidak meninggalkan listener/DB. Isolasi konkurensi masih terbuka.
+- [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal. Uji bind-failure dengan port guard sintetis keluar non-zero dan tidak meninggalkan listener/DB.
 - [x] PostgreSQL disposable: test concurrency 7/7 PASS dan suite semua app 200/200 PASS, dengan interleaving deterministik, isolation, mastery, dan XP.
 - [x] Redis disposable: lintas dua proses berbagi 429; budget 1/sec expire dan retry kembali ke respons handler; destination/transport guards ada dalam suite 200/200.
 - [x] Production synthetic config memakai PostgreSQL+Redis diterima; tanpa Redis atau dengan SQLite ditolak fail-closed. API health 200 pada run PG+Redis.
