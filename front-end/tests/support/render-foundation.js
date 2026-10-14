@@ -23,7 +23,7 @@ export function foundationRenderer({ path = '/login', query = '', session = { us
     modules.set(filePath, module);
     const source = readFileSync(filePath, 'utf8');
     const { code } = transformSync(source, {
-      filename: filePath, babelrc: false, configFile: false,
+      filename: filePath, sourceMaps: 'inline', sourceFileName: filePath, babelrc: false, configFile: false,
       presets: [['next/babel', { 'preset-env': { modules: 'commonjs', targets: { node: 'current' } }, 'preset-react': { runtime: 'automatic' }, 'transform-runtime': { helpers: false } }]],
     });
     function dependency(name) {
