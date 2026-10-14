@@ -126,9 +126,9 @@ Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi 
 
 ## COMP-009 — Tutup fixture dan QA backend runtime
 
-Status: TODO. Prioritas: P0. Dependency: COMP-007. Tiket: TASK-029/027.
+Status: **IN PROGRESS — fixture in-memory + endpoint smoke lulus; PostgreSQL/Redis belum tersedia**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-029/027.
 
-- [ ] Jalankan fixture dan proxy pada resource sementara, validasi isolasi config/port, startup/shutdown, serta cleanup saat failure.
+- [x] Jalankan fixture backend in-memory `--catalog` pada port 8011; validasi migrasi/seed, `/career-tracks/` dan `/health/` HTTP 200, startup dan shutdown normal. Proxy Next, cleanup saat failure, dan isolasi konkurensi masih terbuka.
 - [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN.
 - [ ] Sediakan Redis disposable; buktikan cache/throttle lintas proses, 429/retry/expiry, dan destination guard. Jangan mewarisi instance pengguna.
 - [ ] Periksa konfigurasi local/hosted fail-closed memakai env sintetis; lakukan probe API pada source yang cocok.
