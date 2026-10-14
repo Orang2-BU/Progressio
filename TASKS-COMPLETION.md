@@ -128,7 +128,7 @@ Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi 
 
 Status: **IN PROGRESS — fixture in-memory + endpoint smoke lulus; PostgreSQL/Redis belum tersedia**. Bukti: [laporan COMP-009](docs/completion/COMP-009-backend-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-029/027.
 
-- [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal, port bersih. Cleanup saat failure dan isolasi konkurensi masih terbuka.
+- [x] Jalankan fixture backend in-memory `--catalog` pada port 8011 dan Next proxy 3000; migrasi/seed, katalog seeded dan `/health/` lewat proxy HTTP 200, startup/shutdown normal. Uji bind-failure dengan port guard sintetis keluar non-zero dan tidak meninggalkan listener/DB. Isolasi konkurensi masih terbuka.
 - [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN.
 - [ ] Sediakan Redis disposable; buktikan cache/throttle lintas proses, 429/retry/expiry, dan destination guard. Jangan mewarisi instance pengguna.
 - [x] Probe guard mode production dengan environment sintetis `APP_ENV=production`, `DB_ENGINE=sqlite`; startup ditolak sebelum Django berjalan. Probe hosted dengan PostgreSQL/provider nyata masih terbuka.
