@@ -27,6 +27,8 @@ def validate_provider_url(url, *, has_credentials, allowed_hosts=()):
             or parsed.password is not None or parsed.fragment):
         raise ValueError('Provider URL must be an absolute HTTPS URL without userinfo or fragments.')
     if parsed.scheme == 'https':
+        if port not in (None, 443):
+            raise ValueError('HTTPS provider URLs must use port 443.')
         trusted_hosts = {host.strip().lower() for host in allowed_hosts if host.strip()}
         if hostname.lower() not in trusted_hosts:
             raise ValueError('HTTPS provider host must be listed in its trusted-host allowlist.')

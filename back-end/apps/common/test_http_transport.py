@@ -36,6 +36,14 @@ class ProviderTransportTests(unittest.TestCase):
         self.assertEqual(validate_provider_url('http://[::1]:8080/v1', has_credentials=False),
                          'http://[::1]:8080/v1')
 
+    def test_https_provider_uses_the_standard_port(self):
+        self.assertEqual(validate_provider_url('https://ai.example.test:443/v1', has_credentials=True,
+                                               allowed_hosts={'ai.example.test'}),
+                         'https://ai.example.test:443/v1')
+        with self.assertRaisesRegex(ValueError, 'port 443'):
+            validate_provider_url('https://ai.example.test:8443/v1', has_credentials=True,
+                                  allowed_hosts={'ai.example.test'})
+
     def test_production_rejects_even_unauthenticated_loopback_http(self):
         with patch.dict(os.environ, {'APP_ENV': 'production'}):
             with self.assertRaisesRegex(ValueError, 'only in local development'):

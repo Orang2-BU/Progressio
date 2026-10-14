@@ -58,10 +58,10 @@ Production requires explicit `AI_PROVIDER` (`mock`, `groq`, `http`, or legacy
 requires `AI_API_URL` or `OPENAI_BASE_URL` plus `AI_ALLOWED_HOSTS`; blockchain
 `http` requires `BLOCKCHAIN_SERVICE_URL` and `BLOCKCHAIN_ALLOWED_HOSTS`. These
 Comma-separated allowlists must contain exact hostnames only (no scheme, port,
-wildcard, or path). Provider URLs must use HTTPS, contain no userinfo, and cannot
-redirect. Plain HTTP is accepted only for unauthenticated loopback development
-endpoints. Mock providers simulate these integrations and must not be represented
-as live AI evaluations or anchored credential proofs.
+wildcard, or path). Provider URLs must use HTTPS on the standard port 443, contain
+no userinfo, and cannot redirect. Plain HTTP is accepted only for unauthenticated
+loopback development endpoints. Mock providers simulate these integrations and
+must not be represented as live AI evaluations or anchored credential proofs.
 
 Email is disabled by default in production. When a feature begins sending email,
 set `ENABLE_EMAIL=True` and configure SMTP host, username, password, and sender;
