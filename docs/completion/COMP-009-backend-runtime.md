@@ -22,6 +22,7 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Status: **IN PROGRESS — smoke fixture
 | Shutdown normal | PASS; proses server dihentikan setelah dua request |
 | Cleanup pada bind failure | PASS; listener port 8011 milik tes sendiri memaksa `PermissionError`, fixture keluar 1 dan tidak meninggalkan listener/DB |
 | Production guard dengan environment sintetis (`APP_ENV=production`, `DB_ENGINE=sqlite`) | PASS terbatas; startup ditolak dengan `DB_ENGINE must be 'postgresql' when APP_ENV=production` (exit 1) |
+| `apps.assessments.test_concurrency` na SQLite in-memory | 2 sequential regression PASS; 5 PostgreSQL concurrency cases SKIPPED secara eksplisit; test command exit 0 |
 | Port 3000/8011 setelah shutdown | PASS; tidak ada listener yang tersisa |
 | PostgreSQL row locking/interleaving | NOT RUN; tidak ada PostgreSQL disposable yang tersedia |
 | Redis cache/throttle lintas proses | NOT RUN; tidak ada Redis disposable yang tersedia |
@@ -49,6 +50,8 @@ GET http://127.0.0.1:3000/api/v1/career-tracks/           HTTP 200, Backend Engi
 GET http://127.0.0.1:3000/api/v1/health/                  HTTP 200
 Ctrl-C                                                       normal shutdown
 Port probe 3000, 8011                                         no listener
+$env:APP_ENV='local'; $env:DB_ENGINE='sqlite'; python back-end/manage.py test apps.assessments.test_concurrency -v 2
+                                                             2 passed, 5 skipped (PostgreSQL-only), exit 0
 $portGuard.Start(); python front-end/tests/backend_server.py --catalog
                                                              expected bind failure, exit 1; guard then stopped
 $env:APP_ENV='production'; $env:DB_ENGINE='sqlite'; python back-end/manage.py check
