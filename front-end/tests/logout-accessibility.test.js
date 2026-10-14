@@ -22,8 +22,8 @@ test('logout redirects only after server confirmation and explains failures hone
     readFile(profilePath, 'utf8'),
   ]);
 
-  assert.match(app, /await logout\('Sesi berhasil dicabut di server\.'\)/);
-  assert.match(profile, /await logout\('Sesi berhasil dicabut di server\.'\)/);
+  assert.match(app, /await logout\('Logout berhasil\. Sesi web di perangkat ini sudah diakhiri\.'\)/);
+  assert.match(profile, /await logout\('Logout berhasil\. Sesi web di perangkat ini sudah diakhiri\.'\)/);
   assert.match(app, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
   assert.match(profile, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
 });

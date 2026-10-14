@@ -172,7 +172,7 @@ export default function App({ children }) {
   async function signOut() {
     setLogoutError('');
     try {
-      await logout('Sesi berhasil dicabut di server.');
+      await logout('Logout berhasil. Sesi web di perangkat ini sudah diakhiri.');
       router.replace('/login');
     } catch (error) {
       setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
