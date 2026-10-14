@@ -17,10 +17,12 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Status: **IN PROGRESS — smoke fixture
 | Startup, migrations, seed dan fixture katalog | PASS; server melaporkan disposable in-memory di `127.0.0.1:8011` |
 | `GET /api/v1/career-tracks/` | HTTP 200, 591 byte |
 | `GET /api/v1/health/` | HTTP 200, body `status=ok` |
+| Next proxy `http://127.0.0.1:3000/api/v1/career-tracks/` -> fixture | HTTP 200; response berisi `Backend Engineering` |
+| Next proxy `http://127.0.0.1:3000/api/v1/health/` | HTTP 200 |
 | Shutdown normal | PASS; proses server dihentikan setelah dua request |
 | Production guard dengan environment sintetis (`APP_ENV=production`, `DB_ENGINE=sqlite`) | PASS terbatas; startup ditolak dengan `DB_ENGINE must be 'postgresql' when APP_ENV=production` (exit 1) |
 | Cleanup saat startup/request failure | NOT RUN |
-| Next proxy terhadap fixture 8011 | NOT RUN pada smoke ini |
+| Port 3000/8011 setelah shutdown | PASS; tidak ada listener yang tersisa |
 | PostgreSQL row locking/interleaving | NOT RUN; tidak ada PostgreSQL disposable yang tersedia |
 | Redis cache/throttle lintas proses | NOT RUN; tidak ada Redis disposable yang tersedia |
 
@@ -30,7 +32,7 @@ Concurrency test `back-end/apps/assessments/test_concurrency.py` sengaja mensyar
 
 - COMP-007 belum stabil, jadi runtime ini hanya smoke pada SHA komposisi parsial.
 - Perlu PostgreSQL dan Redis disposable untuk interleaving deterministik, isolasi user, konsistensi mastery/XP, cache/throttle lintas proses, expiry/retry, dan destination guard.
-- Perlu probe fail-closed untuk config local/hosted pada runtime bersih, serta Next proxy/startup-failure cleanup.
+- Perlu probe fail-closed untuk config hosted valid pada runtime bersih, serta cleanup saat startup/request failure.
 - Guard production menolak SQLite terverifikasi; konfigurasi valid dengan PostgreSQL/provider nyata dan Redis belum diverifikasi.
 - Perlu merekonsiliasi acceptance QA TASK-027/029 dengan bukti yang terikat ke kandidat final.
 
@@ -42,7 +44,10 @@ Tidak ada file database persisten yang dibuat oleh fixture ini. COMP-009 belum P
 python front-end/tests/backend_server.py --catalog        (candidate root; server started)
 GET http://127.0.0.1:8011/api/v1/career-tracks/           HTTP 200
 GET http://127.0.0.1:8011/api/v1/health/                  HTTP 200
+GET http://127.0.0.1:3000/api/v1/career-tracks/           HTTP 200, Backend Engineering
+GET http://127.0.0.1:3000/api/v1/health/                  HTTP 200
 Ctrl-C                                                       normal shutdown
+Port probe 3000, 8011                                         no listener
 $env:APP_ENV='production'; $env:DB_ENGINE='sqlite'; python back-end/manage.py check
                                                              exit 1, expected fail-closed ValueError
 ```
