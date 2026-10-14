@@ -131,7 +131,7 @@ Status: **IN PROGRESS — fixture in-memory + endpoint smoke lulus; PostgreSQL/R
 - [x] Jalankan fixture backend in-memory `--catalog` pada port 8011; validasi migrasi/seed, `/career-tracks/` dan `/health/` HTTP 200, startup dan shutdown normal. Proxy Next, cleanup saat failure, dan isolasi konkurensi masih terbuka.
 - [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN.
 - [ ] Sediakan Redis disposable; buktikan cache/throttle lintas proses, 429/retry/expiry, dan destination guard. Jangan mewarisi instance pengguna.
-- [ ] Periksa konfigurasi local/hosted fail-closed memakai env sintetis; lakukan probe API pada source yang cocok.
+- [x] Probe guard mode production dengan environment sintetis `APP_ENV=production`, `DB_ENGINE=sqlite`; startup ditolak sebelum Django berjalan. Probe hosted dengan PostgreSQL/provider nyata masih terbuka.
 - [ ] Petakan acceptance QA backend lama ke bukti baru dan simpan run ID/SHA/environment/exit/artefak/cleanup.
 
 Selesai ketika acceptance runtime mempunyai hasil nyata atau blocker spesifik tetap terbuka. Hasil SQLite tidak menutup row locking PostgreSQL. Commit fixture/test/runbook yang berubah, tanpa artefak runtime atau secret.

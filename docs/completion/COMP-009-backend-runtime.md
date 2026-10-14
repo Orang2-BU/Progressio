@@ -18,6 +18,7 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Status: **IN PROGRESS — smoke fixture
 | `GET /api/v1/career-tracks/` | HTTP 200, 591 byte |
 | `GET /api/v1/health/` | HTTP 200, body `status=ok` |
 | Shutdown normal | PASS; proses server dihentikan setelah dua request |
+| Production guard dengan environment sintetis (`APP_ENV=production`, `DB_ENGINE=sqlite`) | PASS terbatas; startup ditolak dengan `DB_ENGINE must be 'postgresql' when APP_ENV=production` (exit 1) |
 | Cleanup saat startup/request failure | NOT RUN |
 | Next proxy terhadap fixture 8011 | NOT RUN pada smoke ini |
 | PostgreSQL row locking/interleaving | NOT RUN; tidak ada PostgreSQL disposable yang tersedia |
@@ -30,6 +31,7 @@ Concurrency test `back-end/apps/assessments/test_concurrency.py` sengaja mensyar
 - COMP-007 belum stabil, jadi runtime ini hanya smoke pada SHA komposisi parsial.
 - Perlu PostgreSQL dan Redis disposable untuk interleaving deterministik, isolasi user, konsistensi mastery/XP, cache/throttle lintas proses, expiry/retry, dan destination guard.
 - Perlu probe fail-closed untuk config local/hosted pada runtime bersih, serta Next proxy/startup-failure cleanup.
+- Guard production menolak SQLite terverifikasi; konfigurasi valid dengan PostgreSQL/provider nyata dan Redis belum diverifikasi.
 - Perlu merekonsiliasi acceptance QA TASK-027/029 dengan bukti yang terikat ke kandidat final.
 
 Tidak ada file database persisten yang dibuat oleh fixture ini. COMP-009 belum PASS dan tidak menutup acceptance PostgreSQL/Redis.
@@ -41,4 +43,6 @@ python front-end/tests/backend_server.py --catalog        (candidate root; serve
 GET http://127.0.0.1:8011/api/v1/career-tracks/           HTTP 200
 GET http://127.0.0.1:8011/api/v1/health/                  HTTP 200
 Ctrl-C                                                       normal shutdown
+$env:APP_ENV='production'; $env:DB_ENGINE='sqlite'; python back-end/manage.py check
+                                                             exit 1, expected fail-closed ValueError
 ```
