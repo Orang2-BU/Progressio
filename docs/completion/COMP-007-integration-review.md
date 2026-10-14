@@ -8,7 +8,7 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Verdict: **CHANGES — komposisi awal d
 | --- | --- | --- |
 | Keamanan backend/provider dan web auth | `codex/bimo-transport-security` / `1e245a8e341aa3aaa6a6055a191336066eb95be3` (base `main`/`ded1271`) | Dipakai sebagai base integrasi; security report COMP-002 PASS terbatas untuk SHA ini. |
 | Study | `task-047-fix-revisi-ruang-belajar-task-020-dan-lengkapi-b` / `834d6ecdddb3d117de77311b73b667b9d889e1d8` (merge-base `323c4e9`) | Perubahan Study dan tes diterapkan selektif; suite/build pada kandidat komposisi lulus. Commit logout lama `c46edfd` tidak diterapkan karena konflik dan perbaikan yang lebih baru sudah diwarisi dari base Bimo. |
-| Dashboard/Profile | `task-042-safe-ringkasan-profil` / `80d50fd77a22c288573d8def54a34c64d8b4ad66` (base lama `59ebc369`) | Belum digabung: cherry-pick source `421e36e` bertabrakan pada changelog, `package.json`, `App.jsx`, `Profile.jsx`, `styles.css`, `api.test.js`, dan `logout-accessibility.test.js`. |
+| Dashboard/Profile | `task-042-safe-ringkasan-profil` / `80d50fd77a22c288573d8def54a34c64d8b4ad66` (base lama `59ebc369`) | Dashboard/Profile dasar sudah diwarisi dari commit upstream `5ff41a2` pada base Bimo, tetapi final TASK-042 memiliki delta (dashboard responsive rail, view/data helpers, username normalization, dan 223 baris interaction tests) yang belum direkonsiliasi. Cherry-pick `421e36e` bertabrakan pada changelog, `package.json`, `App.jsx`, `Profile.jsx`, `styles.css`, `api.test.js`, dan `logout-accessibility.test.js`. |
 | Diagnostic | `task-018-safe-candidate` / `8cc9638c9fdad53bd9ee8d5199240dc7800b172e` (base lama `59ebc369`) | Belum digabung; berbagi entry/routing, Catalog, API, CSS, dan dependency/tooling dengan kandidat lain. |
 | Roadmap | `task-019-safe-candidate` / `2c4c5abd5dd8768056e59297d1a549a4f39081dc` (base lama `59ebc369`) | Belum digabung; overlap nyata pada routing, Catalog, API, CSS, dan dependency/tooling. |
 
@@ -16,8 +16,8 @@ Kandidat komposisi awal dipin pada branch `codex/completion-integration`, worktr
 
 ## Review dan temuan
 
-- Tidak ditemukan regresi baru pada scope keamanan Bimo saat dipakai sebagai base. COMP-002 mencatat Django/provider tests 198 passed/5 skipped, `pip-audit` tanpa advisory, migration check dan OpenAPI check lulus pada SHA Bimo. Hasil itu tidak menggantikan runtime PostgreSQL/Redis, auth E2E, atau full browser QA.
-- Temuan merge blocker: commit Dashboard/Profile `421e36e` tidak dapat diterapkan otomatis ke base keamanan + Study. Konflik file yang teramati: `front-end/CHANGELOG.md`, `package.json`, `src/App.jsx`, `src/Profile.jsx`, `src/styles.css`, `tests/api.test.js`, `tests/logout-accessibility.test.js`. Reproduksi: cherry-pick `421e36e` pada `codex/completion-integration`; operasi dibatalkan di worktree kandidat setelah konflik dicatat. Tidak ada konflik yang diselesaikan dengan memilih satu sisi secara membabi buta.
+- **HIGH — logout web bukan server revocation.** Pada base Bimo, `front-end/src/api.js:25-30` hanya mengosongkan token/session lokal; source/backend contract tidak memiliki endpoint revoke (`front-end/API_CONTRACT.md:36`). Namun `App.jsx`/`Profile.jsx` dan tes source menganggap `await logout()` bukti konfirmasi server. Reproduksi: spy `fetch`, panggil `logout(reason)`, hasilnya 0 request dan session lokal null. Commit `8c46ce1` mengoreksi klaim UI dan menambahkan tes; endpoint dan revoke sesungguhnya tetap TODO TASK-009. Re-review penuh auth/runtime dibutuhkan.
+- Kompetisi merge Dashboard/Profile: commit `421e36e` tidak dapat diterapkan otomatis ke base keamanan + Study. Konflik file yang teramati: `front-end/CHANGELOG.md`, `package.json`, `src/App.jsx`, `src/Profile.jsx`, `src/styles.css`, `tests/api.test.js`, `tests/logout-accessibility.test.js`. Reproduksi: cherry-pick `421e36e` pada `codex/completion-integration`; operasi dibatalkan setelah konflik dicatat. Base Bimo sudah memiliki Dashboard/Profile dasar dari `5ff41a2`, jadi konflik ini menunjukkan drift/delta, bukan halaman belum tersedia. Tidak ada konflik diselesaikan dengan memilih satu sisi secara membabi buta.
 - Temuan merge blocker berikutnya: Diagnostic dan Roadmap adalah branch terpisah dengan base `59ebc369`, sementara Study dan Bimo berbasis leluhur `main` yang lebih baru. Diff nama-file menunjukkan benturan bersama pada UI shell, Catalog, API, styles, lockfile, serta test harness. Belum dilakukan komposisi manual/review hasil gabungan.
 - Commit logout `c46edfd` pada rangkaian Study juga bertabrakan pada empat file (changelog, App, Profile, api tests). Base Bimo sudah membawa commit perbaikan logout server-confirmed dan tes terkait; commit lama itu dilewati. Penutupan finding logout tetap PASS terbatas ke source/regresi, belum runtime/browser.
 - Verifikasi kandidat parsial pada SHA `a374189`: `npm ci` sukses, audit install melaporkan 0 vulnerability; `npm test` 70/70; `npm run build` sukses dengan 13 route; `npm run coverage` sukses, `Study.jsx` 91.90% line. Coverage keseluruhan 69.11%, dan Dashboard/Profile di kandidat ini belum merupakan implementasi final TASK-042. Tidak ada tes backend yang dijalankan ulang pada branch komposisi.
@@ -27,12 +27,13 @@ Kandidat komposisi awal dipin pada branch `codex/completion-integration`, worktr
 
 | SHA/scope | Verdict | Batas |
 | --- | --- | --- |
-| `1e245a8` backend/security Bimo | PASS terbatas (COMP-002) | Bukan clearance runtime/demo keseluruhan. |
+| `1e245a8` backend/provider security Bimo | PASS terbatas (COMP-002) | Web server-side logout tidak termasuk PASS; kontrak backend belum punya endpoint revoke. |
 | `834d6ec` Study | PASS pada kandidat Study terpisah; komposisi awal `a374189` juga lolos suite/build/coverage | Belum browser dengan backend nyata. |
-| `80d50fd` Dashboard/Profile | PASS pada kandidat terpisah (COMP-005), **belum terintegrasi** | Perlu resolusi konflik terhadap shell/logout keamanan. |
+| `80d50fd` Dashboard/Profile | PASS pada kandidat terpisah (COMP-005), delta belum terintegrasi | Bimo base memiliki versi sebelumnya; perlu rekonsiliasi perubahan + tes tanpa mengganti logout ke local-only silently. |
 | `8cc9638` Diagnostic | PASS acceptance terpisah (COMP-006), **belum terintegrasi** | Perlu komposisi serta rerun tes pada SHA gabungan. |
 | `2c4c5ab` Roadmap | PASS acceptance terpisah (COMP-006), **belum terintegrasi** | Perlu komposisi serta rerun tes pada SHA gabungan. |
-| `a374189` kandidat integrasi awal | CHANGES | Hanya keamanan + Study; belum cukup untuk COMP-008/010 terhadap produk final. |
+| `a374189` kandidat integrasi awal | CHANGES | Keamanan + Study dan Dashboard/Profile baseline; belum cukup untuk COMP-008/010 terhadap produk final. |
+| `8c46ce1` koreksi klaim logout | PASS untuk label lokal + tes offline | Tidak mencabut refresh token; TASK-009 tetap terbuka. |
 
 ## Langkah lanjutan
 

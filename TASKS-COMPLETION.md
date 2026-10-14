@@ -35,11 +35,12 @@ Selesai ketika manifest dan peta dependency tersimpan, source pengguna aman, ser
 
 ## COMP-002 — Tutup keamanan upstream, auth, dan fixture
 
-Status: PASS (review mandiri, terbatas pada SHA yang dicatat). Prioritas: P0. Dependency: COMP-001. Tiket: TASK-046/009/029/012. Bukti: [hasil audit keamanan](docs/completion/COMP-002-security.md).
+Status: **CHANGES — provider/backend dan fixture clear terbatas; web revoke/logout server belum tersedia**. Bukti: [hasil audit keamanan](docs/completion/COMP-002-security.md) dan [review integrasi](docs/completion/COMP-007-integration-review.md). Prioritas: P0. Dependency: COMP-001. Tiket: TASK-046/009/029/012.
 
 - [x] Audit dependency Node dan Python dengan advisory aktual; pasang alat audit lokal bila belum tersedia dan catat failure/coverage audit.
 - [x] Review full diff transport AI/proof: HTTPS, origin/host/port/userinfo, redirect 301/302/303/multi-hop, Authorization, sanitasi error, dan validasi konfigurasi.
-- [x] Rekonsiliasi Mobile sukses simulasi, notice logout palsu, dan false logout web pada kandidat baru. Endpoint gagal tidak boleh diumumkan sebagai revoke sukses.
+- [x] Mobile dan query notice ditinjau; web kini jelas menyebut logout lokal, tidak mengklaim token server dicabut.
+- [ ] Tambahkan/konfirmasi endpoint revoke server untuk TASK-009 dan uji dengan backend; kontrak aktif menyatakan endpoint belum ada.
 - [x] Verifikasi fixture menolak environment pengguna, tujuan eksternal/userinfo/port bukan milik run, dan mencoba seluruh cleanup walaupun satu resource gagal.
 - [x] Untuk defect yang masih terbuka, tulis regression RED, fix minimal, lalu GREEN; perbarui kontrak bila perilaku berubah.
 - [x] Tulis verdict per temuan pada SHA final, metode, severity, dan scope yang belum diuji; lakukan review ulang source yang berubah.
