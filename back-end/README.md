@@ -54,10 +54,12 @@ network. Populate deployment environment variables from a secret manager, using
 `docker compose -f docker-compose.hosted.yml up --build -d`.
 Production requires explicit `AI_PROVIDER` (`mock`, `groq`, `http`, or legacy
 `openai`) and `BLOCKCHAIN_PROVIDER` (`mock` or `http`). Groq requires
-`GROQ_API_KEY`; `http` requires `AI_API_URL`; `openai` requires `AI_API_URL` or
-`OPENAI_BASE_URL`; blockchain `http` requires `BLOCKCHAIN_SERVICE_URL`. Provider
-URLs must use HTTPS, contain no userinfo, and cannot redirect. Plain HTTP is
-accepted only for unauthenticated loopback development endpoints. Mock providers
+`GROQ_API_KEY`; `http` requires `AI_API_URL` and `AI_ALLOWED_HOSTS`; `openai`
+requires `AI_API_URL` or `OPENAI_BASE_URL` plus `AI_ALLOWED_HOSTS`; blockchain
+`http` requires `BLOCKCHAIN_SERVICE_URL` and `BLOCKCHAIN_ALLOWED_HOSTS`. These
+comma-separated allowlists must contain exact hostnames only (no scheme, port,
+wildcard, or path). Provider URLs must use HTTPS, contain no userinfo, and cannot
+redirect. Plain HTTP is accepted only for unauthenticated loopback development endpoints. Mock providers
 simulate these integrations and must not be represented as live AI evaluations
 or anchored credential proofs.
 

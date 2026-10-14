@@ -15,7 +15,7 @@ class _NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def validate_provider_url(url, *, has_credentials):
+def validate_provider_url(url, *, has_credentials, allowed_hosts=()):
     """Require HTTPS except unauthenticated loopback development endpoints."""
     try:
         parsed = urlsplit(url)
@@ -27,6 +27,9 @@ def validate_provider_url(url, *, has_credentials):
             or parsed.password is not None or parsed.fragment):
         raise ValueError('Provider URL must be an absolute HTTPS URL without userinfo or fragments.')
     if parsed.scheme == 'https':
+        trusted_hosts = {host.strip().lower() for host in allowed_hosts if host.strip()}
+        if hostname.lower() not in trusted_hosts:
+            raise ValueError('HTTPS provider host must be listed in its trusted-host allowlist.')
         return url
     if os.getenv('APP_ENV', 'local').strip().lower() != 'local':
         raise ValueError('HTTP provider URLs are allowed only in local development.')

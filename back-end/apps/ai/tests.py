@@ -254,7 +254,8 @@ class AIServicesTests(TestCase):
             'result': expected,
         }).encode('utf-8')
 
-        adapter = HttpAIAdapter(api_url='https://ai-contoh/v1/chat', model='test-model')
+        adapter = HttpAIAdapter(api_url='https://ai-contoh/v1/chat', model='test-model',
+                                allowed_hosts={'ai-contoh'})
         with patch('apps.ai.adapters.http_adapter.open_provider_request', return_value=fake_response) as mocked:
             result = adapter._request_json(
                 'test_result',
@@ -279,7 +280,7 @@ class AIServicesTests(TestCase):
 
     def test_groq_adapter_builds_chat_json_schema_request_and_server_provenance(self):
         with patch.dict(os.environ, {'GROQ_API_KEY': 'synthetic-key', 'AI_MODEL': 'openai/gpt-oss-20b'}):
-            adapter = GroqAIAdapter(api_url='https://groq.test/chat')
+            adapter = GroqAIAdapter()
         schema = {'type': 'object', 'additionalProperties': False,
                   'properties': {'score': {'type': 'number'}}, 'required': ['score']}
         body = adapter._build_request_body('evaluation', 'Use only evidence.', {'text': 'sample'}, schema)
@@ -306,7 +307,7 @@ class AIServicesTests(TestCase):
             self.assertIsInstance(AIService.get_adapter(), GroqAIAdapter)
 
     def test_assessment_remaining_deadline_limits_provider_timeout(self):
-        adapter = HttpAIAdapter(api_url='https://ai.test/chat', timeout=10)
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat', timeout=10, allowed_hosts={'ai.test'})
         with patch.object(adapter, 'evaluate_submission', return_value={'score': 50, 'feedback': 'OK'}), \
                 patch('apps.ai.services.AIService.get_adapter', return_value=adapter):
             result = AIService.evaluate_submission(None, {'text': 'synthetic evidence'}, timeout_seconds=3)
@@ -314,7 +315,7 @@ class AIServicesTests(TestCase):
         self.assertEqual(result['provider'], 'http')
 
     def test_http_provider_outage_is_retryable_and_does_not_leak_vendor_body(self):
-        adapter = HttpAIAdapter(api_url='https://ai.test/chat')
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat', allowed_hosts={'ai.test'})
         error = HTTPError('https://ai.test/chat', 429, 'limited',
                           {'Retry-After': '5'}, BytesIO(b'synthetic vendor detail'))
         with patch('apps.ai.adapters.http_adapter.open_provider_request', side_effect=error):
@@ -324,7 +325,7 @@ class AIServicesTests(TestCase):
         self.assertNotIn('synthetic vendor detail', str(raised.exception))
 
     def test_http_provider_rejects_malformed_structured_response(self):
-        adapter = HttpAIAdapter(api_url='https://ai.test/chat')
+        adapter = HttpAIAdapter(api_url='https://ai.test/chat', allowed_hosts={'ai.test'})
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'{"choices":[]}'
         with patch('apps.ai.adapters.http_adapter.open_provider_request', return_value=response):

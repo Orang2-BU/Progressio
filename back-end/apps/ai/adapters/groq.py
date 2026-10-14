@@ -33,6 +33,7 @@ class GroqAIAdapter(HttpAIAdapter):
             model=model or os.getenv('AI_MODEL', self.DEFAULT_MODEL),
             timeout=timeout_seconds,
             allow_mock_fallback=allow_mock_fallback,
+            allowed_hosts={'api.groq.com', *os.getenv('AI_ALLOWED_HOSTS', '').split(',')},
         )
 
     def _build_request_body(self, task_name, instructions, payload, schema):

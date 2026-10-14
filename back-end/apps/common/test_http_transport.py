@@ -23,11 +23,16 @@ class ProviderTransportTests(unittest.TestCase):
             ('https://ai.example.test/v1#fragment', False),
         ):
             with self.subTest(url=url), self.assertRaises(ValueError):
-                validate_provider_url(url, has_credentials=has_credentials)
+                validate_provider_url(url, has_credentials=has_credentials,
+                                      allowed_hosts={'ai.example.test'})
 
     def test_allows_https_and_unauthenticated_loopback_http_only(self):
-        self.assertEqual(validate_provider_url('https://ai.example.test/v1', has_credentials=True),
+        self.assertEqual(validate_provider_url('https://ai.example.test/v1', has_credentials=True,
+                                               allowed_hosts={'ai.example.test'}),
                          'https://ai.example.test/v1')
+        with self.assertRaisesRegex(ValueError, 'trusted-host allowlist'):
+            validate_provider_url('https://internal.example.test/v1', has_credentials=True,
+                                  allowed_hosts={'ai.example.test'})
         self.assertEqual(validate_provider_url('http://[::1]:8080/v1', has_credentials=False),
                          'http://[::1]:8080/v1')
 
@@ -45,7 +50,8 @@ class ProviderTransportTests(unittest.TestCase):
         HTTPBlockchainAdapter(service_url='http://localhost:8080', api_token='')
 
     def test_provider_refusal_text_is_not_exposed_in_exceptions(self):
-        adapter = HttpAIAdapter(api_url='https://ai.example.test/v1')
+        adapter = HttpAIAdapter(api_url='https://ai.example.test/v1',
+                                allowed_hosts={'ai.example.test'})
         with self.assertRaises(AIProviderError) as raised:
             adapter._extract_json({'output': [{'content': [
                 {'type': 'refusal', 'refusal': 'synthetic sensitive provider response'}]}]})
@@ -53,7 +59,8 @@ class ProviderTransportTests(unittest.TestCase):
 
     def test_blockchain_redirect_is_not_followed_or_exposed(self):
         adapter = HTTPBlockchainAdapter(
-            service_url='https://signer.example.test', api_token='synthetic-token')
+            service_url='https://signer.example.test', api_token='synthetic-token',
+            allowed_hosts={'signer.example.test'})
         redirect = HTTPError(
             'https://signer.example.test/proofs', 307, 'Temporary Redirect',
             {'Location': 'https://attacker.example.test/collect'}, None)
