@@ -49,8 +49,8 @@ export default function Profile() {
   }
 
   function signOut() {
-    logout();
-    router.replace('/login?logged_out=1');
+    logout('Sesi lokal di perangkat ini telah dihapus; pencabutan token refresh server belum dikonfirmasi.');
+    router.replace('/login');
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;

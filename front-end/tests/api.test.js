@@ -178,15 +178,14 @@ describe('frontend foundation rendering', () => {
     }
   });
 
-  test('SSR stays deterministic and the client logout query resolves its success notice', () => {
+  test('a URL query cannot fabricate a successful logout notice', () => {
     const originalWindow = globalThis.window;
     globalThis.window = { location: { search: '?logged_out=1' } };
     try {
       const { app, render } = foundationRenderer({ session: { user: null, reason: '' } });
       const markup = render(app.AuthPage, { mode: 'login' });
       assert.doesNotMatch(markup, /Kamu sudah keluar dari akun\./);
-      assert.equal(app.logoutNoticeFromSearch(new URLSearchParams(window.location.search)), 'Kamu sudah keluar dari akun.');
-      assert.equal(app.logoutNoticeFromSearch(new URLSearchParams('')), '');
+      assert.doesNotMatch(markup, /logout berhasil|sudah keluar/i);
     } finally {
       if (originalWindow === undefined) delete globalThis.window;
       else globalThis.window = originalWindow;
