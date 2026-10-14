@@ -1,0 +1,178 @@
+# Task penyelesaian Progressio
+
+Tanggal: 14 Oktober 2026 (Asia/Jakarta). Plan: [PLAN-COMPLETION.md](PLAN-COMPLETION.md).
+
+Status awal paket ini adalah TODO, kecuali dependency browser yang diketahui BLOCKED. Tes lama yang sudah PASS menjadi titik awal; task baru belum dianggap selesai hanya karena dokumen ini dibuat. ID COMP adalah checklist lokal dan tidak membuat tiket baru di board.
+
+## Pemetaan tiket asal
+
+| Tiket asal | Paket penutupan |
+| --- | --- |
+| TASK-009 | COMP-002, COMP-007, COMP-008, COMP-010 |
+| TASK-012 | COMP-002, COMP-008 |
+| TASK-016 dan TASK-042 | COMP-003, COMP-005, COMP-007, COMP-010 |
+| TASK-018 dan TASK-019 | COMP-003, COMP-006, COMP-007, COMP-010 |
+| TASK-020 dan TASK-047 | COMP-003, COMP-004, COMP-007, COMP-010 |
+| TASK-027 | COMP-009, COMP-010, COMP-011 |
+| TASK-029 | COMP-002, COMP-009, COMP-010 |
+| TASK-033, TASK-043, TASK-049 | COMP-003, COMP-010, COMP-011 |
+| TASK-048 | COMP-007 |
+| Keamanan upstream TASK-046 | COMP-002; laporan lama selesai, verdict terhadap kandidat baru masih harus dibuktikan |
+| Plan 002–005 | COMP-010, COMP-011; gunakan implementasi branch yang sudah ada |
+
+TASK-021 sudah merged. TASK-006/007/015 yang sudah Done adalah konteks QA, bukan implementasi ulang. TASK-014/022/025 tetap di luar paket implementasi ini; acceptance concurrency/QA yang diwarisi dipetakan pada COMP-009 tanpa membuka scope fitur baru.
+
+## COMP-001 — Pin kandidat dan periksa lingkungan
+
+Status: TODO. Prioritas: P0. Dependency: —.
+
+- [ ] Inventaris main, worktree, base/final SHA, serta perubahan tracked/untracked; gunakan kandidat terbaru pada tabel plan sebagai titik awal.
+- [ ] Petakan delta yang sudah terwakili supaya patch dashboard/QA/Study tidak diterapkan dua kali. Tentukan manifest kandidat integrasi dan dependency source.
+- [ ] Periksa Node/Python/Flutter, dependency/lockfile, runner Sokudo, PostgreSQL/Redis disposable, serta alat coverage/dependency audit.
+- [ ] Catat availability dan error konkret. Untuk sumber yang belum dapat diakses, jangan mengklaim review selesai.
+
+Selesai ketika manifest dan peta dependency tersimpan, source pengguna aman, serta blocker lingkungan mempunyai langkah pemulihan. Output: `docs/completion/baseline.md` atau manifest setara; commit dokumentasi bila ada perubahan.
+
+## COMP-002 — Tutup keamanan upstream, auth, dan fixture
+
+Status: TODO. Prioritas: P0. Dependency: COMP-001. Tiket: TASK-046/009/029/012.
+
+- [ ] Audit dependency Node dan Python dengan advisory aktual; pasang alat audit lokal bila belum tersedia dan catat failure/coverage audit.
+- [ ] Review full diff transport AI/proof: HTTPS, origin/host/port/userinfo, redirect 301/302/303/multi-hop, Authorization, sanitasi error, dan validasi konfigurasi.
+- [ ] Rekonsiliasi Mobile sukses simulasi, notice logout palsu, dan false logout web pada kandidat baru. Endpoint gagal tidak boleh diumumkan sebagai revoke sukses.
+- [ ] Verifikasi fixture menolak environment pengguna, tujuan eksternal/userinfo/port bukan milik run, dan mencoba seluruh cleanup walaupun satu resource gagal.
+- [ ] Untuk defect yang masih terbuka, tulis regression RED, fix minimal, lalu GREEN; perbarui kontrak bila perilaku berubah.
+- [ ] Tulis verdict per temuan pada SHA final, metode, severity, dan scope yang belum diuji; lakukan review ulang source yang berubah.
+
+Selesai ketika seluruh temuan relevan ditutup dengan bukti atau mempunyai blocker spesifik yang tetap terbuka. Verdict menentukan kandidat/runtime mana yang bisa dilanjutkan; PASS terbatas tidak berubah menjadi clearance seluruh main. Commit fix dan laporan dengan scope terpisah.
+
+## COMP-003 — Tambahkan tes komponen dan coverage yang valid
+
+Status: TODO. Prioritas: P0. Dependency: COMP-001.
+
+- [ ] Siapkan lingkungan DOM dan tes interaksi React pada runner yang sesuai repo; tambahkan dev dependency yang diperlukan beserta lockfile.
+- [ ] Gunakan React asli dan provider Next, fixture jaringan, deferred response, cleanup per tes, serta query berdasarkan label/role.
+- [ ] Buktikan harness menjalankan effect, klik/input, update async, unmount, dan pergantian query; request tidak terduga harus menggagalkan tes.
+- [ ] Tambahkan command coverage yang dapat direproduksi dan memetakan hasil ke source JSX melalui sourcemap.
+- [ ] Ukur coverage terhadap base terpin: laporkan baris baru yang covered/eligible, persentase, serta pengecualian dengan alasan. Target >=80% kode baru pada tiket yang mensyaratkannya.
+
+Selesai ketika harness dan laporan source coverage dapat dipercaya, tanpa mengganti state/hook React untuk meloloskan tes. Pisahkan hasil komponen dari SSR dan browser E2E. Commit tooling/test saja; ini tidak menutup browser QA.
+
+## COMP-004 — Selesaikan lifecycle Study
+
+Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-020/047.
+
+- [ ] Uji completion lesson A: pilihan tetap A setelah sukses kecuali pengguna memilih lesson lain.
+- [ ] Mulai completion A, pindah ke B, lalu selesaikan respons A; receipt/error/busy A tidak muncul pada B.
+- [ ] Uji checkpoint benar/salah, jawaban/feedback saat berpindah lesson, dan respons terlambat setelah unmount.
+- [ ] Uji duplicate click, response loss tanpa replay otomatis, already-completed dengan `newly_completed:false`, serta reward yang berasal dari receipt server.
+- [ ] Uji progress unavailable/unknown/retry, loading/error/empty, source aman/broken, dan CTA assessment.
+- [ ] Journey hanya menandai tahapan yang terbukti oleh data; lakukan fix jika tes menemukan defect.
+- [ ] Jalankan regresi, build, coverage kode baru, dan update changelog/kontrak yang terpengaruh.
+
+Selesai ketika lifecycle interaktif dan isolasi state terbukti, seluruh kasus wajib PASS, serta coverage baru >=80%. Helper/SSR test saja tidak cukup. Commit fix bersama regresi yang relevan.
+
+## COMP-005 — Selesaikan dashboard dan profil
+
+Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-016/042.
+
+- [ ] Uji akun baru, data terisi, loading/empty, progress gagal, target gagal, roadmap gagal, retry, respons usang, dan pergantian query.
+- [ ] Target hanya berasal dari query tervalidasi; tanpa target tampilkan Pilih target. Data identitas/XP/completion memakai server.
+- [ ] Uji username fallback/email kosong/tanggal tidak valid, fitur profil unavailable, serta refresh profil yang gagal tanpa mengarang sukses.
+- [ ] Uji notice logout dari event nyata, URL `logged_out=1` palsu, logout gagal/retry, dan accessible name Keluar.
+- [ ] Ukur coverage kode baru >=80%, jalankan tes/build, dan perbarui copy/kontrak bila diperlukan.
+
+Selesai ketika acceptance state/data dan coverage terpenuhi. Ukuran 375/768/1440, layout, tema, dan keyboard browser diselesaikan pada COMP-010.
+
+## COMP-006 — Selesaikan diagnostic dan roadmap
+
+Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-018/019.
+
+- [ ] Pin kandidat revisi terbaru dan pastikan fix fokus/TDZ dinilai pada SHA yang benar.
+- [ ] Diagnostic: semua ID terkirim, Belum tahu string kosong, pilihan tidak submit otomatis, prev/next mempertahankan jawaban, submit lock, abort/query berubah, uncertain submit/recovery, empty/404/error/retry, serta konfirmasi keluar/fokus.
+- [ ] Hasil diagnostic memakai overall score/tanggal/skill/rekomendasi server; tidak membuat XP, durasi, histori, atau mastery baru dari asumsi.
+- [ ] Roadmap: denominator unik, data duplikat, coverage/zero guard, urutan server, selection/fokus, query target, dan studyHref benar.
+- [ ] Uji tanpa diagnostic, skill cukup, prerequisite belum cukup, loading/error/empty; status locked/completion/credential mengikuti kontrak.
+- [ ] Jalankan tes/build/coverage sesuai acceptance dan commit defect yang terbukti beserta regresinya.
+
+Selesai ketika revisi final dan perilaku komponen terbukti. Panel roadmap pada 375px dan mode fokus diagnostic masih diuji di browser pada COMP-010.
+
+## COMP-007 — Review final dan susun kandidat integrasi
+
+Status: TODO. Prioritas: P0. Dependency: COMP-002/004/005/006. Tiket: TASK-048.
+
+- [ ] Baca full diff dan history setiap kandidat terhadap base, termasuk inherited backend/auth; identifikasi seluruh source yang masuk komposisi final.
+- [ ] Review Study lifecycle, dashboard/logout, diagnostic, roadmap, kontrak keamanan, serta kualitas regresi dan metode coverage.
+- [ ] Laporkan temuan severity/file:line, reproduksi, dan fix konkret. Perbaikan menghasilkan SHA baru yang perlu direview lagi.
+- [ ] Pin satu kandidat integrasi melalui workflow branch/worktree yang terotorisasi; jangan menimpa pekerjaan lama atau menganggap setiap branch otomatis kompatibel.
+- [ ] Tulis PASS/CHANGES/BLOCKED per SHA dan per scope, dengan identitas pelaksana sebenarnya. Catat apakah review independen atau self-review.
+
+Selesai ketika kandidat stabil dan keputusan review dapat diaudit. Review yang didelegasikan owner dapat dikerjakan assistant, tetapi tidak boleh ditulis sebagai approval orang lain. Commit laporan; integrasi ke main/keputusan kartu adalah langkah terpisah.
+
+## COMP-008 — Uji auth web dan Mobile dengan backend disposable
+
+Status: TODO. Prioritas: P0. Dependency: COMP-007. Tiket: TASK-009/012.
+
+- [ ] Bootstrap backend kandidat dengan local config, database sementara, mock provider, port milik run, dan akun sintetis. Verifikasi kontrak cookie web versus Bearer Mobile.
+- [ ] Web/API: login, CSRF/origin, refresh revoked/expired, logout sukses blacklist+clear cookie, logout 403/503/timeout/network error, refresh race/paralel, dan batas access token yang sudah terbit.
+- [ ] Mobile nyata: register -> login username -> /auth/me -> restart/restore -> logout; pastikan secure storage dan server revoke sesuai kontrak.
+- [ ] Uji 400/401/offline, refresh gagal/paralel, storage failure, dan copy ketika logout hanya berhasil lokal. OTP/reset/Google tetap unavailable.
+- [ ] Jalankan accounts, probe API/OpenAPI, Flutter analyze/test/build pada SHA final setelah source berubah; simpan output yang tidak memuat token/password.
+
+Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi SSR antarpengguna dilengkapi pada COMP-010. APK build/unit test saja tidak membuktikan integrasi Mobile.
+
+## COMP-009 — Tutup fixture dan QA backend runtime
+
+Status: TODO. Prioritas: P0. Dependency: COMP-007. Tiket: TASK-029/027.
+
+- [ ] Jalankan fixture dan proxy pada resource sementara, validasi isolasi config/port, startup/shutdown, serta cleanup saat failure.
+- [ ] Sediakan PostgreSQL disposable; uji koneksi terpisah dengan interleaving deterministik, mastery tidak turun, XP tidak hilang/ganda, dan isolasi user. Catat skip sebagai NOT RUN.
+- [ ] Sediakan Redis disposable; buktikan cache/throttle lintas proses, 429/retry/expiry, dan destination guard. Jangan mewarisi instance pengguna.
+- [ ] Periksa konfigurasi local/hosted fail-closed memakai env sintetis; lakukan probe API pada source yang cocok.
+- [ ] Petakan acceptance QA backend lama ke bukti baru dan simpan run ID/SHA/environment/exit/artefak/cleanup.
+
+Selesai ketika acceptance runtime mempunyai hasil nyata atau blocker spesifik tetap terbuka. Hasil SQLite tidak menutup row locking PostgreSQL. Commit fixture/test/runbook yang berubah, tanpa artefak runtime atau secret.
+
+## COMP-010 — Browser QA kandidat integrasi
+
+Status: **BLOCKED — runner Sokudo belum tersedia pada pemeriksaan terakhir**. Prioritas: P0. Dependency: COMP-008/009 dan runner tersedia. Tiket: TASK-027/033/043/049; acceptance browser semua fitur terkait.
+
+- [ ] Periksa ulang discovery/akses runner. Catat penyebab yang bisa direproduksi dan tindakan pemulihan lingkungan bila tetap unavailable.
+- [ ] Pin runtime/fixture/source, validasi flow existing, selector unik, dan kemampuan runner; jangan menyebut validasi YAML sebagai run PASS.
+- [ ] Uji viewport 375/768/1440, light/dark, reduced motion, keyboard/fokus, loading/empty/error/retry, sidebar, dan public verification.
+- [ ] Uji logout success/failure/expired, reload, dua tab, refresh paralel/race, isolasi sesi, dan SSR lintas pengguna.
+- [ ] Uji lifecycle Study, roadmap selection/panel mobile, diagnostic recovery/exit, mock/draft label, serta state dashboard/profil.
+- [ ] Simpan run ID, screenshot/log yang aman, dan matriks per acceptance PASS/FAIL/NOT RUN; kembalikan defect ke task implementasi lalu uji ulang perubahan relevan.
+
+Selesai ketika seluruh baris wajib mempunyai hasil aktual yang lolos pada kandidat final. Untuk runner yang masih unavailable, task tetap BLOCKED; pekerjaan independen dapat dilanjutkan. Jangan mengklaim tes DOM sebagai browser E2E.
+
+## COMP-011 — Sumber, rehearsal, dan laporan akhir
+
+Status: TODO. Prioritas: P0. Dependency: COMP-010; persiapan sumber/runbook bisa dimulai lebih awal. Plan lama: 002/003/004/005.
+
+- [ ] Periksa ulang 13 sumber dan URL yang dulu 503; bedakan status reachability, redirect/canonical, dan lisensi. Jangan mengubah klaim reuse tanpa bukti.
+- [ ] Pastikan sumber yang digunakan dalam demo terbuka di browser operator; pertahankan label mock/draft dan failed attempt sesuai respons server.
+- [ ] Mulai dari runtime bersih dan lakukan rehearsal catalog -> diagnostic -> result -> roadmap -> study/checkpoint/completion -> rules/mock assessment -> draft credential -> public verification tanpa login.
+- [ ] Buktikan credential draft invalid/unverified/unanchored, tidak ada reward ganda, dan restart database in-memory dijelaskan di runbook.
+- [ ] Update `docs/demo-test-matrix.md`, `docs/demo-runbook.md`, `docs/source-review.md`, serta indeks plan berdasarkan hasil aktual pada SHA final.
+- [ ] Laporkan task berhasil, commit, acceptance terbuka, blocker/pemilik/tindakan berikut, dan keputusan integrasi yang masih diperlukan. Rekonsiliasi kartu asal ketika akses board tersedia.
+
+Selesai ketika rehearsal penuh lulus, sumber demo terbukti, dokumentasi sesuai runtime, dan tidak ada acceptance wajib yang disembunyikan. Commit dokumentasi setelah verifikasi; jangan menandai Plan 002–005 DONE sebelum done criteria masing-masing terpenuhi.
+
+## Format laporan per task
+
+```text
+Task COMP / tiket asal:
+Status: TODO | IN PROGRESS | PASS | FAIL | BLOCKED
+Scope selesai dan acceptance terbuka:
+Base SHA / final SHA / branch / worktree:
+File berubah / commit:
+Command / cwd / environment / exit code:
+Hasil pass / fail / skip / NOT RUN:
+Coverage source dan kode baru / metode:
+Review / pelaksana / batas independensi:
+Run ID / artefak / cleanup:
+Blocker konkret / tindakan berikut / pemilik:
+```
+
+Task dengan source/test/docs yang berubah di-commit setelah verifikasi relevan lulus. Tes ulang tanpa perubahan tidak membutuhkan commit kosong. Penghapusan `HANDOFF.md` root dan pembuatan plan/task ini merupakan perubahan dokumentasi; source aplikasi tidak diubah dalam langkah ini.

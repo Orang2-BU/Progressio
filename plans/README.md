@@ -1,5 +1,7 @@
 # Progressio demo improvement plans
 
+Untuk penyelesaian gap terbaru (14 Oktober 2026), gunakan [plan penyelesaian](../PLAN-COMPLETION.md) dan [task penyelesaian](../TASKS-COMPLETION.md). Indeks di bawah tetap menjadi catatan plan demo awal; statusnya diperbarui setelah bukti pada kandidat final memenuhi kriteria masing-masing.
+
 Planned against commit `2277b83` on 2026-10-01. These five tasks turn the existing Next.js and Django MVP into a repeatable **local demo**. Read the relevant plan completely before executing it. Keep the curriculum and credential labelled `draft`; these plans do not authorize final credential issuance.
 
 ## Ringkasan tugas untuk eksekusi
