@@ -12,6 +12,7 @@ const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' }
 
 function authNoticeProps(text) {
   if (text.startsWith('Sesi berakhir')) return { tone: 'warning', title: 'Sesi berakhir' };
+  if (text.startsWith('Logout lokal:')) return { tone: 'warning', title: 'Logout lokal' };
   return { tone: 'success' };
 }
 
@@ -169,7 +170,7 @@ export default function App({ children }) {
   const redirecting = (!user && privateRoute) || (user && publicRoute);
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     {!focusRoute && <header className="topbar"><div className="topbar-inner"><Brand /><div className="header-right">
-      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={() => { logout('Sesi lokal di perangkat ini telah dihapus; pencabutan token refresh server belum dikonfirmasi.'); router.replace('/login'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
+      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={() => { logout('Logout lokal: sesi di perangkat ini dihapus; pencabutan token refresh server belum dikonfirmasi.'); router.replace('/login'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}

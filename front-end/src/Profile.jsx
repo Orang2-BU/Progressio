@@ -49,7 +49,7 @@ export default function Profile() {
   }
 
   function signOut() {
-    logout('Sesi lokal di perangkat ini telah dihapus; pencabutan token refresh server belum dikonfirmasi.');
+    logout('Logout lokal: sesi di perangkat ini dihapus; pencabutan token refresh server belum dikonfirmasi.');
     router.replace('/login');
   }
 

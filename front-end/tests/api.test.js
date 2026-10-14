@@ -178,6 +178,15 @@ describe('frontend foundation rendering', () => {
     }
   });
 
+  test('a real local logout event is clearly not presented as server revocation', () => {
+    const reason = 'Logout lokal: sesi di perangkat ini dihapus; pencabutan token refresh server belum dikonfirmasi.';
+    const { app, render } = foundationRenderer({ session: { user: null, reason } });
+    const markup = render(app.AuthPage, { mode: 'login' });
+    assert.match(markup, /ui-notice-warning/);
+    assert.match(markup, /<strong>Logout lokal<\/strong>/);
+    assert.ok(markup.includes(reason));
+  });
+
   test('a URL query cannot fabricate a successful logout notice', () => {
     const originalWindow = globalThis.window;
     globalThis.window = { location: { search: '?logged_out=1' } };
