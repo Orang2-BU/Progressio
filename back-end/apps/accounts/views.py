@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework_simplejwt.views import TokenBlacklistView
 
 from apps.common.schema import THROTTLED_RESPONSE
-from apps.common.throttling import AuthRegisterThrottle
+from apps.common.throttling import AuthRegisterThrottle, AuthRefreshThrottle
 
 from .serializers import UserRegistrationSerializer, UserProfileSerializer
 
@@ -54,3 +55,21 @@ class MeView(APIView):
     def get(self, request, *args, **kwargs):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LogoutView(TokenBlacklistView):
+    """Blacklist a refresh token without requiring an unexpired access token."""
+    throttle_classes = [AuthRefreshThrottle]
+
+    @extend_schema(
+        summary="Logout",
+        description="Blacklist the submitted refresh token. Existing access tokens remain valid until expiry.",
+        tags=["Authentication"],
+        responses={
+            200: OpenApiResponse(description="Refresh token revoked."),
+            401: OpenApiResponse(description="Refresh token is invalid or already revoked."),
+            **THROTTLED_RESPONSE,
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)

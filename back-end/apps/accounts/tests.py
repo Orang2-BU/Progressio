@@ -101,6 +101,7 @@ class AuthJWTTests(TestCase):
             role='student'
         )
         self.login_url = reverse('auth-login')
+        self.logout_url = reverse('auth-logout')
         self.refresh_url = reverse('auth-refresh')
         self.me_url = reverse('auth-me')
 
@@ -133,6 +134,35 @@ class AuthJWTTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
+
+    def test_logout_blacklists_refresh_token_without_access_token(self):
+        login_response = self.client.post(
+            self.login_url,
+            {'username': 'jwtuser', 'password': 'SecurePass123!'},
+            format='json',
+        )
+        refresh_token = login_response.data['refresh']
+        access_token = login_response.data['access']
+
+        response = self.client.post(
+            self.logout_url, {'refresh': refresh_token}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        refresh_response = self.client.post(
+            self.refresh_url, {'refresh': refresh_token}, format='json'
+        )
+        self.assertEqual(refresh_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        access_response = self.client.get(self.me_url)
+        self.assertEqual(access_response.status_code, status.HTTP_200_OK)
+
+    def test_logout_rejects_invalid_refresh_token(self):
+        response = self.client.post(
+            self.logout_url, {'refresh': 'not-a-refresh-token'}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_me_authenticated(self):
         """Authenticated user should get their profile."""

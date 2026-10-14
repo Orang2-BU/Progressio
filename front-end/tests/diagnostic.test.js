@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { validateQuestions, diagnosticPayload, validateAttempt } from '../src/diagnostic.js';
 import { loadTarget } from '../src/catalog.js';
-import { login, logout, request } from '../src/api.js';
+import { clearLocalSession, login, request } from '../src/api.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
-afterEach(() => { globalThis.fetch = originalFetch; logout(); });
+afterEach(() => { globalThis.fetch = originalFetch; clearLocalSession(); });
 const questions = [{ id: 1, prompt: 'Question?', skill_title: 'API', options: [{ value: 'a', label: 'A' }] }];
 const attempt = { id: 1, career_track: 10, overall_score: 0, completed_at: '2026-09-29T12:00:00Z',
   skill_scores: [{ skill_id: 3, skill_title: 'API', score: 0, correct_answers: 0, total_questions: 1 }], recommended_skill_ids: [3] };

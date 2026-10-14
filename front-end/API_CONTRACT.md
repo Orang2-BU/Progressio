@@ -29,12 +29,15 @@ Dokumen ini membedakan perilaku saat ini dan perubahan yang masih dibutuhkan.
 | POST `auth/register` | username, email, password, password_confirm, role opsional | 201 profil, tanpa token |
 | POST `auth/login` | username, password | 200 `{access, refresh}` |
 | POST `auth/refresh` | refresh | 200 `{access}` |
+| POST `auth/logout` | refresh | 200; refresh token diblacklist dan tidak dapat dipakai lagi |
 | GET `auth/me` | Bearer access | 200 `{id, username, email, role, date_joined}` |
 
 Login memakai username, bukan email. Registrasi publik menolak role admin;
 student/recruiter diperbolehkan. Access berlaku 30 menit, refresh 7 hari;
-refresh tidak dirotasi. Belum ada endpoint logout/revoke token, reset password,
-atau edit profil. Logout frontend menghapus sesi lokal, bukan mencabut JWT.
+refresh tidak dirotasi. Logout mem-blacklist refresh token pada server; access token
+yang telah diterbitkan tetap berlaku sampai expiry (maksimal 30 menit). Jika revoke gagal,
+client mempertahankan sesi dan meminta pengguna mencoba lagi. Reset password dan edit
+profil belum tersedia.
 
 Client Fase 1: satu refresh bersama untuk request bersamaan yang mendapat 401,
 coba ulang satu kali setelah refresh sukses; refresh ditolak mengakhiri sesi.

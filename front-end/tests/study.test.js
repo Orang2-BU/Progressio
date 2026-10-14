@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { login, logout } from '../src/api.js';
+import { clearLocalSession, login } from '../src/api.js';
 import { studyHref, sourceHref, validateProgress, loadStudy, loadProgress, submitCheckpoint, completeLesson, summarizeLessonProgress, pickActiveLesson, studyJourneyStatuses } from '../src/study.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
-afterEach(() => { globalThis.fetch = originalFetch; logout(); });
+afterEach(() => { globalThis.fetch = originalFetch; clearLocalSession(); });
 const response = (body, status = 200) => new Response(JSON.stringify(body), { status });
 const progress = { total_xp: 50, completed_lessons_count: 1, completed_lesson_ids: [7], skills: [{ skill: 3, mastery: 35, xp: 50 }] };
 const lesson = { id: 7, skill: 3, title: 'HTTP', duration: 20, order: 1, content_url: 'https://example.com/http', content_type: 'reading',

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
-import { login, logout } from '../src/api.js';
+import { clearLocalSession, login } from '../src/api.js';
 import { foundationRenderer } from './support/render-foundation.js';
 
 const require = createRequire(import.meta.url);
@@ -27,7 +27,7 @@ function deferred() {
 
 const environments = [];
 afterEach(async () => {
-  logout();
+  clearLocalSession();
   for (const environment of environments.splice(0).reverse()) await environment.close();
 });
 

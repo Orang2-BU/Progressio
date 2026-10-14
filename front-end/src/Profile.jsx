@@ -48,9 +48,14 @@ export default function Profile() {
     finally { setBusy(false); }
   }
 
-  function signOut() {
-    logout('Logout lokal: sesi pada perangkat ini diakhiri; server belum mengonfirmasi pencabutan token.');
-    router.replace('/login');
+  async function signOut() {
+    setLogoutError('');
+    try {
+      await logout('Logout berhasil. Token refresh dicabut di server.');
+      router.replace('/login');
+    } catch (error) {
+      setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
+    }
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;

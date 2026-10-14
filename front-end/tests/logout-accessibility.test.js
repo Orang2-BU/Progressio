@@ -16,14 +16,14 @@ test('logout keeps an accessible name when its visible text is hidden on mobile'
   assert.match(foundation, /@media \(max-width: 650px\)[\s\S]*?\.header-right \.button span \{ display: none; \}/);
 });
 
-test('logout explicitly reports local session clearing without claiming server revocation', async () => {
+test('logout waits for server confirmation and reports failure without claiming success', async () => {
   const [app, profile] = await Promise.all([
     readFile(appPath, 'utf8'),
     readFile(profilePath, 'utf8'),
   ]);
 
-  assert.match(app, /logout\('Logout lokal: sesi pada perangkat ini diakhiri; server belum mengonfirmasi pencabutan token\.'\)/);
-  assert.match(profile, /logout\('Logout lokal: sesi pada perangkat ini diakhiri; server belum mengonfirmasi pencabutan token\.'\)/);
-  assert.doesNotMatch(app, /Logout berhasil\. Sesi web di perangkat ini sudah diakhiri/);
-  assert.doesNotMatch(profile, /Logout berhasil\. Sesi web di perangkat ini sudah diakhiri/);
+  assert.match(app, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
+  assert.match(profile, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
+  assert.match(app, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
+  assert.match(profile, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
 });
