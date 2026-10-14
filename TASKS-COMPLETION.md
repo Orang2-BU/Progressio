@@ -113,13 +113,14 @@ Selesai ketika kandidat stabil dan keputusan review dapat diaudit. Review yang d
 
 ## COMP-008 — Uji auth web dan Mobile dengan backend disposable
 
-Status: TODO. Prioritas: P0. Dependency: COMP-007. Tiket: TASK-009/012.
+Status: **IN PROGRESS — web revoke smoke pass; Mobile Flutter/runtime belum tersedia**. Bukti: [laporan COMP-008](docs/completion/COMP-008-auth-runtime.md). Prioritas: P0. Dependency: COMP-007 (masih CHANGES). Tiket: TASK-009/012.
 
-- [ ] Bootstrap backend kandidat dengan local config, database sementara, mock provider, port milik run, dan akun sintetis. Verifikasi kontrak cookie web versus Bearer Mobile.
-- [ ] Web/API: login, CSRF/origin, refresh revoked/expired, logout sukses blacklist+clear cookie, logout 403/503/timeout/network error, refresh race/paralel, dan batas access token yang sudah terbit.
+- [x] Bootstrap backend kandidat dengan local config, SQLite sementara, mock provider, port milik run, dan akun sintetis; migrasi blacklist diterapkan. Web saat ini Bearer in-memory, bukan cookie HttpOnly; Mobile menggunakan Bearer.
+- [x] Smoke web/API via Next proxy: register, login, `/me`, logout refresh blacklist, reuse refresh ditolak, akses token lama masih valid hingga expiry.
+- [ ] Uji web 503/timeout/network, origin/CSRF, refresh paralel/race dan expiry pada runtime; logout failure hanya diuji di frontend test.
 - [ ] Mobile nyata: register -> login username -> /auth/me -> restart/restore -> logout; pastikan secure storage dan server revoke sesuai kontrak.
-- [ ] Uji 400/401/offline, refresh gagal/paralel, storage failure, dan copy ketika logout hanya berhasil lokal. OTP/reset/Google tetap unavailable.
-- [ ] Jalankan accounts, probe API/OpenAPI, Flutter analyze/test/build pada SHA final setelah source berubah; simpan output yang tidak memuat token/password.
+- [x] Backend accounts tests, full Django suite, OpenAPI, frontend suite/build/coverage dijalankan pada candidate SHA; Flutter analyze/test/build belum dapat dijalankan karena Flutter tidak ditemukan di PATH.
+- [ ] Uji Mobile 400/401/offline, refresh gagal/paralel, storage failure dan logout copy. OTP/reset/Google tetap unavailable.
 
 Selesai ketika integrasi runtime terbukti. Dua tab, reload browser, dan isolasi SSR antarpengguna dilengkapi pada COMP-010. APK build/unit test saja tidak membuktikan integrasi Mobile.
 

@@ -24,4 +24,4 @@ Tanggal: 14 Oktober 2026 (Asia/Jakarta). Verdict: **CHANGES secara keseluruhan; 
 
 ## Batas verdict
 
-Ini bukan clearance untuk `main` atau satu kandidat demo. Provider backend, fixture, dan endpoint revoke lulus terbatas pada SHA yang disebut; PostgreSQL/Redis runtime, web/Mobile terhadap backend aktif, browser/Sokudo, penerapan migrasi deployment, dan rehearsal belum diuji. Lima test backend yang skip tidak diklaim lulus. Tidak ada approval independen dari Bimo/Adit yang diklaim.
+Ini bukan clearance untuk `main` atau satu kandidat demo. Provider backend, fixture, dan endpoint revoke lulus terbatas pada SHA yang disebut; smoke web lewat Next proxy ke Django SQLite sudah dilakukan pada COMP-008, tetapi PostgreSQL/Redis runtime, Mobile terhadap backend, browser/Sokudo, penerapan migrasi deployment, dan rehearsal belum diuji. Lima test backend yang skip tidak diklaim lulus. Tidak ada approval independen dari Bimo/Adit yang diklaim.
