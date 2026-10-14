@@ -178,6 +178,7 @@ test('pending checkpoint prevents duplicate submissions and unknown completion s
   assert.equal(submissions, 1);
   request.resolve({ correct: true, feedback: 'Status 201.' });
   await act(async () => { await request.promise; });
+  assert.match(view.container.textContent, /Jawaban sesuai/);
 });
 
 test('completion errors are announced, cleared on lesson change, and duplicate clicks submit once', async () => {
