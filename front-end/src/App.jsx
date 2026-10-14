@@ -149,7 +149,7 @@ export function AuthPage({ mode }) {
   const notice = mode !== 'login' ? '' : reason;
   return <AuthForm mode={mode} notice={notice}
     onRegistered={async (username) => {
-      await logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
+      logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
       router.replace('/login');
     }} />;
 }
@@ -159,7 +159,6 @@ export default function App({ children }) {
   const route = usePathname()?.replace(/\/$/, '') || '/';
   const router = useRouter();
   const main = useRef(null);
-  const [logoutError, setLogoutError] = useState('');
   const publicRoute = ['/login', '/register'].includes(route);
   const privateRoute = ['/', '/profile', '/catalog', '/diagnostic', '/diagnostic/result', '/roadmap', '/study', '/assessment', '/credentials'].includes(route);
   const focusRoute = route === '/diagnostic';
@@ -169,21 +168,15 @@ export default function App({ children }) {
     main.current?.focus();
   }, [route, user, publicRoute, privateRoute, router]);
   const redirecting = (!user && privateRoute) || (user && publicRoute);
-  async function signOut() {
-    setLogoutError('');
-    try {
-      await logout('Logout berhasil. Sesi web di perangkat ini sudah diakhiri.');
-      router.replace('/login');
-    } catch (error) {
-      setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
-    }
+  function signOut() {
+    logout('Logout lokal: sesi pada perangkat ini diakhiri; server belum mengonfirmasi pencabutan token.');
+    router.replace('/login');
   }
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     {!focusRoute && <header className="topbar"><div className="topbar-inner"><Brand /><div className="header-right">
       {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={signOut}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
-      {logoutError && <Notice tone="error" title="Logout gagal">{logoutError}</Notice>}
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
     </main>{!focusRoute && <footer className="footer"><span>progressio<span className="brand-dot">.</span> — Setiap kemajuan punya arah.</span><span>TURNING PROGRESS INTO PROOF</span></footer>}
   </>;
