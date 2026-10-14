@@ -35,26 +35,26 @@ Selesai ketika manifest dan peta dependency tersimpan, source pengguna aman, ser
 
 ## COMP-002 — Tutup keamanan upstream, auth, dan fixture
 
-Status: TODO. Prioritas: P0. Dependency: COMP-001. Tiket: TASK-046/009/029/012.
+Status: PASS (review mandiri, terbatas pada SHA yang dicatat). Prioritas: P0. Dependency: COMP-001. Tiket: TASK-046/009/029/012. Bukti: [hasil audit keamanan](docs/completion/COMP-002-security.md).
 
-- [ ] Audit dependency Node dan Python dengan advisory aktual; pasang alat audit lokal bila belum tersedia dan catat failure/coverage audit.
-- [ ] Review full diff transport AI/proof: HTTPS, origin/host/port/userinfo, redirect 301/302/303/multi-hop, Authorization, sanitasi error, dan validasi konfigurasi.
-- [ ] Rekonsiliasi Mobile sukses simulasi, notice logout palsu, dan false logout web pada kandidat baru. Endpoint gagal tidak boleh diumumkan sebagai revoke sukses.
-- [ ] Verifikasi fixture menolak environment pengguna, tujuan eksternal/userinfo/port bukan milik run, dan mencoba seluruh cleanup walaupun satu resource gagal.
-- [ ] Untuk defect yang masih terbuka, tulis regression RED, fix minimal, lalu GREEN; perbarui kontrak bila perilaku berubah.
-- [ ] Tulis verdict per temuan pada SHA final, metode, severity, dan scope yang belum diuji; lakukan review ulang source yang berubah.
+- [x] Audit dependency Node dan Python dengan advisory aktual; pasang alat audit lokal bila belum tersedia dan catat failure/coverage audit.
+- [x] Review full diff transport AI/proof: HTTPS, origin/host/port/userinfo, redirect 301/302/303/multi-hop, Authorization, sanitasi error, dan validasi konfigurasi.
+- [x] Rekonsiliasi Mobile sukses simulasi, notice logout palsu, dan false logout web pada kandidat baru. Endpoint gagal tidak boleh diumumkan sebagai revoke sukses.
+- [x] Verifikasi fixture menolak environment pengguna, tujuan eksternal/userinfo/port bukan milik run, dan mencoba seluruh cleanup walaupun satu resource gagal.
+- [x] Untuk defect yang masih terbuka, tulis regression RED, fix minimal, lalu GREEN; perbarui kontrak bila perilaku berubah.
+- [x] Tulis verdict per temuan pada SHA final, metode, severity, dan scope yang belum diuji; lakukan review ulang source yang berubah.
 
 Selesai ketika seluruh temuan relevan ditutup dengan bukti atau mempunyai blocker spesifik yang tetap terbuka. Verdict menentukan kandidat/runtime mana yang bisa dilanjutkan; PASS terbatas tidak berubah menjadi clearance seluruh main. Commit fix dan laporan dengan scope terpisah.
 
 ## COMP-003 — Tambahkan tes komponen dan coverage yang valid
 
-Status: TODO. Prioritas: P0. Dependency: COMP-001.
+Status: PASS (tooling/harness; bukan penutupan tiket UI). Prioritas: P0. Dependency: COMP-001. Bukti: [hasil harness dan coverage](docs/completion/COMP-003-coverage.md).
 
-- [ ] Siapkan lingkungan DOM dan tes interaksi React pada runner yang sesuai repo; tambahkan dev dependency yang diperlukan beserta lockfile.
-- [ ] Gunakan React asli dan provider Next, fixture jaringan, deferred response, cleanup per tes, serta query berdasarkan label/role.
-- [ ] Buktikan harness menjalankan effect, klik/input, update async, unmount, dan pergantian query; request tidak terduga harus menggagalkan tes.
-- [ ] Tambahkan command coverage yang dapat direproduksi dan memetakan hasil ke source JSX melalui sourcemap.
-- [ ] Ukur coverage terhadap base terpin: laporkan baris baru yang covered/eligible, persentase, serta pengecualian dengan alasan. Target >=80% kode baru pada tiket yang mensyaratkannya.
+- [x] Siapkan lingkungan DOM dan tes interaksi React pada runner yang sesuai repo; tambahkan dev dependency yang diperlukan beserta lockfile.
+- [x] Gunakan React asli dan provider Next, fixture jaringan, deferred response, cleanup per tes, serta query berdasarkan label/role.
+- [x] Buktikan harness menjalankan effect, klik/input, update async, unmount, dan pergantian query; request tidak terduga harus menggagalkan tes.
+- [x] Tambahkan command coverage yang dapat direproduksi dan memetakan hasil ke source JSX melalui sourcemap.
+- [x] Ukur coverage terhadap base terpin: laporkan baris baru yang covered/eligible, persentase, serta pengecualian dengan alasan. Target >=80% kode baru pada tiket yang mensyaratkannya.
 
 Selesai ketika harness dan laporan source coverage dapat dipercaya, tanpa mengganti state/hook React untuk meloloskan tes. Pisahkan hasil komponen dari SSR dan browser E2E. Commit tooling/test saja; ini tidak menutup browser QA.
 
