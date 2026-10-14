@@ -27,6 +27,7 @@ export default function Profile() {
   const router = useRouter();
   const [progressState, setProgressState] = useState({ loading: true });
   const [profileError, setProfileError] = useState('');
+  const [logoutError, setLogoutError] = useState('');
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
 
@@ -48,9 +49,14 @@ export default function Profile() {
     finally { setBusy(false); }
   }
 
-  function signOut() {
-    logout('Logout lokal: sesi di perangkat ini dihapus; pencabutan token refresh server belum dikonfirmasi.');
-    router.replace('/login');
+  async function signOut() {
+    setLogoutError('');
+    try {
+      await logout('Sesi berhasil dicabut di server.');
+      router.replace('/login');
+    } catch (error) {
+      setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
+    }
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;
@@ -59,6 +65,7 @@ export default function Profile() {
     <h1>Profil akun</h1>
     <p className="intro">Informasi identitas dan kemajuan yang tercatat pada akunmu.</p>
     {profileError && <Notice tone="error" title="Profil belum dapat diperbarui">{profileError}</Notice>}
+    {logoutError && <Notice tone="error" title="Logout gagal">{logoutError}</Notice>}
 
     <section className="profile-v3-card" aria-labelledby="identity-title">
       <div className="profile-v3-heading"><div className="profile-avatar" aria-hidden="true">{user?.username?.trim()?.[0]?.toUpperCase() || '?'}</div>
