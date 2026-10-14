@@ -86,13 +86,13 @@ Selesai ketika acceptance state/data dan coverage terpenuhi. Ukuran 375/768/1440
 
 ## COMP-006 — Selesaikan diagnostic dan roadmap
 
-Status: IN PROGRESS; bukti dan gap: [laporan COMP-006](docs/completion/COMP-006-diagnostic-roadmap.md). Prioritas: P0. Dependency: COMP-003. Tiket: TASK-018/019.
+Status: PASS untuk acceptance kandidat terpisah; integrasi/browser matrix lanjut COMP-007/010. Bukti: [laporan COMP-006](docs/completion/COMP-006-diagnostic-roadmap.md). Prioritas: P0. Dependency: COMP-003. Tiket: TASK-018/019.
 
 - [x] Pin kandidat revisi terbaru secara terpisah; fix fokus/TDZ dinilai pada SHA kandidat yang sesuai.
-- [ ] Diagnostic: semua ID terkirim, Belum tahu string kosong, pilihan tidak submit otomatis, prev/next mempertahankan jawaban, submit lock, abort/query berubah, uncertain submit/recovery, empty/404/error/retry, serta konfirmasi keluar/fokus.
-- [x] Hasil diagnostic memakai overall score/tanggal/skill/rekomendasi server; tidak membuat XP, durasi, histori, atau mastery baru dari asumsi (validasi helper dan SSR/component evidence).
-- [x] Roadmap helper/DOM: denominator unik, duplicate, zero guard, urutan server, selection, query target, dan studyHref.
-- [ ] Uji tanpa diagnostic, skill cukup, prerequisite belum cukup, loading/error/empty; status locked/completion/credential mengikuti kontrak.
+- [x] Diagnostic DOM/Chrome: semua ID terkirim, Belum tahu string kosong, pilihan tidak submit otomatis, prev/next mempertahankan jawaban, submit lock, abort/query berubah, uncertain submit/recovery, latest 404/error/retry, serta konfirmasi keluar/fokus.
+- [x] Hasil diagnostic memakai overall score/tanggal/skill/rekomendasi server; tidak membuat XP, durasi, histori, atau mastery baru dari asumsi (helper/DOM dan Chrome smoke).
+- [x] Roadmap helper/DOM/Chrome: denominator unik, duplicate, zero guard, urutan server, selection, query target, dan studyHref.
+- [x] Roadmap tanpa attempt diagnostic, skill cukup/empty, prerequisite belum cukup, loading/error/empty; tidak mengklaim locked/completion/credential di luar kontrak.
 - [x] Jalankan tes/build/coverage pada dua kandidat dan commit defect/regresi yang terbukti; lihat laporan untuk acceptance yang masih terbuka.
 
 Selesai ketika revisi final dan perilaku komponen terbukti. Panel roadmap pada 375px dan mode fokus diagnostic masih diuji di browser pada COMP-010.
@@ -135,9 +135,9 @@ Selesai ketika acceptance runtime mempunyai hasil nyata atau blocker spesifik te
 
 ## COMP-010 — Browser QA kandidat integrasi
 
-Status: **BLOCKED — runner Sokudo belum tersedia pada pemeriksaan terakhir**. Prioritas: P0. Dependency: COMP-008/009 dan runner tersedia. Tiket: TASK-027/033/043/049; acceptance browser semua fitur terkait.
+Status: **BLOCKED untuk matriks penuh — tool Sokudo tidak diekspos pada sesi; `.sokudo/` menyimpan 16 run historis yang semuanya gagal**. Prioritas: P0. Dependency: COMP-008/009 dan runner tersedia. Tiket: TASK-027/033/043/049; acceptance browser semua fitur terkait.
 
-- [ ] Periksa ulang discovery/akses runner. Catat penyebab yang bisa direproduksi dan tindakan pemulihan lingkungan bila tetap unavailable.
+- [x] Periksa ulang discovery/akses runner. Tool tidak tersedia di sesi; artefak historis membuktikan runner pernah berjalan tetapi run gagal di runtime/login/scroll. Lihat laporan COMP-006.
 - [ ] Pin runtime/fixture/source, validasi flow existing, selector unik, dan kemampuan runner; jangan menyebut validasi YAML sebagai run PASS.
 - [ ] Uji viewport 375/768/1440, light/dark, reduced motion, keyboard/fokus, loading/empty/error/retry, sidebar, dan public verification.
 - [ ] Uji logout success/failure/expired, reload, dua tab, refresh paralel/race, isolasi sesi, dan SSR lintas pengguna.
