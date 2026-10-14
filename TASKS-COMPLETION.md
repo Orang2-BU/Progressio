@@ -60,15 +60,15 @@ Selesai ketika harness dan laporan source coverage dapat dipercaya, tanpa mengga
 
 ## COMP-004 — Selesaikan lifecycle Study
 
-Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-020/047.
+Status: PASS pada kandidat Study terpin (browser/runtime tetap COMP-010). Prioritas: P0. Dependency: COMP-003. Tiket: TASK-020/047. Bukti: [regresi lifecycle Study](docs/completion/COMP-004-study.md).
 
-- [ ] Uji completion lesson A: pilihan tetap A setelah sukses kecuali pengguna memilih lesson lain.
-- [ ] Mulai completion A, pindah ke B, lalu selesaikan respons A; receipt/error/busy A tidak muncul pada B.
-- [ ] Uji checkpoint benar/salah, jawaban/feedback saat berpindah lesson, dan respons terlambat setelah unmount.
-- [ ] Uji duplicate click, response loss tanpa replay otomatis, already-completed dengan `newly_completed:false`, serta reward yang berasal dari receipt server.
-- [ ] Uji progress unavailable/unknown/retry, loading/error/empty, source aman/broken, dan CTA assessment.
-- [ ] Journey hanya menandai tahapan yang terbukti oleh data; lakukan fix jika tes menemukan defect.
-- [ ] Jalankan regresi, build, coverage kode baru, dan update changelog/kontrak yang terpengaruh.
+- [x] Uji completion lesson A: pilihan tetap A setelah sukses kecuali pengguna memilih lesson lain.
+- [x] Mulai completion A, pindah ke B, lalu selesaikan respons A; receipt/error/busy A tidak muncul pada B.
+- [x] Uji checkpoint benar/salah, jawaban/feedback saat berpindah lesson, dan respons terlambat setelah unmount.
+- [x] Uji duplicate click, response loss tanpa replay otomatis, already-completed dengan `newly_completed:false`, serta reward yang berasal dari receipt server.
+- [x] Uji progress unavailable/unknown/retry, loading/error/empty, source aman/broken, dan CTA assessment.
+- [x] Journey hanya menandai tahapan yang terbukti oleh data; lakukan fix jika tes menemukan defect.
+- [x] Jalankan regresi, build, coverage kode baru, dan update changelog/kontrak yang terpengaruh.
 
 Selesai ketika lifecycle interaktif dan isolasi state terbukti, seluruh kasus wajib PASS, serta coverage baru >=80%. Helper/SSR test saja tidak cukup. Commit fix bersama regresi yang relevan.
 
