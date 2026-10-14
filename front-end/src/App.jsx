@@ -3,19 +3,16 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { getSession, getServerSession, subscribe, login, register, logout } from './api.js';
+import { getSession, getServerSession, subscribe, login, register, logout, clearLocalSession } from './api.js';
 import { loginDestination } from './navigation.js';
 import { Button, Icon, Notice, ProgressBar } from './ui.jsx';
 
 export const useSession = () => useSyncExternalStore(subscribe, getSession, getServerSession);
 const roleNames = { student: 'Student', recruiter: 'Recruiter', admin: 'Admin' };
 
-export function logoutNoticeFromSearch(search) {
-  return search?.get('logged_out') === '1' ? 'Kamu sudah keluar dari akun.' : '';
-}
-
 function authNoticeProps(text) {
   if (text.startsWith('Sesi berakhir')) return { tone: 'warning', title: 'Sesi berakhir' };
+  if (text.startsWith('Logout lokal:')) return { tone: 'warning', title: 'Logout lokal' };
   return { tone: 'success' };
 }
 
@@ -47,7 +44,7 @@ function AuthForm({ mode, notice, onRegistered }) {
     try {
       if (isRegister) {
         await register(values);
-        if (alive.current) onRegistered(values.username);
+        if (alive.current) await onRegistered(values.username);
       } else {
         const destination = loginDestination(new URLSearchParams(window.location.search).get('next'));
         await login({ username: values.username, password: values.password });
@@ -149,20 +146,17 @@ export function FocusLayout({ children, exitHref, completed = 0, total = 0 }) {
 export function AuthPage({ mode }) {
   const { reason } = useSession();
   const router = useRouter();
-  const [logoutNotice, setLogoutNotice] = useState('');
-  useEffect(() => {
-    setLogoutNotice(mode === 'login' ? logoutNoticeFromSearch(new URLSearchParams(window.location.search)) : '');
-  }, [mode]);
-  const notice = mode !== 'login' ? '' : logoutNotice || reason;
+  const notice = mode !== 'login' ? '' : reason;
   return <AuthForm mode={mode} notice={notice}
-    onRegistered={(username) => {
-      logout(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
+    onRegistered={async (username) => {
+      clearLocalSession(`Akun ${username} berhasil dibuat. Masuk dengan username dan kata sandimu.`);
       router.replace('/login');
     }} />;
 }
 
 export default function App({ children }) {
   const { user } = useSession();
+  const [logoutError, setLogoutError] = useState('');
   const route = usePathname()?.replace(/\/$/, '') || '/';
   const router = useRouter();
   const main = useRef(null);
@@ -175,11 +169,21 @@ export default function App({ children }) {
     main.current?.focus();
   }, [route, user, publicRoute, privateRoute, router]);
   const redirecting = (!user && privateRoute) || (user && publicRoute);
+  async function signOut() {
+    setLogoutError('');
+    try {
+      await logout('Logout berhasil. Token refresh dicabut di server.');
+      router.replace('/login');
+    } catch (error) {
+      setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
+    }
+  }
   return <><a className="skip-link" href="#main" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Lewati ke konten utama</a>
     {!focusRoute && <header className="topbar"><div className="topbar-inner"><Brand /><div className="header-right">
-      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={() => { logout(); router.replace('/login?logged_out=1'); }}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
+      {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={signOut}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
+      {logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">{logoutError}</Notice>}
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
     </main>{!focusRoute && <footer className="footer"><span>progressio<span className="brand-dot">.</span> — Setiap kemajuan punya arah.</span><span>TURNING PROGRESS INTO PROOF</span></footer>}
   </>;

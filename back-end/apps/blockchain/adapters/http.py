@@ -1,7 +1,8 @@
 import json
 import os
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from apps.common.http_transport import open_provider_request, validate_provider_url
 
 from .base import BaseBlockchainAdapter
 
@@ -13,14 +14,18 @@ class BlockchainProviderError(RuntimeError):
 class HTTPBlockchainAdapter(BaseBlockchainAdapter):
     """Adapter for an external service that owns keys and submits chain transactions."""
 
-    def __init__(self, service_url=None, api_token=None, timeout=None):
+    def __init__(self, service_url=None, api_token=None, timeout=None, allowed_hosts=None):
         self.service_url = (service_url or os.getenv('BLOCKCHAIN_SERVICE_URL', '')).rstrip('/')
         self.api_token = api_token or os.getenv('BLOCKCHAIN_SERVICE_TOKEN', '')
+        self.allowed_hosts = allowed_hosts if allowed_hosts is not None else os.getenv(
+            'BLOCKCHAIN_ALLOWED_HOSTS', '').split(',')
         self.timeout = timeout or int(os.getenv('BLOCKCHAIN_TIMEOUT_SECONDS', '30'))
         if not self.service_url:
             raise BlockchainProviderError(
                 'BLOCKCHAIN_SERVICE_URL is required when BLOCKCHAIN_PROVIDER=http.'
             )
+        validate_provider_url(self.service_url, has_credentials=bool(self.api_token),
+                              allowed_hosts=self.allowed_hosts)
 
     # No documented idempotency/lookup contract: issuance must stop before POST.
     supports_recovery = False
@@ -54,7 +59,9 @@ class HTTPBlockchainAdapter(BaseBlockchainAdapter):
             method='POST',
         )
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            validate_provider_url(self.service_url, has_credentials=bool(self.api_token),
+                                  allowed_hosts=self.allowed_hosts)
+            with open_provider_request(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode('utf-8'))
         except HTTPError as exc:
             raise BlockchainProviderError(

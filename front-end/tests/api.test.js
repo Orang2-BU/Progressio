@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 import React from 'react';
 import nextConfig from '../next.config.mjs';
-import { ApiError, getSession, getServerSession, login, logout, register, reloadProfile, request } from '../src/api.js';
+import { ApiError, clearLocalSession, getSession, getServerSession, login, logout, register, reloadProfile, request } from '../src/api.js';
 import { loadProgress } from '../src/study.js';
 import { foundationRenderer } from './support/render-foundation.js';
 
@@ -10,8 +10,8 @@ const originalFetch = globalThis.fetch;
 const profile = { id: 1, username: 'student', email: 'student@example.test', role: 'student', date_joined: '2026-09-29T00:00:00Z' };
 const response = (data, status = 200) => new Response(JSON.stringify(data), { status });
 const deferred = () => { let resolve; const promise = new Promise((done) => { resolve = done; }); return { promise, resolve }; };
-beforeEach(() => logout());
-afterEach(() => { logout(); globalThis.fetch = originalFetch; });
+beforeEach(() => clearLocalSession());
+afterEach(() => { clearLocalSession(); globalThis.fetch = originalFetch; });
 
 function authenticatedFetch(handler) {
   globalThis.fetch = async (url, options) => {
@@ -37,6 +37,7 @@ test('register sends exact payload without authorization; login loads real profi
 
 test('Next proxy preserves Django endpoints with and without a trailing slash', async () => {
   assert.equal(nextConfig.skipTrailingSlashRedirect, true);
+  assert.equal(nextConfig.turbopack.root, process.cwd());
   const rules = await nextConfig.rewrites();
   assert.equal(rules[0].source, '/api/:path*/');
   assert.ok(rules[0].destination.endsWith('/api/:path*/'));
@@ -105,7 +106,7 @@ test('logout during refresh cannot restore the old session', async () => {
   const pending = request('progress');
   const rejected = assert.rejects(pending, ApiError);
   await started.promise;
-  logout();
+  clearLocalSession();
   gate.resolve(response({ access: 'late-token' }));
   await rejected;
   assert.equal(getSession().user, null);
@@ -178,15 +179,72 @@ describe('frontend foundation rendering', () => {
     }
   });
 
-  test('SSR stays deterministic and the client logout query resolves its success notice', () => {
+  test('a real local logout event is clearly not presented as server revocation', () => {
+    const reason = 'Logout lokal: sesi pada perangkat ini diakhiri; server belum mengonfirmasi pencabutan token.';
+    const { app, render } = foundationRenderer({ session: { user: null, reason } });
+    const markup = render(app.AuthPage, { mode: 'login' });
+    assert.match(markup, /ui-notice-warning/);
+    assert.match(markup, /<strong>Logout lokal<\/strong>/);
+    assert.ok(markup.includes(reason));
+  });
+
+  test('logout waits for server revocation before clearing the local session', async () => {
+    let logoutCalls = 0;
+    authenticatedFetch((url, options) => {
+      if (url.endsWith('auth/logout')) {
+        logoutCalls += 1;
+        assert.equal(options.method, 'POST');
+        assert.equal(options.headers.Authorization, undefined);
+        assert.deepEqual(JSON.parse(options.body), { refresh: 'refresh-token' });
+        return response({});
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    await login({ username: 'student', password: 'abc' });
+    await logout('Logout berhasil. Token refresh dicabut di server.');
+    assert.equal(logoutCalls, 1);
+    assert.equal(getSession().user, null);
+    assert.match(getSession().reason, /dicabut di server/);
+  });
+
+  test('failed server logout preserves the current session for retry', async () => {
+    authenticatedFetch((url) => {
+      if (url.endsWith('auth/logout')) return response({ detail: 'Unavailable' }, 503);
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    await login({ username: 'student', password: 'abc' });
+    const user = getSession().user;
+    await assert.rejects(logout(), /Unavailable/);
+    assert.equal(getSession().user, user);
+  });
+
+  test('concurrent logout clicks share one revocation request', async () => {
+    const gate = deferred();
+    let logoutCalls = 0;
+    authenticatedFetch((url) => {
+      if (url.endsWith('auth/logout')) {
+        logoutCalls += 1;
+        return gate.promise;
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    await login({ username: 'student', password: 'abc' });
+    const first = logout('Logout berhasil. Token refresh dicabut di server.');
+    const second = logout('Logout berhasil. Token refresh dicabut di server.');
+    assert.equal(logoutCalls, 1);
+    gate.resolve(response({}));
+    await Promise.all([first, second]);
+    assert.equal(getSession().user, null);
+  });
+
+  test('a URL query cannot fabricate a successful logout notice', () => {
     const originalWindow = globalThis.window;
     globalThis.window = { location: { search: '?logged_out=1' } };
     try {
       const { app, render } = foundationRenderer({ session: { user: null, reason: '' } });
       const markup = render(app.AuthPage, { mode: 'login' });
       assert.doesNotMatch(markup, /Kamu sudah keluar dari akun\./);
-      assert.equal(app.logoutNoticeFromSearch(new URLSearchParams(window.location.search)), 'Kamu sudah keluar dari akun.');
-      assert.equal(app.logoutNoticeFromSearch(new URLSearchParams('')), '');
+      assert.doesNotMatch(markup, /logout berhasil|sudah keluar/i);
     } finally {
       if (originalWindow === undefined) delete globalThis.window;
       else globalThis.window = originalWindow;

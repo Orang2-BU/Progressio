@@ -12,7 +12,7 @@ from apps.common.throttling import (
     AuthRefreshThrottle,
 )
 
-from .views import RegisterView, MeView
+from .views import RegisterView, MeView, LogoutView
 
 
 class ThrottledTokenObtainPairView(TokenObtainPairView):
@@ -61,5 +61,6 @@ urlpatterns = [
     path('register', RegisterView.as_view(), name='auth-register'),
     path('login', ThrottledTokenObtainPairView.as_view(), name='auth-login'),
     path('refresh', ThrottledTokenRefreshView.as_view(), name='auth-refresh'),
+    path('logout', LogoutView.as_view(), name='auth-logout'),
     path('me', MeView.as_view(), name='auth-me'),
 ]

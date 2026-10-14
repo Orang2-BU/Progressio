@@ -48,9 +48,14 @@ export default function Profile() {
     finally { setBusy(false); }
   }
 
-  function signOut() {
-    logout();
-    router.replace('/login?logged_out=1');
+  async function signOut() {
+    setLogoutError('');
+    try {
+      await logout('Logout berhasil. Token refresh dicabut di server.');
+      router.replace('/login');
+    } catch (error) {
+      setLogoutError(`Logout belum terkonfirmasi. Sesi tetap aktif; coba lagi. ${error.message}`);
+    }
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;

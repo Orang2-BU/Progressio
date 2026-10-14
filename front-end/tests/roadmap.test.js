@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { login, logout } from '../src/api.js';
+import { clearLocalSession, login } from '../src/api.js';
 import { roadmapPath, validateRoadmap, loadRoadmap } from '../src/roadmap.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
-afterEach(() => { globalThis.fetch = originalFetch; logout(); });
+afterEach(() => { globalThis.fetch = originalFetch; clearLocalSession(); });
 const target = { kind: 'skill', slug: 'rest' };
 const step = { order: 1, skill_id: 3, skill_slug: 'rest', skill_title: 'REST', competency_title: 'API',
   difficulty: 'beginner', estimated_minutes: 90, mastery: 0, prerequisites: [], is_target: true };

@@ -34,7 +34,8 @@ class AIService:
             return OpenAIAdapter()
         if provider == 'mock':
             return MockAIAdapter()
-        raise ImproperlyConfigured(f"Unsupported AI_PROVIDER '{provider}'. Expected 'mock' or 'http'.")
+        raise ImproperlyConfigured(
+            f"Unsupported AI_PROVIDER '{provider}'. Expected 'mock', 'http', 'openai', or 'groq'.")
 
     @classmethod
     def evaluate_submission(cls, assessment, submission_content, timeout_seconds=None):

@@ -4,6 +4,7 @@ const serverSession = { user: null, reason: '' };
 let session = serverSession;
 let version = 0;
 let refreshing = null;
+let logoutPending = null;
 const listeners = new Set();
 
 export class ApiError extends Error {
@@ -22,11 +23,35 @@ function publish(user, reason = '') {
   session = { user, reason };
   listeners.forEach((listener) => listener());
 }
-export function logout(reason = '') {
+export function clearLocalSession(reason = '') {
   version += 1;
   tokens = null;
   refreshing = null;
+  logoutPending = null;
   publish(null, reason);
+}
+
+export async function logout(reason = '') {
+  if (logoutPending) return logoutPending;
+  const currentVersion = version;
+  const refresh = tokens?.refresh;
+  if (!refresh) {
+    clearLocalSession(reason);
+    return;
+  }
+  const pending = (async () => {
+    await send('auth/logout', { method: 'POST', body: { refresh } });
+    if (version !== currentVersion || tokens?.refresh !== refresh) {
+      throw new ApiError('Sesi berubah saat logout. Periksa status akun sebelum mencoba lagi.', 401);
+    }
+    clearLocalSession(reason);
+  })();
+  logoutPending = pending;
+  try {
+    await pending;
+  } finally {
+    if (logoutPending === pending) logoutPending = null;
+  }
 }
 
 async function send(path, { method = 'GET', body, access, signal } = {}) {
@@ -44,9 +69,11 @@ async function send(path, { method = 'GET', body, access, signal } = {}) {
     if (signal?.aborted) throw signal.reason;
     throw new ApiError('Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.');
   }
-  let data;
-  try { data = await response.json(); } catch {
-    throw new ApiError('Server mengirim respons yang tidak dapat dibaca. Coba lagi.', response.status);
+  let data = {};
+  if (response.status !== 204 && response.status !== 205) {
+    try { data = await response.json(); } catch {
+      throw new ApiError('Server mengirim respons yang tidak dapat dibaca. Coba lagi.', response.status);
+    }
   }
   if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
   if (!response.ok) {
@@ -78,7 +105,7 @@ export async function request(path, options = {}) {
           tokens = { ...tokens, access: data.access };
         }).catch((error) => {
           if (version === currentVersion && [400, 401, 403].includes(error.status)) {
-            logout('Sesi berakhir. Masuk kembali untuk melanjutkan.');
+            clearLocalSession('Sesi berakhir. Masuk kembali untuk melanjutkan.');
           }
           throw error;
         }).finally(() => { if (refreshing === pending) refreshing = null; });
@@ -92,7 +119,7 @@ export async function request(path, options = {}) {
     if (version !== currentVersion) throw new ApiError('Sesi sudah berakhir.', 401);
     return data;
   } catch (error) {
-    if (version === currentVersion && error.status === 401) logout('Sesi berakhir. Masuk kembali untuk melanjutkan.');
+    if (version === currentVersion && error.status === 401) clearLocalSession('Sesi berakhir. Masuk kembali untuk melanjutkan.');
     throw error;
   }
 }
@@ -100,7 +127,7 @@ export async function request(path, options = {}) {
 export const publicRequest = (path, options) => send(path, options);
 export const register = (body) => send('auth/register', { method: 'POST', body });
 export async function login(body) {
-  logout();
+  clearLocalSession();
   const currentVersion = version;
   try {
     const data = await send('auth/login', { method: 'POST', body });
@@ -112,7 +139,7 @@ export async function login(body) {
     publish(user);
     return user;
   } catch (error) {
-    if (version === currentVersion) logout();
+    if (version === currentVersion) clearLocalSession();
     throw error;
   }
 }

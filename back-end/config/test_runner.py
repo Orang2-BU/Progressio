@@ -17,17 +17,23 @@ TEST_CACHES = {
     },
 }
 
-_django_pre_setup = SimpleTestCase._pre_setup
+_django_pre_setup = SimpleTestCase.__dict__['_pre_setup']
 
 
-def _pre_setup_with_fresh_budget(test_case):
-    """Django never clears caches between tests; budget counters must be reset.
+if isinstance(_django_pre_setup, classmethod):
+    def _pre_setup_with_fresh_budget(test_case):
+        """Keep Django's classmethod hook and clear request budgets per test."""
+        _django_pre_setup.__get__(None, test_case)()
+        caches['throttle'].clear()
 
-    Without this a request made by one test would throttle an unrelated test in
-    the same process, because locmem counters outlive the per-test database.
-    """
-    _django_pre_setup(test_case)
-    caches['throttle'].clear()
+    _fresh_budget_pre_setup = classmethod(_pre_setup_with_fresh_budget)
+else:
+    def _pre_setup_with_fresh_budget(test_case):
+        """Keep Django's instance hook and clear request budgets per test."""
+        _django_pre_setup(test_case)
+        caches['throttle'].clear()
+
+    _fresh_budget_pre_setup = _pre_setup_with_fresh_budget
 
 
 class ProgressioTestRunner(DiscoverRunner):
@@ -39,7 +45,7 @@ class ProgressioTestRunner(DiscoverRunner):
             CACHES=TEST_CACHES, THROTTLE_CACHE_ALIAS='throttle'
         )
         self._budget_settings.enable()
-        setattr(SimpleTestCase, '_pre_setup', _pre_setup_with_fresh_budget)
+        setattr(SimpleTestCase, '_pre_setup', _fresh_budget_pre_setup)
 
     def tearDown_test_environment(self, **kwargs):
         setattr(SimpleTestCase, '_pre_setup', _django_pre_setup)

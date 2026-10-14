@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const appPath = new URL('../src/App.jsx', import.meta.url);
 const foundationPath = new URL('../src/foundation.css', import.meta.url);
+const profilePath = new URL('../src/Profile.jsx', import.meta.url);
 
 test('logout keeps an accessible name when its visible text is hidden on mobile', async () => {
   const [app, foundation] = await Promise.all([
@@ -13,4 +14,18 @@ test('logout keeps an accessible name when its visible text is hidden on mobile'
 
   assert.match(app, /<Button[^>]*className="compact"[^>]*aria-label="Keluar"[^>]*>[\s\S]*?<span>Keluar<\/span><\/Button>/);
   assert.match(foundation, /@media \(max-width: 650px\)[\s\S]*?\.header-right \.button span \{ display: none; \}/);
+});
+
+test('logout waits for server confirmation and reports failure without claiming success', async () => {
+  const [app, profile] = await Promise.all([
+    readFile(appPath, 'utf8'),
+    readFile(profilePath, 'utf8'),
+  ]);
+
+  assert.match(app, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
+  assert.match(profile, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
+  assert.match(app, /const \[logoutError, setLogoutError\] = useState\(''\)/);
+  assert.match(app, /logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">\{logoutError\}<\/Notice>/);
+  assert.match(app, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
+  assert.match(profile, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
 });

@@ -7,7 +7,7 @@
 
 - Diagnostic questions and answer keys are stored server-side. Submissions update the student's skill graph without awarding artificial XP.
 - Quiz scores are calculated from private server-side answer keys. Clients cannot submit or override a score.
-- Coding challenges can use `AI_PROVIDER=openai` through the OpenAI Responses API, or the explicit deterministic `mock` provider for offline demos.
+- AI integrations support `mock` for offline demos, `groq`, and HTTP-compatible `http`/legacy `openai` providers.
 - Credentials require both a competency score of at least 70 and a completed passing assessment.
 - A credential is marked `issued` only after its SHA-256 proof is anchored successfully.
 - Public verification recomputes the credential hash, checks provider confirmation, and checks revocation status.
@@ -52,11 +52,16 @@ keeps PostgreSQL and Redis off published host ports. Attach the TLS proxy to its
 network. Populate deployment environment variables from a secret manager, using
 [`.env.production.example`](.env.production.example) as a key list, then start with
 `docker compose -f docker-compose.hosted.yml up --build -d`.
-Production also requires explicit `AI_PROVIDER` (`openai` or an intentionally
-chosen `mock`) and `BLOCKCHAIN_PROVIDER` (`http` or an intentionally chosen
-`mock`). `openai` requires `OPENAI_API_KEY`; `http` requires
-`BLOCKCHAIN_SERVICE_URL`. Mock providers simulate these integrations and must not
-be represented as live AI evaluations or anchored credential proofs.
+Production requires explicit `AI_PROVIDER` (`mock`, `groq`, `http`, or legacy
+`openai`) and `BLOCKCHAIN_PROVIDER` (`mock` or `http`). Groq requires
+`GROQ_API_KEY`; `http` requires `AI_API_URL` and `AI_ALLOWED_HOSTS`; `openai`
+requires `AI_API_URL` or `OPENAI_BASE_URL` plus `AI_ALLOWED_HOSTS`; blockchain
+`http` requires `BLOCKCHAIN_SERVICE_URL` and `BLOCKCHAIN_ALLOWED_HOSTS`. These
+Comma-separated allowlists must contain exact hostnames only (no scheme, port,
+wildcard, or path). Provider URLs must use HTTPS on the standard port 443, contain
+no userinfo, and cannot redirect. Plain HTTP is accepted only for unauthenticated
+loopback development endpoints. Mock providers simulate these integrations and
+must not be represented as live AI evaluations or anchored credential proofs.
 
 Email is disabled by default in production. When a feature begins sending email,
 set `ENABLE_EMAIL=True` and configure SMTP host, username, password, and sender;

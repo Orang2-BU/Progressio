@@ -28,7 +28,8 @@ import json
 import logging
 import os
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from apps.common.http_transport import open_provider_request, validate_provider_url
 
 from .base import BaseAIAdapter
 from .mock import MockAIAdapter
@@ -58,9 +59,11 @@ class HttpAIAdapter(BaseAIAdapter):
     """Generic HTTP AI adapter — vendor-agnostic placeholder."""
 
     def __init__(self, api_url=None, api_key=None, model=None, timeout=None,
-                 allow_mock_fallback=None):
+                 allow_mock_fallback=None, allowed_hosts=None):
         self.api_url = (api_url or os.getenv('AI_API_URL', '')).strip()
         self.api_key = api_key if api_key is not None else os.getenv('AI_API_KEY', '')
+        self.allowed_hosts = allowed_hosts if allowed_hosts is not None else os.getenv(
+            'AI_ALLOWED_HOSTS', '').split(',')
         self.model = model or os.getenv('AI_MODEL', 'placeholder-model')
         self.timeout = int(timeout or os.getenv('AI_TIMEOUT_SECONDS', '45'))
         if allow_mock_fallback is None:
@@ -73,6 +76,8 @@ class HttpAIAdapter(BaseAIAdapter):
                 'AI_API_URL is required when AI_PROVIDER=http. '
                 'Contoh: AI_API_URL=https://api-contoh-anda/v1/chat/completions'
             )
+        validate_provider_url(self.api_url, has_credentials=bool(self.api_key),
+                              allowed_hosts=self.allowed_hosts)
 
     # ---- Public tasks (kontrak stabil, jangan ubah signature) ----
     def analyze_skill_gap(self, user_profile, target_career_track, user_skills, required_skills):
@@ -236,7 +241,7 @@ class HttpAIAdapter(BaseAIAdapter):
                     if c.get('type') == 'output_text' and c.get('text'):
                         return json.loads(c['text'])
                     if c.get('type') == 'refusal':
-                        raise AIProviderError(f"AI provider refused: {c.get('refusal', '')}")
+                        raise AIProviderError('AI provider refused the request.')
             # Ollama: {"response": "{...}"} atau {"message": {"content": "{...}"}}
             if isinstance(response_body.get('response'), str):
                 return json.loads(response_body['response'])
@@ -266,7 +271,9 @@ class HttpAIAdapter(BaseAIAdapter):
         request = Request(self.api_url, data=json.dumps(body).encode('utf-8'),
                           headers=headers, method='POST')
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            validate_provider_url(self.api_url, has_credentials=bool(self.api_key),
+                                  allowed_hosts=self.allowed_hosts)
+            with open_provider_request(request, timeout=self.timeout) as response:
                 response_body = json.loads(response.read().decode('utf-8'))
         except HTTPError as exc:
             retry_after = None

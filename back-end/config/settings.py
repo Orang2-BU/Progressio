@@ -4,6 +4,7 @@ import re
 from datetime import timedelta
 from email.utils import parseaddr
 from pathlib import Path
+from apps.common.http_transport import validate_provider_url
 from urllib.parse import urlsplit
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
@@ -58,6 +59,50 @@ else:
     ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,backend').split(',') if host.strip()]
 
 AI_PROVIDER = os.getenv('AI_PROVIDER', 'mock' if APP_ENV == 'local' else '').strip().lower()
+configured_blockchain_provider = os.getenv('BLOCKCHAIN_PROVIDER', '').strip().lower()
+ai_allowed_hosts = [host.strip() for host in os.getenv('AI_ALLOWED_HOSTS', '').split(',') if host.strip()]
+blockchain_allowed_hosts = [host.strip() for host in os.getenv('BLOCKCHAIN_ALLOWED_HOSTS', '').split(',') if host.strip()]
+if configured_blockchain_provider and configured_blockchain_provider not in {'mock', 'http'}:
+    raise ImproperlyConfigured("BLOCKCHAIN_PROVIDER must be one of: mock, http.")
+if configured_blockchain_provider == 'http':
+    blockchain_url = os.getenv('BLOCKCHAIN_SERVICE_URL', '').strip()
+    if not blockchain_url:
+        raise ImproperlyConfigured('BLOCKCHAIN_SERVICE_URL is required when BLOCKCHAIN_PROVIDER=http.')
+    try:
+        validate_provider_url(blockchain_url, has_credentials=bool(
+            os.getenv('BLOCKCHAIN_SERVICE_TOKEN', '').strip()), allowed_hosts=blockchain_allowed_hosts)
+    except ValueError as exc:
+        raise ImproperlyConfigured(str(exc)) from exc
+if AI_PROVIDER and AI_PROVIDER not in {'mock', 'http', 'openai', 'groq'}:
+    raise ImproperlyConfigured("AI_PROVIDER must be one of: mock, http, openai, groq.")
+if AI_PROVIDER == 'http':
+    ai_url = os.getenv('AI_API_URL', '').strip()
+    if not ai_url:
+        raise ImproperlyConfigured('AI_API_URL is required when AI_PROVIDER=http.')
+    try:
+        validate_provider_url(ai_url, has_credentials=bool(os.getenv('AI_API_KEY', '').strip()),
+                              allowed_hosts=ai_allowed_hosts)
+    except ValueError as exc:
+        raise ImproperlyConfigured(str(exc)) from exc
+if AI_PROVIDER == 'openai':
+    ai_url = (os.getenv('AI_API_URL', '').strip()
+              or (os.getenv('OPENAI_BASE_URL', '').rstrip('/') + '/responses'
+                  if os.getenv('OPENAI_BASE_URL', '').strip() else ''))
+    if not ai_url:
+        raise ImproperlyConfigured('AI_API_URL or OPENAI_BASE_URL is required when AI_PROVIDER=openai.')
+    try:
+        validate_provider_url(ai_url, has_credentials=bool(
+            os.getenv('AI_API_KEY', '').strip() or os.getenv('OPENAI_API_KEY', '').strip()),
+            allowed_hosts=ai_allowed_hosts)
+    except ValueError as exc:
+        raise ImproperlyConfigured(str(exc)) from exc
+if AI_PROVIDER == 'groq':
+    try:
+        validate_provider_url('https://api.groq.com/openai/v1/chat/completions',
+                              has_credentials=bool(os.getenv('GROQ_API_KEY', '').strip()),
+                              allowed_hosts={'api.groq.com'})
+    except ValueError as exc:  # defensive; endpoint is a code-owned constant
+        raise ImproperlyConfigured(str(exc)) from exc
 if AI_PROVIDER == 'groq':
     if not os.getenv('GROQ_API_KEY', '').strip():
         raise ImproperlyConfigured('GROQ_API_KEY is required when AI_PROVIDER=groq.')
@@ -79,12 +124,19 @@ if APP_ENV == 'production':
         raise ValueError("Production requires BLOCKCHAIN_PROVIDER to be explicitly set to 'mock' or 'http'.")
     if AI_PROVIDER == 'http' and not os.getenv('AI_API_URL', '').strip():
         raise ValueError('AI_API_URL is required when production AI_PROVIDER=http.')
-    if AI_PROVIDER == 'openai' and not (os.getenv('AI_API_URL', '').strip() or os.getenv('OPENAI_API_KEY', '').strip()):
-        raise ValueError('AI_API_URL or OPENAI_API_KEY is required when production AI_PROVIDER=openai.')
+    if AI_PROVIDER == 'openai' and not (os.getenv('AI_API_URL', '').strip() or os.getenv('OPENAI_BASE_URL', '').strip()):
+        raise ValueError('AI_API_URL or OPENAI_BASE_URL is required when production AI_PROVIDER=openai.')
     if AI_PROVIDER == 'groq' and not os.getenv('GROQ_API_KEY', '').strip():
         raise ValueError('GROQ_API_KEY is required when production AI_PROVIDER=groq.')
     if BLOCKCHAIN_PROVIDER == 'http' and not os.getenv('BLOCKCHAIN_SERVICE_URL', '').strip():
         raise ValueError('BLOCKCHAIN_SERVICE_URL is required when production BLOCKCHAIN_PROVIDER=http.')
+    if BLOCKCHAIN_PROVIDER == 'http':
+        try:
+            validate_provider_url(os.getenv('BLOCKCHAIN_SERVICE_URL', '').strip(),
+                                  has_credentials=bool(os.getenv('BLOCKCHAIN_SERVICE_TOKEN', '').strip()),
+                                  allowed_hosts=blockchain_allowed_hosts)
+        except ValueError as exc:
+            raise ImproperlyConfigured(str(exc)) from exc
     if os.getenv('AI_ALLOW_MOCK_FALLBACK', 'False').lower() in {'1', 'true', 'yes', 'on'}:
         raise ValueError('AI_ALLOW_MOCK_FALLBACK must be False in production.')
 
@@ -116,6 +168,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     'drf_spectacular',

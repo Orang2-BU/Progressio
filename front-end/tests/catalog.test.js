@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { listCatalog, parseSelection, selectionHref, resolveTarget, filterSkills, countByDifficulty, formatMinutes } from '../src/catalog.js';
-import { login, logout } from '../src/api.js';
+import { clearLocalSession, login } from '../src/api.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
@@ -9,7 +9,7 @@ const response = (body) => new Response(JSON.stringify(body));
 const tracks = [{ id: 10, title: 'Backend', slug: 'backend', is_active: true }];
 const competencies = [{ id: 20, title: 'API', slug: 'api', career_track: 10 }];
 const skills = [{ id: 30, title: 'JWT', slug: 'jwt', competency: 20 }];
-afterEach(() => { globalThis.fetch = originalFetch; logout(); });
+afterEach(() => { globalThis.fetch = originalFetch; clearLocalSession(); });
 
 test('catalog pagination preserves parent filters and never attaches a token or follows an external URL', async () => {
   let pages = 0;
