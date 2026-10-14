@@ -74,13 +74,13 @@ Selesai ketika lifecycle interaktif dan isolasi state terbukti, seluruh kasus wa
 
 ## COMP-005 — Selesaikan dashboard dan profil
 
-Status: TODO. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-016/042.
+Status: PASS untuk interaksi Dashboard/Profile kandidat TASK-042; revoke server tetap COMP-008. Prioritas: P0. Dependency: COMP-003. Tiket: TASK-016/042. Bukti: [regresi Dashboard/Profile](docs/completion/COMP-005-dashboard-profile.md).
 
-- [ ] Uji akun baru, data terisi, loading/empty, progress gagal, target gagal, roadmap gagal, retry, respons usang, dan pergantian query.
-- [ ] Target hanya berasal dari query tervalidasi; tanpa target tampilkan Pilih target. Data identitas/XP/completion memakai server.
-- [ ] Uji username fallback/email kosong/tanggal tidak valid, fitur profil unavailable, serta refresh profil yang gagal tanpa mengarang sukses.
-- [ ] Uji notice logout dari event nyata, URL `logged_out=1` palsu, logout gagal/retry, dan accessible name Keluar.
-- [ ] Ukur coverage kode baru >=80%, jalankan tes/build, dan perbarui copy/kontrak bila diperlukan.
+- [x] Uji akun baru, data terisi, loading/empty, progress gagal, target gagal, roadmap gagal, retry, respons usang, dan pergantian query.
+- [x] Target hanya berasal dari query tervalidasi; tanpa target tampilkan Pilih target. Data identitas/XP/completion memakai server.
+- [x] Uji username fallback/email kosong/tanggal tidak valid, fitur profil unavailable, serta refresh profil yang gagal tanpa mengarang sukses.
+- [x] Uji notice logout dari event nyata, URL `logged_out=1` palsu, dan accessible name Keluar. Kandidat ini hanya mengakhiri sesi lokal secara eksplisit; revoke server/failure retry ada di COMP-008.
+- [x] Ukur coverage kode baru >=80%, jalankan tes/build, dan perbarui copy/kontrak bila diperlukan.
 
 Selesai ketika acceptance state/data dan coverage terpenuhi. Ukuran 375/768/1440, layout, tema, dan keyboard browser diselesaikan pada COMP-010.
 
