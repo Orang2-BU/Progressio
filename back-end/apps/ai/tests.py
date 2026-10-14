@@ -255,7 +255,7 @@ class AIServicesTests(TestCase):
         }).encode('utf-8')
 
         adapter = HttpAIAdapter(api_url='https://ai-contoh/v1/chat', model='test-model')
-        with patch('apps.ai.adapters.http_adapter.urlopen', return_value=fake_response) as mocked:
+        with patch('apps.ai.adapters.http_adapter.open_provider_request', return_value=fake_response) as mocked:
             result = adapter._request_json(
                 'test_result',
                 'Return the result.',
@@ -317,7 +317,7 @@ class AIServicesTests(TestCase):
         adapter = HttpAIAdapter(api_url='https://ai.test/chat')
         error = HTTPError('https://ai.test/chat', 429, 'limited',
                           {'Retry-After': '5'}, BytesIO(b'synthetic vendor detail'))
-        with patch('apps.ai.adapters.http_adapter.urlopen', side_effect=error):
+        with patch('apps.ai.adapters.http_adapter.open_provider_request', side_effect=error):
             with self.assertRaises(AIProviderUnavailable) as raised:
                 adapter._request_json('test', 'instructions', {}, {})
         self.assertEqual(raised.exception.retry_after_seconds, 5)
@@ -327,6 +327,6 @@ class AIServicesTests(TestCase):
         adapter = HttpAIAdapter(api_url='https://ai.test/chat')
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'{"choices":[]}'
-        with patch('apps.ai.adapters.http_adapter.urlopen', return_value=response):
+        with patch('apps.ai.adapters.http_adapter.open_provider_request', return_value=response):
             with self.assertRaises(AIProviderProtocolError):
                 adapter._request_json('test', 'instructions', {}, {})

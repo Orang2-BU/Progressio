@@ -1,7 +1,8 @@
 import json
 import os
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from apps.common.http_transport import open_provider_request, validate_provider_url
 
 from .base import BaseBlockchainAdapter
 
@@ -21,6 +22,7 @@ class HTTPBlockchainAdapter(BaseBlockchainAdapter):
             raise BlockchainProviderError(
                 'BLOCKCHAIN_SERVICE_URL is required when BLOCKCHAIN_PROVIDER=http.'
             )
+        validate_provider_url(self.service_url, has_credentials=bool(self.api_token))
 
     # No documented idempotency/lookup contract: issuance must stop before POST.
     supports_recovery = False
@@ -54,7 +56,8 @@ class HTTPBlockchainAdapter(BaseBlockchainAdapter):
             method='POST',
         )
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            validate_provider_url(self.service_url, has_credentials=bool(self.api_token))
+            with open_provider_request(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode('utf-8'))
         except HTTPError as exc:
             raise BlockchainProviderError(
