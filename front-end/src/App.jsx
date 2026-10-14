@@ -156,6 +156,7 @@ export function AuthPage({ mode }) {
 
 export default function App({ children }) {
   const { user } = useSession();
+  const [logoutError, setLogoutError] = useState('');
   const route = usePathname()?.replace(/\/$/, '') || '/';
   const router = useRouter();
   const main = useRef(null);
@@ -182,6 +183,7 @@ export default function App({ children }) {
       {user ? <><Link className="account-link" href="/profile" aria-label={`Profil ${user.username}`}><span className="account-avatar" aria-hidden="true">{user.username?.slice(0, 1).toUpperCase()}</span><span className="account-label">{roleNames[user.role] || user.role}</span></Link><Button variant="secondary" className="compact" aria-label="Keluar" onClick={signOut}><Icon name="logout" size={16}/><span>Keluar</span></Button></> : <span className="brand-tagline">Turning Progress Into Proof</span>}
     </div></div></header>}
     <main id="main" ref={main} tabIndex="-1">
+      {logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">{logoutError}</Notice>}
       {redirecting ? <p className="not-found" role="status">Mengalihkan halaman…</p> : children}
     </main>{!focusRoute && <footer className="footer"><span>progressio<span className="brand-dot">.</span> — Setiap kemajuan punya arah.</span><span>TURNING PROGRESS INTO PROOF</span></footer>}
   </>;
