@@ -24,12 +24,12 @@ TASK-021 sudah merged. TASK-006/007/015 yang sudah Done adalah konteks QA, bukan
 
 ## COMP-001 — Pin kandidat dan periksa lingkungan
 
-Status: TODO. Prioritas: P0. Dependency: —.
+Status: PASS. Prioritas: P0. Dependency: —. Bukti: [baseline kandidat dan lingkungan](docs/completion/baseline.md), commit setelah plan.
 
-- [ ] Inventaris main, worktree, base/final SHA, serta perubahan tracked/untracked; gunakan kandidat terbaru pada tabel plan sebagai titik awal.
-- [ ] Petakan delta yang sudah terwakili supaya patch dashboard/QA/Study tidak diterapkan dua kali. Tentukan manifest kandidat integrasi dan dependency source.
-- [ ] Periksa Node/Python/Flutter, dependency/lockfile, runner Sokudo, PostgreSQL/Redis disposable, serta alat coverage/dependency audit.
-- [ ] Catat availability dan error konkret. Untuk sumber yang belum dapat diakses, jangan mengklaim review selesai.
+- [x] Inventaris main, worktree, base/final SHA, serta perubahan tracked/untracked; gunakan kandidat terbaru pada tabel plan sebagai titik awal.
+- [x] Petakan delta yang sudah terwakili supaya patch dashboard/QA/Study tidak diterapkan dua kali. Tentukan manifest kandidat integrasi dan dependency source.
+- [x] Periksa Node/Python/Flutter, dependency/lockfile, runner Sokudo, PostgreSQL/Redis disposable, serta alat coverage/dependency audit.
+- [x] Catat availability dan error konkret. Untuk sumber yang belum dapat diakses, jangan mengklaim review selesai.
 
 Selesai ketika manifest dan peta dependency tersimpan, source pengguna aman, serta blocker lingkungan mempunyai langkah pemulihan. Output: `docs/completion/baseline.md` atau manifest setara; commit dokumentasi bila ada perubahan.
 
