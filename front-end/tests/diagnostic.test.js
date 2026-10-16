@@ -22,6 +22,15 @@ test('questions, incomplete answers, explicit unknown and server result contract
   assert.equal(loginDestination('/diagnostic/result?track=10'), '/diagnostic/result?track=10');
   assert.equal(loginDestination('https://evil.test/diagnostic'), '/');
 });
+test('authenticated API requests preserve valid JSON array responses', async () => {
+  globalThis.fetch = async (url) => {
+    if (url.endsWith('auth/login')) return new Response(JSON.stringify({ access: 'access', refresh: 'refresh' }));
+    if (url.endsWith('auth/me')) return new Response(JSON.stringify({ username: 'student' }));
+    return new Response(JSON.stringify(questions));
+  };
+  await login({ username: 'student', password: 'test' });
+  assert.deepEqual(await request('diagnostics/10'), questions);
+});
 test('diagnostic target validates the selected parent chain using public endpoints', async () => {
   const records = { 'career-tracks/10': { id: 10, title: 'Backend', slug: 'backend', is_active: true },
     'competencies/20': { id: 20, title: 'API', slug: 'api', career_track: 10 }, 'skills/30': { id: 30, title: 'REST', slug: 'rest', competency: 20 } };

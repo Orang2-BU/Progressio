@@ -132,10 +132,12 @@ export function WorkspaceLayout({ children }) {
   </div>;
 }
 
-export function FocusLayout({ children, exitHref, completed = 0, total = 0 }) {
+export function FocusLayout({ children, exitHref, onRequestExit, completed = 0, total = 0 }) {
   return <div className="focus-layout">
     <header className="focus-header">
-      <Link className="icon-button" href={exitHref} aria-label="Tutup diagnostic dan kembali ke target"><Icon name="x"/></Link>
+      {onRequestExit
+        ? <button className="icon-button" type="button" onClick={onRequestExit} aria-label="Tutup diagnostic dan kembali ke target"><Icon name="x"/></button>
+        : <Link className="icon-button" href={exitHref} aria-label="Tutup diagnostic dan kembali ke target"><Icon name="x"/></Link>}
       <ProgressBar value={completed} max={total} label="Soal diagnostic dijawab"/>
       <span className="focus-count">{total ? `${completed} / ${total} dijawab` : 'Memuat soal'}</span>
     </header>

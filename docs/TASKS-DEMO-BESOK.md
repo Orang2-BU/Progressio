@@ -7,6 +7,7 @@ Dokumen ini mencatat pekerjaan yang belum selesai untuk demo. Jangan menandai pr
 - [x] Tetapkan baseline kerja dari `main` pada SHA `989e0a3`: auth/security dan Study telah dipadukan; test frontend 73/73 dan production build 13 route lulus.
 - [x] Perbaiki logout pada halaman Profile yang sebelumnya memanggil setter error yang tidak didefinisikan; tambahkan regresi assertion dan validasi dengan suite frontend 73/73 + build.
 - [x] Integrasikan slice Dashboard/Profile yang aman: hasil progress/target tetap independen saat error/cancel, username dinormalisasi, dan ringkasan/pengaturan memakai rail responsif; suite 75/75 + build 13 route lulus.
+- [x] Integrasikan slice Diagnostic secara selektif dan perbaiki API client yang sebelumnya menormalisasi respons JSON array menjadi `{}`; regression interaksi 5/5, suite frontend 81/81, build 13 route.
 - [ ] Rekonsiliasi delta Dashboard/Profile TASK-042, Diagnostic TASK-018, dan Roadmap TASK-019. Hindari cherry-pick kandidat lama secara utuh: beberapa branch safe-composition menghapus file backend, dokumentasi, dan test di luar scope.
 - [ ] Setelah tiap komponen dipadukan, jalankan test frontend, build production, dan review diff penuh. Pastikan backend/provider security dan server-confirmed logout tetap utuh.
 - [ ] Perbarui `docs/completion/COMP-007-integration-review.md` dan status COMP-007/008/010/011 hanya dengan hasil pada SHA kandidat final.

@@ -75,7 +75,7 @@ async function send(path, { method = 'GET', body, access, signal } = {}) {
       throw new ApiError('Server mengirim respons yang tidak dapat dibaca. Coba lagi.', response.status);
     }
   }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
+  if (!data || typeof data !== 'object') data = {};
   if (!response.ok) {
     const fields = Object.fromEntries(Object.entries(data || {})
       .filter(([key]) => key !== 'detail' && key !== 'code')

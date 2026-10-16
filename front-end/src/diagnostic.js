@@ -1,5 +1,31 @@
 import { ApiError } from './api.js';
 
+export function isQuestionAnswered(answers, questionId) {
+  return Object.hasOwn(answers, questionId);
+}
+
+export function updateQuestionAnswer(answers, questionId, value) {
+  return { ...answers, [questionId]: value };
+}
+
+export function getAnsweredQuestionCount(questions, answers) {
+  return questions.filter((question) => isQuestionAnswered(answers, question.id)).length;
+}
+
+export function findFirstUnansweredQuestion(questions, answers) {
+  return questions.findIndex((question) => !isQuestionAnswered(answers, question.id));
+}
+
+export function isUncertainDiagnosticSubmission(error) {
+  return !error.status || error.status >= 500 || (error.status >= 200 && error.status < 300);
+}
+
+export function getDiagnosticFocusTarget({ promptFocusRequested, issue }) {
+  if (promptFocusRequested) return 'prompt';
+  if (issue) return 'summary';
+  return null;
+}
+
 export function validateQuestions(data) {
   const ids = new Set();
   if (!Array.isArray(data) || !data.every((q) => {
@@ -17,7 +43,7 @@ export function validateQuestions(data) {
 }
 
 export function diagnosticPayload(questions, answers) {
-  const missing = questions.filter((q) => !Object.hasOwn(answers, q.id));
+  const missing = questions.filter((q) => !isQuestionAnswered(answers, q.id));
   if (missing.length) throw new ApiError('Jawab semua soal, atau pilih Belum tahu.', 400,
     Object.fromEntries(missing.map((q) => [q.id, 'Pilih satu jawaban.'])));
   if (!questions.length || questions.some((q) => answers[q.id] !== '' && !q.options.some((o) => o.value === answers[q.id]))) {
@@ -38,4 +64,21 @@ export function validateAttempt(data, trackId) {
     throw new ApiError('Format hasil diagnostic dari server tidak valid.');
   }
   return data;
+}
+
+export function diagnosticRadarGeometry(skillScores) {
+  if (!Array.isArray(skillScores) || skillScores.length < 3 || skillScores.length > 8 ||
+      !skillScores.every((skill) => typeof skill?.score === 'number' && Number.isFinite(skill.score) && skill.score >= 0 && skill.score <= 100)) return null;
+  const center = 100;
+  const radius = 66;
+  const point = (index, scale) => {
+    const angle = -Math.PI / 2 + (index * Math.PI * 2) / skillScores.length;
+    return { x: Number((center + Math.cos(angle) * radius * scale).toFixed(2)), y: Number((center + Math.sin(angle) * radius * scale).toFixed(2)) };
+  };
+  return {
+    rings: [0.25, 0.5, 0.75, 1].map((scale) => skillScores.map((_, index) => point(index, scale))),
+    axes: skillScores.map((_, index) => point(index, 1)),
+    values: skillScores.map((skill, index) => point(index, skill.score / 100)),
+    labels: skillScores.map((_, index) => point(index, 1.22)),
+  };
 }
