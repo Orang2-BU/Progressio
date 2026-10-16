@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { clearLocalSession, login } from '../src/api.js';
-import { roadmapPath, validateRoadmap, loadRoadmap } from '../src/roadmap.js';
+import { roadmapPath, validateRoadmap, loadRoadmap, roadmapCoveragePercent } from '../src/roadmap.js';
 import { loginDestination } from '../src/navigation.js';
 
 const originalFetch = globalThis.fetch;
@@ -33,6 +33,13 @@ test('roadmap validates server totals, target, order and empty satisfied route w
     steps: [{ ...step, skill_id: 2, skill_slug: 'foundation', is_target: false }, { ...step, order: 2, prerequisites: ['foundation'] }] };
   assert.equal(validateRoadmap(ordered, target), ordered);
   assert.throws(() => validateRoadmap({ ...ordered, steps: [{ ...ordered.steps[0], prerequisites: ['rest'] }, ordered.steps[1]] }, target));
+});
+test('roadmap coverage distinguishes unique satisfied skills and empty roadmaps', () => {
+  assert.equal(roadmapCoveragePercent(roadmap), 0);
+  assert.equal(roadmapCoveragePercent({ ...roadmap, already_satisfied: [{ skill_slug: 'http', skill_title: 'HTTP', mastery: 70 }] }), 50);
+  assert.equal(roadmapCoveragePercent({ ...roadmap, steps: [], already_satisfied: [{ skill_slug: 'rest', skill_title: 'REST', mastery: 70 }] }), 100);
+  assert.equal(roadmapCoveragePercent({ ...roadmap, steps: [] }), null);
+  assert.equal(roadmapCoveragePercent(null), null);
 });
 test('roadmap requests are read-only, authenticated and preserve API failure/cancellation', async () => {
   let reads = 0;

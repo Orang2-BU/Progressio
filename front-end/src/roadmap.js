@@ -7,6 +7,12 @@ export function roadmapPath(target) {
   return `roadmap?${new URLSearchParams({ [target.kind]: target.slug })}`;
 }
 
+export function roadmapCoveragePercent(data) {
+  if (!data || !Array.isArray(data.steps) || !Array.isArray(data.already_satisfied)) return null;
+  const totalUnique = data.steps.length + data.already_satisfied.length;
+  return totalUnique ? Math.round(data.already_satisfied.length / totalUnique * 100) : null;
+}
+
 export function validateRoadmap(data, target) {
   const text = (s) => typeof s === 'string' && s.trim().length > 0;
   const score = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100;
