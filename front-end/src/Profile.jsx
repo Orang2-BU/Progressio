@@ -27,6 +27,7 @@ export default function Profile() {
   const router = useRouter();
   const [progressState, setProgressState] = useState({ loading: true });
   const [profileError, setProfileError] = useState('');
+  const [logoutError, setLogoutError] = useState('');
   const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false);
 
@@ -64,6 +65,7 @@ export default function Profile() {
     <h1>Profil akun</h1>
     <p className="intro">Informasi identitas dan kemajuan yang tercatat pada akunmu.</p>
     {profileError && <Notice tone="error" title="Profil belum dapat diperbarui">{profileError}</Notice>}
+    {logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">{logoutError}</Notice>}
 
     <section className="profile-v3-card" aria-labelledby="identity-title">
       <div className="profile-v3-heading"><div className="profile-avatar" aria-hidden="true">{user?.username?.trim()?.[0]?.toUpperCase() || '?'}</div>

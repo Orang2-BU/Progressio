@@ -25,7 +25,9 @@ test('logout waits for server confirmation and reports failure without claiming 
   assert.match(app, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
   assert.match(profile, /await logout\('Logout berhasil\. Token refresh dicabut di server\.'\)/);
   assert.match(app, /const \[logoutError, setLogoutError\] = useState\(''\)/);
+  assert.match(profile, /const \[logoutError, setLogoutError\] = useState\(''\)/);
   assert.match(app, /logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">\{logoutError\}<\/Notice>/);
+  assert.match(profile, /logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">\{logoutError\}<\/Notice>/);
   assert.match(app, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
   assert.match(profile, /Logout belum terkonfirmasi\. Sesi tetap aktif; coba lagi\./);
 });
