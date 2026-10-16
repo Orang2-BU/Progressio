@@ -1,9 +1,38 @@
 # Progressio
 
 > **Turning Progress Into Proof.**
-> Progressio is an AI-powered platform for turning progress into clear, measurable proof.
 
-The repository contains a Next.js web client, a Django API, and a Flutter mobile client. Local demo credentials remain drafts; the mock runtime does not prove final credential validity or external blockchain anchoring. See [the demo runbook](docs/demo-runbook.md) for a disposable local rehearsal.
+Progressio adalah platform yang mengubah progres belajar menjadi bukti yang terukur dan bisa diverifikasi. Pengguna (student) mengikuti jalur karier, menjawab diagnostic, belajar materi per skill, mengerjakan assessment, lalu — jika memenuhi syarat — mendapatkan **credential** yang bisa diverifikasi publik lewat hash SHA-256.
+
+Aturan intinya: **kurikulum adalah sumber kebenaran, database hanya proyeksinya.** Penilaian (skor, kunci jawaban, rubrik) dijalankan di server, bukan di klien.
+
+> ⚠️ **Status: MVP hackathon.** Mode `mock` untuk AI dan blockchain hanya simulasi offline untuk demo. Credential dari mode mock belum menjadi bukti valid secara eksternal, dan belum ada anchoring blockchain sungguhan.
+
+---
+
+## 📑 Daftar Isi
+
+- [Fitur](#-fitur)
+- [Struktur Repo](#-struktur-repo)
+- [Tech Stack](#-tech-stack)
+- [Quick Start (Docker)](#-quick-start-docker)
+- [Menjalankan Secara Lokal](#-menjalankan-secara-lokal)
+- [Menjalankan Test](#-menjalankan-test)
+- [Konfigurasi Environment](#-konfigurasi-environment)
+- [Dokumentasi Lanjutan](#-dokumentasi-lanjutan)
+- [Status & Batasan](#-status--batasan)
+
+---
+
+## ✨ Fitur
+
+- **Career track → competency → skill**: katalog jalur belajar dengan graf prasyarat antar skill.
+- **Diagnostic**: soal penempatan dengan kunci jawaban yang disimpan di server.
+- **Roadmap & learning path**: urutan skill menuju target yang dipilih, lengkap dengan status *mastered / available / locked* dan estimasi jam belajar.
+- **Study**: per skill, pengguna membaca bagian materi tertentu lalu menjawab checkpoint yang dinilai server-side.
+- **Assessment**: pengumpulan jawaban dengan penilaian server-side (klien tidak bisa mengubah skor).
+- **Credential & verifikasi publik**: credential diterbitkan hanya jika skor kompetensi ≥ 70 *dan* assessment lulus; status `issued` hanya setelah hash proof berhasil di-anchor. Verifikasi publik tersedia tanpa login.
+- **Integrasi AI** (opsional): provider `mock`, `groq`, atau HTTP-compatible.
 
 ---
 
@@ -11,200 +40,185 @@ The repository contains a Next.js web client, a Django API, and a Flutter mobile
 
 ```text
 Progressio/
-├── curriculum/      # Standar penilaian — SUMBER KEBENARAN, bukan turunan
-│   ├── validator.py #   validator tanpa dependency, dipakai CI dan backend
-│   ├── schemas/     #   kontrak tiap entitas (JSON Schema)
-│   ├── tests/       #   suite validasi + fixture valid & invalid
-│   └── tracks/      #   satu folder per career track
-├── back-end/        # Django 5.1 + DRF — mesin yang mengukur
-├── front-end/       # Next.js web client and browser-flow tests
-├── Mobile/          # Flutter mobile client
-└── docker-compose.yml
+├── curriculum/        # Standar penilaian — SUMBER KEBENARAN
+│   ├── validator.py   #   validator tanpa dependency (dipakai CI dan backend)
+│   ├── schemas/       #   JSON Schema untuk tiap entitas
+│   ├── tests/         #   suite validasi + fixture valid & invalid
+│   └── tracks/        #   satu folder per career track (mis. backend-engineering)
+├── back-end/          # Django 5.1 + DRF — mesin penilai dan API
+├── front-end/         # Web client Next.js (App Router) + browser-flow tests
+├── Mobile/            # Client Flutter (masih dalam pengembangan)
+├── docs/              # Runbook demo, QA, dan catatan penyelesaian
+├── e2e/               # Skenario end-to-end
+├── docker-compose.yml         # Stack lokal: PostgreSQL, Redis, backend, Celery
+├── docker-compose.demo.yml    # Stack untuk demo
+└── docker-compose.hosted.yml  # Stack untuk deployment
 ```
 
-Aturan penting: **kurikulum adalah sumber kebenaran, database hanya proyeksinya.**
-Track, competency, skill, lesson, dan assessment diisi lewat `import_curriculum`,
-bukan lewat Django admin — perubahan manual akan tertimpa saat impor berikutnya.
-Lihat [curriculum/README.md](curriculum/README.md).
+### Backend apps (`back-end/apps/`)
+
+| App | Tanggung jawab |
+|---|---|
+| `accounts` | Custom user (role `student`, `recruiter`, `admin`) dan JWT auth |
+| `curriculum` | Importer paket kurikulum → model Django |
+| `careers` | Career track |
+| `competencies` | Competency dan prasyaratnya |
+| `skills` | Skill dan skill graph |
+| `learning` | Lesson, study step, progres, roadmap |
+| `assessments` | Assessment, submission, diagnostic, dan grading server-side |
+| `credentials` | Credential, evidence, dan aturan kelayakan |
+| `blockchain` | Hash SHA-256 kanonik dan anchoring proof |
+| `verification` | Verifikasi publik tanpa auth |
+| `ai` | Adapter AI (`mock`, `groq`, `http`) |
+| `common` | Utilitas bersama, health check, command `seed_demo` |
+
+> Jangan mengubah track, competency, skill, lesson, atau assessment lewat Django admin. Isi lewat `python manage.py import_curriculum` karena perubahan manual akan tertimpa saat impor berikutnya. Detail ada di [curriculum/README.md](curriculum/README.md).
 
 ---
 
-## 🏗️ Backend Overview
+## 🛠️ Tech Stack
 
-Backend dibangun menggunakan **Django 5.1** + **Django REST Framework (DRF)** dengan dokumentasi **OpenAPI 3.0 (drf-spectacular)** dan database **PostgreSQL 15**.
+| Bagian | Teknologi |
+|---|---|
+| Backend | Python 3.12, Django 5.2, Django REST Framework, drf-spectacular (OpenAPI 3.0), SimpleJWT |
+| Database | PostgreSQL 15 (SQLite untuk demo/test lokal) |
+| Async | Celery 5 + Redis 7 |
+| Web | Next.js 16 (App Router), React 19, Node.js ≥ 20.19 |
+| Mobile | Flutter |
+| Container | Docker & Docker Compose |
 
-### Django Apps Structure
-```text
-back-end/
-├── apps/
-│   ├── accounts/        # Custom User model (role: student, recruiter, admin), JWT Auth
-│   ├── curriculum/      # Importer paket kurikulum -> model Django
-│   ├── careers/         # CareerTrack model & API
-│   ├── competencies/    # Competency, CompetencyPrerequisite & API
-│   ├── skills/          # Skill, SkillPrerequisite (Skill Graph) & API
-│   ├── learning/        # Lesson, StudyStep, progress, roadmap & API
-│   ├── assessments/     # Assessment, Submission, Diagnostic & grading server-side
-│   ├── credentials/     # Credential, Evidence, aturan kelayakan
-│   ├── blockchain/      # Hash SHA-256 kanonik + anchoring proof
-│   ├── verification/    # Verifikasi publik tanpa auth
-│   ├── ai/              # Adapter AI (mock | openai)
-│   └── common/          # TimestampMixin, HealthCheck API, seed_demo
-├── config/              # Core settings, JWT, OpenAPI, and routing
-└── Dockerfile           # Python 3.12 slim backend container
+---
+
+## 🚀 Quick Start (Docker)
+
+Dari root repo:
+
+```bash
+docker compose up --build -d
+
+# Jalankan migrasi database
+docker compose exec backend python manage.py migrate
+
+# Impor kurikulum ke database
+docker compose exec backend python manage.py import_curriculum --help
+
+# Lihat log backend
+docker compose logs -f backend
 ```
+
+Setelah stack aktif:
+
+| Layanan | URL |
+|---|---|
+| Swagger UI | http://localhost:8000/api/docs/ |
+| Redoc | http://localhost:8000/api/redoc/ |
+| OpenAPI schema | http://localhost:8000/api/schema/ |
+| Health check | http://localhost:8000/api/v1/health/ |
+
+---
+
+## 💻 Menjalankan Secara Lokal
+
+Prasyarat: Python 3.12, Node.js ≥ 20.19. Perintah di bawah untuk PowerShell dari root repo.
+
+### 1. Backend
+
+```powershell
+cd back-end
+python -m venv .venv
+.\.venv\Scripts\activate
+python -m pip install -r requirements.txt
+
+$env:APP_ENV = "local"          # wajib: local atau production
+$env:DB_ENGINE = "sqlite"       # atau atur DB_* untuk PostgreSQL
+$env:AI_PROVIDER = "mock"
+$env:BLOCKCHAIN_PROVIDER = "mock"
+
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver
+```
+
+### 2. Frontend
+
+```powershell
+cd front-end
+npm ci
+npm run dev
+```
+
+Buka http://127.0.0.1:3000. Next.js meneruskan request `/api` ke Django; target-nya diatur lewat `API_PROXY_TARGET` (default `http://127.0.0.1:8000`, lihat [front-end/.env.example](front-end/.env.example)).
+
+### 3. Mobile (opsional)
+
+```bash
+cd Mobile
+flutter pub get
+flutter run
+```
+
+### Demo terisolasi
+
+Untuk rehearsal demo dengan database SQLite in-memory yang dibuat ulang setiap kali dijalankan (tidak menyentuh database proyek), ikuti [docs/demo-runbook.md](docs/demo-runbook.md).
 
 ---
 
 ## 🧪 Menjalankan Test
 
-Gunakan Python 3.12 dan virtualenv baru agar dependency backend terpasang
-terisolasi dari Python sistem (PowerShell dari root repo):
+Test dijalankan di CI (`.github/workflows/`) untuk backend, kurikulum, dan web. Untuk menjalankan secara lokal dengan provider eksternal dimatikan:
 
 ```powershell
-# Bootstrap sekali; .venv berada di back-end/ dan tidak perlu di-commit
-python -m venv back-end/.venv
-back-end/.venv/Scripts/python.exe -m pip install -r back-end/requirements.txt
-$python = (Resolve-Path "back-end/.venv/Scripts/python.exe").Path
-$env:APP_ENV = "local"
-$env:DB_ENGINE = "sqlite"
-$env:AI_PROVIDER = "mock"
-$env:BLOCKCHAIN_PROVIDER = "mock"
+# Backend (dari back-end/, dengan venv aktif dan env seperti di atas)
+python manage.py test
+python manage.py makemigrations --check --dry-run
+python manage.py spectacular --fail-on-warn --file openapi.tmp.yaml
 
-# Backend dan pemeriksaan model/schema
-Push-Location back-end
-try {
-    & $python manage.py test
-    if ($LASTEXITCODE -ne 0) { throw "Django tests failed ($LASTEXITCODE)" }
-    & $python manage.py makemigrations --check --dry-run
-    if ($LASTEXITCODE -ne 0) { throw "Migration check failed ($LASTEXITCODE)" }
-    $openapi = [System.IO.Path]::GetTempFileName()
-    try {
-        & $python manage.py spectacular --fail-on-warn --file $openapi
-        if ($LASTEXITCODE -ne 0) { throw "OpenAPI validation failed ($LASTEXITCODE)" }
-    } finally {
-        Remove-Item $openapi -ErrorAction SilentlyContinue
-    }
-} finally {
-    Pop-Location
-}
-
-# API probe and curriculum checks run from the repository root.
-& $python front-end/check_api_contract.py
-if ($LASTEXITCODE -ne 0) { throw "API contract probe failed ($LASTEXITCODE)" }
+# Kurikulum (dari root repo)
 python -m unittest discover -s curriculum -t .
-if ($LASTEXITCODE -ne 0) { throw "Curriculum tests failed ($LASTEXITCODE)" }
 
-# Web (Node minimal 20.19 sesuai package.json)
-cd front-end
-npm ci
+# Web (dari front-end/)
 npm test
 npm run build
 ```
 
-`APP_ENV` wajib dipilih eksplisit (`local` atau `production`) agar Django tidak
-menjalankan konfigurasi development secara diam-diam. Di POSIX, interpreter venv
-adalah `back-end/.venv/bin/python`; set `APP_ENV=local` sebelum menjalankan
-command di atas. Tetapkan
-`AI_PROVIDER=mock` dan `BLOCKCHAIN_PROVIDER=mock` untuk menjalankan pemeriksaan
-lokal tanpa provider eksternal. Probe kontrak memakai database SQLite in-memory
-dan identitas sementara; tidak memerlukan token atau layanan eksternal. Workflow
-web berjalan saat frontend, backend, kurikulum, atau workflow-nya berubah.
+| Workflow CI | Cakupan |
+|---|---|
+| `backend-tests.yml` | Migrasi, test Django (termasuk PostgreSQL 15), validasi OpenAPI, impor kurikulum |
+| `curriculum-tests.yml` | Validasi semua paket kurikulum dan fixture |
+| `web-tests.yml` | Test dan build web, probe kontrak API |
 
 ---
 
-## 🚀 Cara Menjalankan
+## ⚙️ Konfigurasi Environment
 
-### Opsi 1: Menggunakan Docker (Rekomendasi)
-Dari root folder `Progressio/`:
-```powershell
-# Build dan jalankan seluruh service (PostgreSQL + Django Backend)
-docker compose up --build -d
+- `APP_ENV` **wajib** diisi eksplisit (`local` atau `production`). Startup gagal jika tidak ada, sehingga konfigurasi development tidak aktif diam-diam.
+- Di profil `production`, startup gagal kecuali `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` (HTTPS), dan `CSRF_TRUSTED_ORIGINS` (HTTPS) sudah diisi.
+- Template variabel ada di [`back-end/.env.example`](back-end/.env.example), [`back-end/.env.production.example`](back-end/.env.production.example), dan [`back-end/.env.demo.example`](back-end/.env.demo.example).
 
-# Cek logs
-docker compose logs -f backend
-
-# Jalankan migration database
-docker compose exec backend python manage.py migrate
-
-# Jalankan unit tests
-docker compose exec backend python manage.py test
-```
-
-Akses aplikasi:
-- 📑 **Swagger UI (OpenAPI 3.0)**: [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
-- 📖 **Redoc UI**: [http://localhost:8000/api/redoc/](http://localhost:8000/api/redoc/)
-- 🩺 **Health Check**: [http://localhost:8000/api/v1/health/](http://localhost:8000/api/v1/health/)
-- 📄 **OpenAPI Schema**: [http://localhost:8000/api/schema/](http://localhost:8000/api/schema/)
+> 🔐 Jangan commit file `.env` yang berisi secret. Isi secret production lewat secret manager. Nilai di `docker-compose.yml` hanya untuk development lokal.
 
 ---
 
-### Opsi 2: Lokal / Native Python (Virtualenv)
-Dari folder `back-end/`:
-```powershell
-cd back-end
+## 📚 Dokumentasi Lanjutan
 
-# Aktifkan virtual environment
-.\.venv\Scripts\activate
-
-# Profil wajib untuk command Django lokal (atau salin .env.example ke .env)
-$env:APP_ENV = "local"
-
-# Jalankan migrations
-python manage.py migrate
-
-# Jalankan tests
-python manage.py test
-
-# Jalankan dev server
-python manage.py runserver
-```
-
-`APP_ENV` wajib bernilai `local` atau `production`; profil local ditujukan untuk
-development. Untuk deployment, lihat
-[`docker-compose.hosted.yml`](docker-compose.hosted.yml) dan
-[`back-end/.env.production.example`](back-end/.env.production.example). Isi
-variabel dari contoh melalui secret manager sebelum menjalankan hosted stack.
-Jalankan migrasi setelah stack aktif:
-
-```sh
-docker compose -f docker-compose.hosted.yml exec backend python manage.py migrate
-```
+- [Backend README](back-end/README.md) — arsitektur backend, konfigurasi hosted, dan throttling ([THROTTLING.md](back-end/THROTTLING.md))
+- [Curriculum README](curriculum/README.md) — format paket kurikulum dan aturan validasi
+- [Frontend README](front-end/README.md) — status fase pengembangan web dan API contract ([API_CONTRACT.md](front-end/API_CONTRACT.md))
+- [Demo runbook](docs/demo-runbook.md) — langkah demo lokal yang terisolasi
+- [Progressio backend spec](progressio-backend-spec.md) — spesifikasi backend
 
 ---
 
-## 📡 API Endpoints (Sprint 1)
+## 🚧 Status & Batasan
 
-Semua endpoint domain berada di bawah `/api/v1/`:
-
-| Method | Endpoint | Auth | Deskripsi |
-|---|---|---|---|
-| `POST` | `/api/v1/auth/register` | Public | Register user baru (`student` atau `recruiter`; admin tidak dapat dipilih publik) |
-| `POST` | `/api/v1/auth/login` | Public | JWT Token obtain (`access` & `refresh`) |
-| `POST` | `/api/v1/auth/refresh` | Public | JWT Token refresh |
-| `GET` | `/api/v1/auth/me` | Bearer JWT | Profile user yang sedang login |
-| `GET` | `/api/v1/career-tracks` | Public | List semua career track aktif |
-| `GET` | `/api/v1/career-tracks/{id}` | Public | Detail career track & jumlah competency |
-| `GET` | `/api/v1/competencies` | Public | List competency (bisa filter `?career_track={id}`) |
-| `GET` | `/api/v1/competencies/{id}` | Public | Detail competency & jumlah skill |
-| `GET` | `/api/v1/skills` | Public | List skill (bisa filter `?competency={id}`) |
-| `GET` | `/api/v1/skills/{id}` | Public | Detail skill beserta prerequisite skill graph |
-| `GET` | `/api/v1/skills/{id}/lessons` | Public | List materi/lesson untuk skill tertentu |
-| `GET` | `/api/v1/lessons` | Public | List lesson (bisa filter `?skill={id}`) |
-| `GET` | `/api/v1/lessons/{id}` | Public | Detail lesson |
-| `GET` | `/api/v1/health/` | Public | Status health check API |
-| `GET` | `/api/v1/learning-path?career_track={slug}` | Bearer JWT | Peta skill + status (mastered/available/locked) |
-| `GET` | `/api/v1/roadmap?skill={slug}` | Bearer JWT | Rute terurut ke target pilihan user + sisa jam |
-| `GET` | `/api/v1/skills/{slug}/study-plan` | Public | Study step: bagian mana yang dibaca dan apa yang dikerjakan |
-| `POST` | `/api/v1/study-steps/{id}/checkpoint` | Bearer JWT | Cek jawaban checkpoint (dinilai server-side) |
+- Web client masih berkembang: katalog, diagnostic, roadmap, study, dan proof sudah ada, tetapi beberapa alur belum lengkap. Lihat [front-end/README.md](front-end/README.md).
+- Mobile masih dalam tahap awal (halaman login, register, lupa password, dan OTP).
+- Provider `mock` untuk AI dan blockchain hanya untuk pengembangan. Jangan diklaim sebagai transaksi OpenAI atau blockchain sungguhan. Untuk integrasi jaringan nyata, gunakan `BLOCKCHAIN_PROVIDER=http` dengan layanan signer eksternal.
+- Email default menggunakan console backend (dicetak ke terminal). Email production dinonaktifkan sampai SMTP dikonfigurasi.
+- Celery sudah terpasang di Docker stack, tetapi alur background (evaluasi AI, transaksi blockchain) masih dikembangkan.
 
 ---
 
-## 📝 Catatan Penting & Roadmap
+## 📄 Lisensi
 
-> [!IMPORTANT]
-> **Email Backend:**
-> Profil lokal menggunakan `django.core.mail.backends.console.EmailBackend` (isi email dicetak ke console). Email nonaktif secara default pada profil production. Jika fitur mulai mengirim email, aktifkan `ENABLE_EMAIL=True` dan konfigurasi SMTP host, username, password, serta alamat pengirim sebelum memakai fitur tersebut.
-
-> [!NOTE]
-> **Celery & Background Tasks:**
-> Celery + Redis broker akan diintegrasikan pada Sprint berikutnya saat implementasi AI evaluation, Blockchain transaction, dan notifikasi otomatis.
+Repo ini belum memiliki file lisensi. Tambahkan `LICENSE` sebelum repo dibagikan secara publik agar penggunaan ulang jelas.
