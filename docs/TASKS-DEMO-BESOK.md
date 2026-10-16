@@ -1,10 +1,10 @@
-# Tugas lanjutan demo — 15 Oktober 2026
+# Tugas lanjutan demo — 16 Oktober 2026
 
-Dokumen ini mencatat pekerjaan yang belum selesai setelah push malam ini. Jangan menandai proyek siap rilis hanya berdasarkan build dan unit test; kandidat UI masih perlu komposisi dan rehearsal end-to-end.
+Dokumen ini mencatat pekerjaan yang belum selesai untuk demo. Jangan menandai proyek siap rilis hanya berdasarkan build dan unit test; kandidat UI masih perlu komposisi dan rehearsal end-to-end.
 
 ## P0 — Stabilkan kandidat integrasi
 
-- [ ] Buat satu SHA kandidat final dari baseline keamanan/auth dan Study yang sudah lulus.
+- [x] Tetapkan baseline kerja dari `main` pada SHA `989e0a3`: auth/security dan Study telah dipadukan; test frontend 73/73 dan production build 13 route lulus.
 - [ ] Rekonsiliasi delta Dashboard/Profile TASK-042, Diagnostic TASK-018, dan Roadmap TASK-019. Hindari cherry-pick kandidat lama secara utuh: beberapa branch safe-composition menghapus file backend, dokumentasi, dan test di luar scope.
 - [ ] Setelah tiap komponen dipadukan, jalankan test frontend, build production, dan review diff penuh. Pastikan backend/provider security dan server-confirmed logout tetap utuh.
 - [ ] Perbarui `docs/completion/COMP-007-integration-review.md` dan status COMP-007/008/010/011 hanya dengan hasil pada SHA kandidat final.
