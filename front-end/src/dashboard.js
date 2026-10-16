@@ -20,6 +20,15 @@ export async function loadDashboardTarget(query, options, loadTarget, loadRoadma
   catch (error) { return { target, roadmapError: error.message }; }
 }
 
+export async function loadDashboardData(query, options, loadProgress, loadTarget, loadRoadmap) {
+  const progressRequest = Promise.resolve()
+    .then(() => loadProgress(options))
+    .then((progress) => ({ progress }), (error) => ({ progressError: error.message }));
+  const targetRequest = loadDashboardTarget(query, options, loadTarget, loadRoadmap);
+  const [progressResult, targetResult] = await Promise.all([progressRequest, targetRequest]);
+  return options?.signal?.aborted ? null : { ...progressResult, ...targetResult };
+}
+
 export function journeyStatuses(target, roadmap) {
   return [
     target ? 'complete' : 'upcoming',
@@ -32,4 +41,7 @@ export function journeyStatuses(target, roadmap) {
 
 export function profileEmail(email) {
   return typeof email === 'string' && email.trim() ? email : 'Belum diisi';
+}
+export function displayUsername(user, fallback = 'Pengguna') {
+  return typeof user?.username === 'string' && user.username.trim() ? user.username.trim() : fallback;
 }

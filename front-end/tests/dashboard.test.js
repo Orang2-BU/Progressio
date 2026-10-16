@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { progressSummary, nextStudyStep, profileEmail, loadDashboardTarget, journeyStatuses } from '../src/dashboard.js';
+import { progressSummary, nextStudyStep, profileEmail, loadDashboardTarget, loadDashboardData, journeyStatuses, displayUsername } from '../src/dashboard.js';
 
 test('dashboard summaries use only validated server progress and report empty accounts clearly', () => {
   assert.deepEqual(progressSummary({ total_xp: 0, completed_lessons_count: 0, completed_lesson_ids: [], skills: [] }),
@@ -9,6 +9,12 @@ test('dashboard summaries use only validated server progress and report empty ac
     { totalXp: 120, completedLessons: 2, skillsWithMastery: 1 });
   assert.equal(profileEmail(''), 'Belum diisi');
   assert.equal(profileEmail('rama@example.test'), 'rama@example.test');
+});
+
+test('dashboard username is trimmed and falls back for missing or invalid values', () => {
+  assert.equal(displayUsername({ username: '  Raka  ' }, 'teman'), 'Raka');
+  assert.equal(displayUsername({ username: '   ' }, 'teman'), 'teman');
+  assert.equal(displayUsername({ username: 42 }), 'Pengguna');
 });
 
 test('next study step comes from the server roadmap and never invents a checkpoint', () => {
@@ -27,4 +33,23 @@ test('dashboard keeps validated target when roadmap fails and only marks support
   assert.deepEqual(journeyStatuses(target, null), ['complete', 'upcoming', 'upcoming', 'upcoming', 'upcoming']);
   assert.deepEqual(journeyStatuses(target, { steps: [{ skill_id: 1 }] }), ['complete', 'upcoming', 'current', 'upcoming', 'upcoming']);
   assert.deepEqual(journeyStatuses(target, { steps: [] }), ['complete', 'upcoming', 'complete', 'upcoming', 'upcoming']);
+});
+
+test('dashboard data keeps independent failures and ignores results after cancellation', async () => {
+  const data = await loadDashboardData('track=1', undefined,
+    async () => { throw new Error('Progress offline'); },
+    async () => ({ title: 'Backend' }),
+    async () => ({ steps: [] }));
+  assert.deepEqual(data, { progressError: 'Progress offline', target: { title: 'Backend' }, roadmap: { steps: [] } });
+
+  const controller = new AbortController();
+  let resolveProgress;
+  const pending = loadDashboardData('', { signal: controller.signal },
+    () => new Promise((resolve) => { resolveProgress = resolve; }),
+    async () => assert.fail('No target should load without URL context'),
+    async () => assert.fail('No roadmap should load without URL context'));
+  await Promise.resolve();
+  controller.abort();
+  resolveProgress({ total_xp: 5, completed_lessons_count: 0, skills: [] });
+  assert.equal(await pending, null);
 });

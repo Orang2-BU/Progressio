@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { WorkspaceLayout } from './App.jsx';
 import { loadTarget } from './catalog.js';
-import { progressSummary, nextStudyStep, loadDashboardTarget, journeyStatuses } from './dashboard.js';
+import { progressSummary, nextStudyStep, loadDashboardData, journeyStatuses, displayUsername } from './dashboard.js';
 import { loadRoadmap } from './roadmap.js';
 import { loadProgress, studyHref } from './study.js';
 import { Button, EmptyState, Icon, JourneyTracker, LoadingState, Notice } from './ui.jsx';
@@ -18,26 +18,26 @@ export default function Dashboard({ user }) {
     const controller = new AbortController();
     const options = { signal: controller.signal };
     setState({ query, loading: true });
-    const progressRequest = loadProgress(options).then((progress) => ({ progress }), (error) => ({ progressError: error.message }));
-    const targetRequest = loadDashboardTarget(query, options, loadTarget, loadRoadmap);
-    Promise.all([progressRequest, targetRequest]).then(([progressResult, targetResult]) => {
-      if (!controller.signal.aborted) setState({ query, ...progressResult, ...targetResult });
+    loadDashboardData(query, options, loadProgress, loadTarget, loadRoadmap).then((data) => {
+      if (data) setState({ query, ...data });
     });
     return () => controller.abort();
   }, [query, revision]);
   const current = state.query === query ? state : { loading: true };
+  const username = displayUsername(user, 'teman');
   const summary = current.progress ? progressSummary(current.progress) : null;
   const nextStep = nextStudyStep(current.roadmap);
   const targetQuery = query ? `?${query}` : '';
   const statuses = journeyStatuses(current.target, current.roadmap);
   return <WorkspaceLayout><section className="workspace-content dashboard-content" aria-busy={Boolean(current.loading)}>
     <p className="eyebrow">RINGKASAN</p>
-    <h1>Halo, {user.username || 'teman'}.</h1>
+    <h1>Halo, {username}.</h1>
     <p className="intro">Lihat kemajuan belajarmu dan tentukan langkah berikutnya.</p>
     {current.loading && <LoadingState>Memuat ringkasan akun dan progres belajar…</LoadingState>}
     {current.progressError && <Notice tone="error" title="Progres belum tersedia">{current.progressError}</Notice>}
     {current.targetError && <Notice tone="error" title="Target belum dapat dimuat">{current.targetError}</Notice>}
     {current.roadmapError && <Notice tone="error" title="Roadmap belum dapat dimuat">{current.roadmapError} Gunakan tombol Perbarui untuk mencoba lagi.</Notice>}
+    <div className="dashboard-grid">
     <div className="dashboard-hero">
       {current.target ? <>
         <div className="dashboard-hero-copy"><p className="eyebrow">TARGET DARI TAUTAN INI</p><h2>{current.target.title}</h2>
@@ -56,6 +56,7 @@ export default function Dashboard({ user }) {
         <Button href="/catalog">Pilih target <Icon name="arrow" size={18}/></Button>
       </div>}
     </div>
+    <aside className="dashboard-rail" aria-label="Ringkasan progres akun">
     <section className="dashboard-section" aria-labelledby="progress-title">
       <div className="dashboard-section-heading"><div><p className="eyebrow">DATA AKUN AKTIF</p><h2 id="progress-title">Ringkasan progres</h2></div>
         <button className="button secondary" type="button" disabled={current.loading} onClick={() => setRevision((value) => value + 1)}>Perbarui</button>
@@ -66,6 +67,8 @@ export default function Dashboard({ user }) {
         <article className="dashboard-stat dashboard-stat-skills"><span><Icon name="target"/>Skill dengan mastery</span><strong>{summary.skillsWithMastery}</strong><small>Dari data progres akun</small></article>
       </div> : !current.loading && !current.progressError && <EmptyState icon="chart" title="Belum ada progres">Selesaikan materi untuk mulai mencatat XP dan progres.</EmptyState>}
     </section>
+    </aside>
+    </div>
     <section className="dashboard-section" aria-labelledby="journey-title"><p className="eyebrow">TAHAPAN BELAJAR</p><h2 id="journey-title">Perjalananmu</h2>
       <JourneyTracker statuses={statuses} className="dashboard-journey" />
       {!current.target && <p className="hint">Pilih target untuk menghubungkan tahapan belajar dengan roadmap yang tervalidasi.</p>}

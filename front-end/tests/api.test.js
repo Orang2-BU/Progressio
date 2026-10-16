@@ -389,12 +389,16 @@ describe('frontend foundation rendering', () => {
     const { load, render } = foundationRenderer({ path: '/', session: { user, reason: '' } });
     const dashboard = render(load('Dashboard.jsx').default, { user });
     assert.match(dashboard, /Halo, pelajar-qa/);
+    assert.match(dashboard, /class="dashboard-grid"/);
+    assert.match(dashboard, /aria-label="Ringkasan progres akun"/);
     assert.match(dashboard, /Pilih target belajar pertamamu/);
     assert.match(dashboard, /Memuat ringkasan akun dan progres belajar/);
     assert.doesNotMatch(dashboard, /Total XP[\s\S]*?<strong>\d/);
 
     const profile = render(load('Profile.jsx').default);
     assert.match(profile, />pelajar-qa</);
+    assert.match(profile, /class="profile-v3-grid"/);
+    assert.match(profile, /aria-label="Pengaturan akun"/);
     assert.match(profile, /pelajar@example\.test/);
     assert.match(profile, /Memuat kemajuan akun/);
     assert.match(profile, /Streak, level, lencana, dan peta aktivitas belum tersedia dari server/);

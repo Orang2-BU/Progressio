@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkspaceLayout, useSession } from './App.jsx';
 import { logout, reloadProfile } from './api.js';
-import { profileEmail, progressSummary } from './dashboard.js';
+import { profileEmail, progressSummary, displayUsername } from './dashboard.js';
 import { loadProgress } from './study.js';
 import { Button, EmptyState, Icon, LoadingState, Notice } from './ui.jsx';
 
@@ -60,6 +60,7 @@ export default function Profile() {
   }
 
   const summary = progressState.progress ? progressSummary(progressState.progress) : null;
+  const username = displayUsername(user);
   return <WorkspaceLayout><section className="workspace-content profile-v3" aria-busy={progressState.loading}>
     <p className="eyebrow">AKUN PROGRESSIO</p>
     <h1>Profil akun</h1>
@@ -68,17 +69,19 @@ export default function Profile() {
     {logoutError && <Notice tone="error" title="Logout belum terkonfirmasi">{logoutError}</Notice>}
 
     <section className="profile-v3-card" aria-labelledby="identity-title">
-      <div className="profile-v3-heading"><div className="profile-avatar" aria-hidden="true">{user?.username?.trim()?.[0]?.toUpperCase() || '?'}</div>
-        <div><p className="eyebrow">IDENTITAS AKUN</p><h2 id="identity-title">{user?.username || 'Pengguna'}</h2></div>
+      <div className="profile-v3-heading"><div className="profile-avatar" aria-hidden="true">{username[0]?.toUpperCase() || '?'}</div>
+        <div><p className="eyebrow">IDENTITAS AKUN</p><h2 id="identity-title">{username}</h2></div>
       </div>
       <dl className="profile-v3-identity">
-        <div><dt>Username</dt><dd>{user?.username || 'Belum tersedia'}</dd></div>
+        <div><dt>Username</dt><dd>{username}</dd></div>
         <div><dt>Email</dt><dd>{profileEmail(user?.email)}</dd></div>
         <div><dt>Peran</dt><dd>{roleNames[user?.role] || user?.role || 'Belum tersedia'}</dd></div>
         <div><dt>Bergabung</dt><dd>{joinedDate(user?.date_joined)}</dd></div>
       </dl>
     </section>
 
+    <div className="profile-v3-grid">
+    <div className="profile-v3-main">
     <section className="profile-v3-section" aria-labelledby="profile-progress-title">
       <div className="profile-v3-section-heading"><div><p className="eyebrow">DARI SERVER</p><h2 id="profile-progress-title">Kemajuan belajar</h2></div>
         <Button variant="secondary" disabled={busy || progressState.loading} onClick={refresh}>{busy ? 'Memuat…' : 'Muat ulang'}</Button></div>
@@ -98,11 +101,15 @@ export default function Profile() {
       </div>
     </section>
 
+    </div>
+    <aside className="profile-v3-rail" aria-label="Pengaturan akun">
     <section className="profile-v3-section" aria-labelledby="profile-settings-title"><p className="eyebrow">PENGATURAN</p><h2 id="profile-settings-title">Pengaturan akun</h2>
       <ul className="profile-v3-settings">{upcomingSettings.map(([title, description]) => <li key={title}>
         <span><strong>{title}</strong><small>{description}</small></span><button type="button" disabled aria-label={`${title}, segera`}>SEGERA</button>
       </li>)}</ul>
       <Button className="profile-v3-logout" variant="secondary" onClick={signOut}><Icon name="logout"/>Keluar</Button>
     </section>
+    </aside>
+    </div>
   </section></WorkspaceLayout>;
 }
