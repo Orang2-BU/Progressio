@@ -1,5 +1,23 @@
 # COMP-007 — Review final dan kandidat integrasi
 
+## Addendum main 2026-10-16 — SHA `ca39c3a`
+
+Dashboard/Profile, Diagnostic, dan Roadmap kini telah direkonsiliasi secara
+selektif di `main`; kandidat lama tidak di-merge utuh. Commit slice terbaru
+`4310949` (Diagnostic) dan `ca39c3a` (Roadmap) sudah di-push. Verifikasi pada
+SHA ini: frontend 85/85 + build 13 route; Django 200 test, 5 skipped dengan
+`DB_ENGINE=sqlite AI_PROVIDER=mock`; disposable API/runtime startup smoke lulus.
+Perubahan ini tidak menyentuh kode backend security/provider atau mekanisme
+server-confirmed logout.
+
+Verdict tetap **CHANGES / belum clear untuk demo end-to-end**: interaksi browser
+penuh, acceptance backend/browser lintas journey, 375/768/1440 viewport,
+keyboard/fokus, session multi-tab, assessment-to-draft/public verification,
+Mobile, dan lisensi sumber belum dibuktikan pada SHA ini. Pemeriksaan penuh
+Django tanpa override lokal `.env` sempat mengontak Groq dan gagal (HTTP 403);
+run mock deterministik lulus. Lihat `docs/demo-test-matrix.md` untuk hasil
+aktual dan blocker. Review ini self-review, bukan clearance independen.
+
 Tanggal: 14 Oktober 2026 (Asia/Jakarta). Verdict: **CHANGES — kandidat auth browser diperbaiki, komposisi fitur belum final**. Review dilakukan assistant (self-review), bukan approval independen Adit/Bimo. Inventaris history/base dan diff-file seluruh kandidat sudah dilakukan; full source-diff review setiap kandidat belum selesai.
 
 ## Kandidat dan hasil integrasi awal

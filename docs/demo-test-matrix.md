@@ -1,5 +1,27 @@
 # Demo rehearsal test matrix
 
+## Current main smoke — 2026-10-16
+
+SHA `ca39c3a` (`main`). Disposable SQLite backend from
+`front-end/tests/backend_server.py --catalog`; Next.js 16.3.8 proxied to
+`http://127.0.0.1:8011`. `AI_PROVIDER=mock` was scoped to both processes; no
+paid provider or blockchain service was called. The backend is in-memory and
+was stopped after the smoke.
+
+| Area | Result |
+|---|---|
+| Django suite | PASS: 200 tests, 5 skipped, `DB_ENGINE=sqlite AI_PROVIDER=mock`. The first default-config run contacted the Groq provider selected by local `.env` and got 403 (2 failures, 7 errors); rerunning with the mock provider passed. Do not run the test suite with the local Groq setting unless a live-provider test is intended. |
+| Frontend | PASS: 85/85 Node tests; `npm run build` generated all 13 routes. |
+| Runtime/API | PASS: disposable backend readiness and career-track catalog through Next proxy returned 200. `/`, login, register, catalog, diagnostic, roadmap, study, assessment, and credentials page requests returned 200. |
+| Browser journey and interaction | NOT RUN: no Playwright package/runner is installed in this worktree and no Sokudo E2E tool is available in this session. HTTP 200 is not proof of login, navigation, keyboard/focus, form submission, assessment, issuance, or public verification. |
+| Mobile | BLOCKED / NOT RUN: Flutter SDK/runtime is absent from PATH. |
+| Source/licensing | NOT RUN in browser this pass. Existing source review reports 13 declared licenses unverified and several links unreachable; do not claim license clearance. |
+
+Next action: run the documented browser rehearsal on an operator machine with a
+browser runner, complete the assessment-to-draft/public-verification journey,
+then update this matrix with actual interactions and evidence. Current status
+is not full demo/release clearance.
+
 Date: 2026-10-07. Runtime: a fresh disposable backend process with
 `front-end/tests/backend_server.py --catalog` and Next.js proxied to port 8011.
 The seeded account and all records are synthetic. The backend database is

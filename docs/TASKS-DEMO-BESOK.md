@@ -10,20 +10,20 @@ Dokumen ini mencatat pekerjaan yang belum selesai untuk demo. Jangan menandai pr
 - [x] Integrasikan slice Diagnostic secara selektif dan perbaiki API client yang sebelumnya menormalisasi respons JSON array menjadi `{}`; regression interaksi 5/5, suite frontend 81/81, build 13 route.
 - [x] Rekonsiliasi slice aman Dashboard/Profile TASK-042, Diagnostic TASK-018, dan Roadmap TASK-019 secara selektif; branch kandidat lama tidak digabung utuh karena membawa perubahan di luar scope.
 - [x] Roadmap menampilkan langkah interaktif, prasyarat, cakupan mastery roadmap, dan empty-state tanpa klaim credential; suite frontend 85/85 + build 13 route lulus.
-- [ ] Setelah tiap komponen dipadukan, jalankan test frontend, build production, dan review diff penuh. Pastikan backend/provider security dan server-confirmed logout tetap utuh.
-- [ ] Perbarui `docs/completion/COMP-007-integration-review.md` dan status COMP-007/008/010/011 hanya dengan hasil pada SHA kandidat final.
+- [x] Setelah tiap slice dipadukan, jalankan test frontend, build production, dan review diff slice; backend/provider security tidak diubah dan server-confirmed logout tetap diuji.
+- [x] Perbarui COMP-007 dan matrix dengan bukti pada SHA `ca39c3a`; clearance integrasi/release tetap CHANGES sampai rehearsal penuh.
 
 ## P0 — Rehearsal browser end-to-end
 
-- [ ] Mulai dari runtime bersih dengan fixture/backend yang terdokumentasi.
+- [x] Mulai runtime bersih: disposable SQLite backend `--catalog` + Next proxy; `/api/v1/ready/`, catalog, dan 9 halaman Next memberi HTTP 200. Ini startup/API smoke, bukan browser interaction.
 - [ ] Jalankan alur catalog → pilih target → diagnostic → result → roadmap → study/checkpoint/completion → assessment → draft credential → public verification tanpa login.
 - [ ] Verifikasi register/login/logout/revoke, refresh replay, kegagalan jaringan/server dan retry; lanjutkan skenario reload, dua tab, refresh paralel/expiry, serta isolasi sesi.
 - [ ] Cek viewport mobile/tablet/desktop, keyboard/fokus, loading/empty/error, navigasi sidebar, dan lifecycle Study.
-- [ ] Simpan hasil per acceptance (PASS/FAIL/NOT RUN), log/screenshot aman, serta SHA dan konfigurasi runtime di `docs/demo-test-matrix.md`.
+- [x] Catat hasil PASS/NOT RUN, batas browser, SHA, dan konfigurasi runtime di `docs/demo-test-matrix.md`.
 
 ## P1 — Mobile dan sumber demo
 
-- [ ] Pastikan Flutter SDK/runtime tersedia; jika tidak, catat blocker dan jangan menyebut Mobile teruji.
+- [x] Cek Flutter SDK/runtime; `flutter` tidak tersedia di PATH, dicatat sebagai blocker dan Mobile tidak diklaim teruji.
 - [ ] Uji Mobile register/login/restore/logout, secure storage, offline/401/refresh gagal, dan kegagalan storage.
 - [ ] Buka sumber materi yang benar-benar dipakai saat demo pada browser operator. Reachability bukan bukti lisensi; pertahankan `license_verified=false` sampai diverifikasi.
 
